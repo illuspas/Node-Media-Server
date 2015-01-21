@@ -7,8 +7,8 @@ var NMRtmpConn = require('./nm_rtmp_conn');
 function NMServer() {
     var self = this;
     this.port = 1935;
-    this.conns = new Map();
-    this.producers = new Map();
+    this.conns = {};
+    this.producers = {};
 
     this.rtmpServer = net.createServer(function(socket) {
         var id = self.generateNewSessionID();
@@ -20,7 +20,7 @@ function NMServer() {
 
         socket.on('end', function() {
             rtmpClient.stop();
-            console.log('client disconnected id=' + rtmpClient.id + " conns=" + self.conns.size);
+            console.log('client disconnected id=' + rtmpClient.id);
         });
 
         socket.on('error', function() {
@@ -29,17 +29,21 @@ function NMServer() {
         });
 
         rtmpClient.run();
-        console.log('client connect id=' + id + " conns=" + self.conns.size);
+        console.log('client connect id=' + id);
     });
 
     NMServer.prototype.run = function() {
+
         this.rtmpServer.listen(this.port, function() {
             console.log('Node Media Server bound on port:' + self.port);
+        });
+
+        this.rtmpServer.on('error', function(e) {
+            console.error('rtmpServer listen error:'+e);
         });
     };
 
     NMServer.prototype.generateNewSessionID = function() {
-        var SessionID;
         do {
             var possible = "abcdefghijklmnopqrstuvwxyz0123456789";
             var numPossible = possible.length;
@@ -47,7 +51,7 @@ function NMServer() {
             for (var i = 0; i < 12; i++) {
                 SessionID += possible.charAt((Math.random() * numPossible) | 0);
             }
-        } while (this.conns.has(SessionID))
+        } while (this.conns[SessionID])
         return SessionID;
     };
 

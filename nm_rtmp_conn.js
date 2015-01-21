@@ -68,7 +68,7 @@ function NMRtmpConn(id, socket, conns, producers) {
 
     NMRtmpConn.prototype.run = function() {
         setInterval(this.hanshake, 10, this);
-        this.conns.set(id, this);
+        this.conns[id] = this;
     };
 
     NMRtmpConn.prototype.stop = function() {
@@ -76,19 +76,19 @@ function NMRtmpConn(id, socket, conns, producers) {
         this.qb.end();
         if (this.publishStreamName != '') {
             //console.info("Send Stream EOF to publiser's consumers. Stream name " + this.publishStreamName);
-            this.consumers.forEach(function(conn, id) {
-                conn.sendStreamEOF();
-            });
+            for (var id in this.consumers) {
+                this.consumers[id].sendStreamEOF();
+            }
             //console.info("Delete publiser from producers. Stream name " + this.publishStreamName);
-            this.producers.delete(this.publishStreamName);
+            delete this.producers[this.publishStreamName];
         } else if (this.playStreamName != '') {
-            if (this.producers.has(this.playStreamName)) {
+            if (this.producers[this.playStreamName]) {
                 //console.info("Delete player from consumers. Stream name " + this.playStreamName);
-                this.producers.get(this.playStreamName).consumers.delete(this.id);
+                delete this.producers[this.playStreamName].consumers[this.id];
             }
         }
         //console.info("Delete client from conns. ID: " + this.id);
-        this.conns.delete(this.id);
+        delete this.conns[this.id];
     };
 
     NMRtmpConn.prototype.getRealChunkSize = function(rtmpBodySize, chunkSize) {
@@ -379,18 +379,18 @@ function NMRtmpConn(id, socket, conns, producers) {
                 this.respondPlay();
                 this.playStreamName = streamName;
 
-                if (!this.producers.has(streamName)) {
+                if (!this.producers[streamName]) {
                     //console.info("[rtmp streamPlay]  There's no stream named " + streamName + " is publushing! Create a producer.");
-                    this.producers.set(streamName, {
+                    this.producers[streamName] = {
                         id: null,
-                        consumers: new Map()
-                    });
-                } else if (this.producers.get(streamName).id == null) {
+                        consumers: {}
+                    };
+                } else if (this.producers[streamName].id == null) {
                     //console.info("[rtmp streamPlay]  There's no stream named " + streamName + " is publushing! But the producer is created.");
                 } else {
-                    //console.info("[rtmp streamPlay]  There's a  stream named " + streamName + " is publushing! id=" + this.producers.get(streamName).id);
+                    //console.info("[rtmp streamPlay]  There's a  stream named " + streamName + " is publushing! id=" + this.producers[streamName].id);
                 }
-                this.producers.get(streamName).consumers.set(this.id, this);
+                this.producers[streamName].consumers[this.id] = this;
                 this.startPlay();
                 break;
             case 'closeStream':
@@ -413,20 +413,20 @@ function NMRtmpConn(id, socket, conns, producers) {
                 var streamName = this.connectCmdObj.app + '/' + cmd.name;
                 //console.log("[rtmp publish] A client want to publish a stream named " + streamName);
 
-                if (!this.producers.has(streamName)) {
-                    this.producers.set(streamName, {
+                if (!this.producers[streamName]) {
+                    this.producers[streamName] = {
                         id: this.id,
-                        consumers: new Map()
-                    });
-                } else if (this.producers.get(streamName).id == null) {
-                    this.producers.get(streamName).id = this.id;
+                        consumers: {}
+                    };
+                } else if (this.producers[streamName].id == null) {
+                    this.producers[streamName].id = this.id;
                 } else {
                     //console.warn("[rtmp publish] Already has a stream named " + streamName);
                     this.respondPublishError();
                     return;
                 }
                 this.publishStreamName = streamName;
-                this.producer = this.producers.get(streamName);
+                this.producer = this.producers[streamName];
                 this.consumers = this.producer.consumers;
                 this.respondPublish();
                 break;
@@ -576,7 +576,7 @@ function NMRtmpConn(id, socket, conns, producers) {
     };
 
     NMRtmpConn.prototype.startPlay = function() {
-        var producer = this.producers.get(this.playStreamName);
+        var producer = this.producers[this.playStreamName];
         if (producer.metaData == null || producer.cacheAudioSequenceBuffer == null || producer.cacheVideoSequenceBuffer == null) return;
 
         var rtmpHeader = {
@@ -693,7 +693,7 @@ function NMRtmpConn(id, socket, conns, producers) {
         //console.log('[receiveSetDataFrame] method:' + method);
 
         if (method == 'onMetaData') {
-            this.producers.get(this.publishStreamName).metaData = obj;
+            this.producers[this.publishStreamName].metaData = obj;
         }
 
     };
@@ -751,10 +751,10 @@ function NMRtmpConn(id, socket, conns, producers) {
                 // //console.info(this.codec);
                 this.isFirstAudioReceived = false;
                 this.producer.cacheAudioSequenceBuffer = new Buffer(rtmpBody);
-                this.consumers.forEach(function(conn, id) {
-                    conn.startPlay();
-                });
 
+                for (var id in this.consumers) {
+                    this.consumers[id].startPlay();
+                }
             }
 
         } else {
@@ -766,9 +766,9 @@ function NMRtmpConn(id, socket, conns, producers) {
             };
             var rtmpMessage = this.createRtmpMessage(sendRtmpHeader, rtmpBody);
 
-            this.consumers.forEach(function(conn, id) {
-                conn.sendBufferQueue.push(rtmpMessage);
-            });
+            for (var id in this.consumers) {
+                this.consumers[id].sendBufferQueue.push(rtmpMessage);
+            }
             /* 
             var frame_length = rtmpBody.length - 2 + 7;
             var audioBuffer = new Buffer(frame_length);
@@ -860,9 +860,9 @@ function NMRtmpConn(id, socket, conns, producers) {
                 // 
                 // 
                 this.producer.cacheVideoSequenceBuffer = new Buffer(rtmpBody);
-                this.consumers.forEach(function(conn, id) {
-                    conn.startPlay();
-                });
+                for (var id in this.consumers) {
+                    this.consumers[id].startPlay();
+                }
             }
         } else if (avc_packet_type == 1) {
             var sendRtmpHeader = {
@@ -872,9 +872,10 @@ function NMRtmpConn(id, socket, conns, producers) {
                 messageStreamID: 1
             };
             var rtmpMessage = this.createRtmpMessage(sendRtmpHeader, rtmpBody);
-            this.consumers.forEach(function(conn, id) {
-                conn.sendBufferQueue.push(rtmpMessage);
-            });
+
+            for (var id in this.consumers) {
+                this.consumers[id].sendBufferQueue.push(rtmpMessage);
+            }
             /*
             //AVC NALU
             var NALUnitLength = 0;
