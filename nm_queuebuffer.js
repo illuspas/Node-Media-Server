@@ -39,7 +39,7 @@ function QueueBuffer() {
     QueueBuffer.prototype.commit = function() {
         var length = this.queueBuffer.length;
         for (var i = 0; i < length; i++) {
-            this.queueBuffer.pop();
+            this.queueBuffer.shift();
         }
     };
 
