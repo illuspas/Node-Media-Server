@@ -2,10 +2,18 @@
 A Node.js implementation of RTMP Server 
  - Supports only RTMP protocol.
  - Supports only H.264 video and AAC audio.
- - Supports publish or play multiple streams at the same time.
  
 # Usage 
   node app.js
+
+# Todo
+本项目写着玩的，用以学习rtmp协议，不保证实现。
+ - 优化发送队列
+ - 支持更多协议  RTMPT/HTTP-FLV/HLS
+ - 支持更多编码 speex/nellymoser
+ - 流状态监控
+ - 流状态回调
+ - 实时录制
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
