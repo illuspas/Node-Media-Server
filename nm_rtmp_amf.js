@@ -1021,7 +1021,7 @@ var rtmpCmdDecode = {
     "deleteStream": ["transId", "cmdObj", "streamId"],
     "receiveAudio": ["transId", "cmdObj", "bool"],
     "receiveVideo": ["transId", "cmdObj", "bool"],
-    "publish": ["transId", "cmdObj", "name", "type"],
+    "publish": ["transId", "cmdObj", "streamName", "type"],
     "seek": ["transId", "cmdObj", "ms"],
     "pause": ["transId", "cmdObj", "pause", "ms"],
     "|RtmpSampleAccess": ["bool1", "bool2"],

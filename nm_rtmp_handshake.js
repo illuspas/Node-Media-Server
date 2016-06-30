@@ -41,30 +41,20 @@ function GetServerGenuineConstDigestOffset(buf) {
     return offset;
 };
 
-
-function hasSameBytes(buf1, buf2) {
-    for (var i = 0; i < buf1.length; i++) {
-        if (buf1[i] !== buf2[i]) {
-            return false;
-        }
-    }
-    return true;
-};
-
 function detectClientMessageFormat(clientsig) {
     var computedSignature, msg, providedSignature, sdl;
     sdl = GetServerGenuineConstDigestOffset(clientsig.slice(772, 776));
     msg = Buffer.concat([clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)], 1504);
     computedSignature = calcHmac(msg, GenuineFPConst);
     providedSignature = clientsig.slice(sdl, sdl + SHA256DL);
-    if (hasSameBytes(computedSignature, providedSignature)) {
+    if (computedSignature.equals(providedSignature)) {
         return MESSAGE_FORMAT_2;
     }
     sdl = GetClientGenuineConstDigestOffset(clientsig.slice(8, 12));
     msg = Buffer.concat([clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)], 1504);
     computedSignature = calcHmac(msg, GenuineFPConst);
     providedSignature = clientsig.slice(sdl, sdl + SHA256DL);
-    if (hasSameBytes(computedSignature, providedSignature)) {
+    if (computedSignature.equals(providedSignature)) {
         return MESSAGE_FORMAT_1;
     }
     return MESSAGE_FORMAT_0;
@@ -105,7 +95,7 @@ function generateS2(messageFormat, clientsig, callback) {
 };
 
 function generateS0S1S2(clientsig, callback) {
-    var clientType = clientsig[0];
+    var clientType = clientsig.slice(0,1);
     //console.log("[rtmp handshake] client type: " + clientType);
     var clientsig = clientsig.slice(1);
 
@@ -113,10 +103,10 @@ function generateS0S1S2(clientsig, callback) {
     var allBytes;
     if (messageFormat === MESSAGE_FORMAT_0) {
         //    console.log('[rtmp handshake] using simple handshake.');
-        allBytes = Buffer.concat([new Buffer([clientType]), clientsig, clientsig]);
+        allBytes = Buffer.concat([clientType, clientsig, clientsig]);
     } else {
         //    console.log('[rtmp handshake] using complex handshake.');
-        allBytes = Buffer.concat([new Buffer([clientType]), generateS1(messageFormat), generateS2(messageFormat, clientsig)]);
+        allBytes = Buffer.concat([clientType, generateS1(messageFormat), generateS2(messageFormat, clientsig)]);
     }
     return allBytes;
 };

@@ -3,7 +3,7 @@
 
 var NMRtmpHandshake = require('./nm_rtmp_handshake');
 var AMF = require('./nm_rtmp_amf');
-var QueueBuffer = require('./nm_queuebuffer');
+var BufferPool = require('./nm_bufferpool');
 
 var aac_sample_rates = [
     96000, 88200, 64000, 48000,
@@ -11,22 +11,6 @@ var aac_sample_rates = [
     16000, 12000, 11025, 8000,
     7350, 0, 0, 0
 ];
-
-var ReadUInt24BE = function(buf, offset) {
-    if (offset == null) {
-        offset = 0;
-    }
-    return (buf[0 + offset] << 16) + (buf[1 + offset] << 8) + buf[2 + offset];
-}
-
-var WriteUInt24BE = function(buf, value, offset) {
-    if (offset == null) {
-        offset = 0;
-    }
-    buf[offset] = (value >> 16) & 0xFF;
-    buf[offset + 1] = (value >> 8) & 0xFF;
-    buf[offset + 2] = value & 0xFF;
-}
 
 function NMRtmpConn(id, socket, conns, producers) {
     this.id = id;
@@ -47,7 +31,12 @@ function NMRtmpConn(id, socket, conns, producers) {
     this.playStreamName = '';
     this.publishStreamName = '';
 
-    this.qb = new QueueBuffer();
+    this.bp = new BufferPool();
+    this.bp.on('error',function(){
+
+    });
+
+    this.parser = parseRtmpMessage(this);
 
     this.codec = {
         width: 0,
@@ -67,13 +56,12 @@ function NMRtmpConn(id, socket, conns, producers) {
     this.sendBufferQueue = [];
 
     NMRtmpConn.prototype.run = function() {
-        setInterval(this.hanshake, 10, this);
-        this.conns[id] = this;
+        this.isStarting = true;
+        this.bp.init(this.parser);
     };
 
     NMRtmpConn.prototype.stop = function() {
         this.isStarting = false;
-        this.qb.end();
         if (this.publishStreamName != '') {
             //console.info("Send Stream EOF to publiser's consumers. Stream name " + this.publishStreamName);
             for (var id in this.consumers) {
@@ -100,62 +88,64 @@ function NMRtmpConn(id, socket, conns, producers) {
         }
     };
 
-    NMRtmpConn.prototype.hanshake = function(self) {
-        //console.log('hanshake rtmpStatus:' + self.rtmpStatus);
-        if (self.rtmpStatus == 0) {
-            var c0c1 = self.qb.read(1537, true);
-            if (c0c1 == null) return;
-            var s0s1s2 = NMRtmpHandshake.generateS0S1S2(c0c1);
-            self.socket.write(s0s1s2);
-            self.rtmpStatus = 1;
-        } else {
-            var c2 = self.qb.read(1536, true);
-            if (c2 == null) return;
-            self.rtmpStatus = 2;
-            clearInterval(this);
-            self.isStarting = true;
-            self.parseRtmpMessage(self);
+   function *parseRtmpMessage(self) {
+       console.log("rtmp handshake [start]");
+        if( self.bp.need(1537) ) {
+                yield;
         }
-    };
-
-    NMRtmpConn.prototype.parseRtmpMessage = function(self) {
-        var ret = 0;
-        if (!self.isStarting) return;
-        do {
+        var c0c1 = self.bp.read(1537);
+        var s0s1s2 = NMRtmpHandshake.generateS0S1S2(c0c1);
+        self.socket.write(s0s1s2);
+        if( self.bp.need(1536) ) {
+            yield;
+        }
+        var c2 = self.bp.read(1536);
+        console.log("rtmp handshake [ok]");
+        
+        while(self.isStarting) {
             var message = {};
             var chunkMessageHeader = null;
             var previousChunk = null;
             var pos = 0;
-            var chunkBasicHeader = self.qb.read(1);
-            if (chunkBasicHeader == null) break;
-
+            if( self.bp.need(1) ) {
+                yield;
+            }
+            var chunkBasicHeader = self.bp.read(1);
             message.formatType = chunkBasicHeader[0] >> 6;
             message.chunkStreamID = chunkBasicHeader[0] & 0x3F;
             if (message.chunkStreamID == 0) {
-                var exStreamID = self.qb.read(1);
-                if (exStreamID == null) break;
+                 if( self.bp.need(1) ) {
+                    yield;
+                }
+                var exStreamID = self.bp.read(1);
                 message.chunkStreamID = exStreamID[0] + 64;
             } else if (message.chunkStreamID == 1) {
-                var exStreamID = self.qb.read(2);
-                if (exStreamID == null) break;
+                 if( self.bp.need(2) ) {
+                    yield;
+                }
+                var exStreamID = self.bp.read(2);
                 message.chunkStreamID = (exStreamID[0] << 8) + exStreamID[1] + 64;
             }
 
             if (message.formatType == 0) {
                 // Type 0 (11 bytes)
-                chunkMessageHeader = self.qb.read(11);
-                if (chunkMessageHeader == null) break;
-                message.timestamp = ReadUInt24BE(chunkMessageHeader, 0);
+                 if( self.bp.need(11) ) {
+                    yield;
+                }
+                chunkMessageHeader = self.bp.read(11);
+                message.timestamp = chunkMessageHeader.readIntBE(0, 3);
                 message.timestampDelta = 0;
-                message.messageLength = ReadUInt24BE(chunkMessageHeader, 3);
+                message.messageLength = chunkMessageHeader.readIntBE(3, 3);
                 message.messageTypeID = chunkMessageHeader[6];
                 message.messageStreamID = chunkMessageHeader.readInt32LE(7);
             } else if (message.formatType == 1) {
                 // Type 1 (7 bytes)
-                chunkMessageHeader = self.qb.read(7);
-                if (chunkMessageHeader == null) break;
-                message.timestampDelta = ReadUInt24BE(chunkMessageHeader, 0);
-                message.messageLength = ReadUInt24BE(chunkMessageHeader, 3);
+                 if( self.bp.need(7) ) {
+                    yield;
+                }
+                chunkMessageHeader = self.bp.read(7);
+                message.timestampDelta = chunkMessageHeader.readIntBE(0, 3);
+                message.messageLength = chunkMessageHeader.readIntBE(3, 3);
                 message.messageTypeID = chunkMessageHeader[6]
                 previousChunk = self.previousChunkMessage[message.chunkStreamID];
                 if (previousChunk != null) {
@@ -166,9 +156,11 @@ function NMRtmpConn(id, socket, conns, producers) {
                 }
             } else if (message.formatType == 2) {
                 // Type 2 (3 bytes)
-                chunkMessageHeader = self.qb.read(3);
-                if (chunkMessageHeader == null) break;
-                message.timestampDelta = ReadUInt24BE(chunkMessageHeader, 0);
+                 if( self.bp.need(3) ) {
+                    yield;
+                }
+                chunkMessageHeader = self.bp.read(3);
+                message.timestampDelta =  chunkMessageHeader.readIntBE(0, 3);
                 previousChunk = self.previousChunkMessage[message.chunkStreamID];
                 if (previousChunk != null) {
                     message.timestamp = previousChunk.timestamp
@@ -197,13 +189,17 @@ function NMRtmpConn(id, socket, conns, producers) {
             //Extended Timestamp
             if (message.formatType === 0) {
                 if (message.timestamp === 0xffffff) {
-                    var chunkBodyHeader = self.qb.read(3);
-                    if (chunkBodyHeader == null) break;
+                    if( self.bp.need(4) ) {
+                        yield;
+                    }
+                    var chunkBodyHeader = self.bp.read(4);
                     message.timestamp = (chunkBodyHeader[0] * Math.pow(256, 3)) + (chunkBodyHeader[1] << 16) + (chunkBodyHeader[2] << 8) + chunkBodyHeader[3];
                 }
             } else if (message.timestampDelta === 0xffffff) {
-                var chunkBodyHeader = self.qb.read(4);
-                if (chunkBodyHeader == null) break;
+                if( self.bp.need(4) ) {
+                    yield;
+                }
+                var chunkBodyHeader = self.bp.read(4);
                 message.timestampDelta = (chunkBodyHeader[0] * Math.pow(256, 3)) + (chunkBodyHeader[1] << 16) + (chunkBodyHeader[2] << 8) + chunkBodyHeader[3];
             }
 
@@ -212,11 +208,11 @@ function NMRtmpConn(id, socket, conns, producers) {
             var rtmpBody = [];
             var rtmpBodySize = message.messageLength;
             var chunkBodySize = self.getRealChunkSize(rtmpBodySize, self.inChunkSize);
-            var chunkBody = self.qb.read(chunkBodySize);
+            if( self.bp.need(chunkBodySize) ) {
+                yield;
+            }
+            var chunkBody = self.bp.read(chunkBodySize);
             var chunkBodyPos = 0;
-
-            if (chunkBody == null) break;
-
             do {
                 if (rtmpBodySize > self.inChunkSize) {
                     rtmpBody.push(chunkBody.slice(chunkBodyPos, chunkBodyPos + self.inChunkSize));
@@ -235,13 +231,6 @@ function NMRtmpConn(id, socket, conns, producers) {
             self.previousChunkMessage[message.chunkStreamID] = message;
             var rtmpBodyBuf = Buffer.concat(rtmpBody);
             self.handleRtmpMessage(message, rtmpBodyBuf);
-            self.qb.commit();
-            ret = 1;
-        } while (0);
-        if (ret == 0) {
-            setTimeout(self.parseRtmpMessage, 200, self);
-        } else {
-            setImmediate(self.parseRtmpMessage, self);
         }
     };
 
@@ -369,13 +358,14 @@ function NMRtmpConn(id, socket, conns, producers) {
                 this.outChunkSize = 4000;
                 this.setChunkSize(this.outChunkSize);
                 this.respondConnect();
+                console.log('rtmp connect app: '+this.connectCmdObj.app);
                 break;
             case 'createStream':
                 this.respondCreateStream(cmd);
                 break;
             case 'play':
                 var streamName = this.connectCmdObj.app + '/' + cmd.streamName;
-                //console.info("[rtmp streamPlay] Client want to play:" + streamName);
+                console.log('rtmp play stream: '+ cmd.streamName);
                 this.respondPlay();
                 this.playStreamName = streamName;
 
@@ -410,9 +400,8 @@ function NMRtmpConn(id, socket, conns, producers) {
                 this.respondFCPublish();
                 break;
             case 'publish':
-                var streamName = this.connectCmdObj.app + '/' + cmd.name;
-                //console.log("[rtmp publish] A client want to publish a stream named " + streamName);
-
+                var streamName = this.connectCmdObj.app + '/' + cmd.streamName;
+                console.log('rtmp publish stream: '+ cmd.streamName);
                 if (!this.producers[streamName]) {
                     this.producers[streamName] = {
                         id: this.id,
@@ -805,7 +794,7 @@ function NMRtmpConn(id, socket, conns, producers) {
             return -1;
         }
         var avc_packet_type = rtmpBody[1];
-        var composition_time = ReadUInt24BE(rtmpBody, 2);
+        var composition_time = rtmpBody.readIntBE(2, 3);
         //  printf("v composition_time %d\n",composition_time);
 
         if (avc_packet_type == 0) {
