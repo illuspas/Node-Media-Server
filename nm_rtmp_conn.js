@@ -921,11 +921,7 @@ function NMRtmpConn(id, socket, conns, producers) {
         for (var i = 0; i < len; i++) {
             self.socket.write(self.sendBufferQueue.shift());
         };
-        if (len == 0) {
-            setTimeout(self.sendRtmpMessage, 200, self);
-        } else {
-            setImmediate(self.sendRtmpMessage, self);
-        }
+        setTimeout(self.sendRtmpMessage, 100, self);
     };
 
 };
