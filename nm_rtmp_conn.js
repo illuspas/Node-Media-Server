@@ -324,6 +324,16 @@ function NMRtmpConn(id, socket, conns, producers) {
                 // //console.log('Video Data: '+rtmpBody.length);
                 this.parseVideoMessage(rtmpHeader, rtmpBody);
                 break;
+            case 0x0F:
+                //AMF3 Data
+                var cmd = AMF.decodeAmf0Cmd(rtmpBody.slice(1));
+                this.handleAMFDataMessage(cmd, this);
+                break;
+            case 0x11:
+                //AMF3 Command
+                var cmd = AMF.decodeAmf0Cmd(rtmpBody.slice(1));
+                this.handleAMFCommandMessage(cmd, this);
+                break;
             case 0x12:
                 //AMF0 Data
                 var cmd = AMF.decodeAmf0Cmd(rtmpBody);
@@ -353,9 +363,10 @@ function NMRtmpConn(id, socket, conns, producers) {
         switch (cmd.cmd) {
             case 'connect':
                 this.connectCmdObj = cmd.cmdObj;
-                this.windowACK(2500000);
-                this.setPeerBandwidth(2500000, 2);
-                this.outChunkSize = 4000;
+                this.objectEncoding = cmd.cmdObj.objectEncoding != null ? cmd.cmdObj.objectEncoding : 0;
+                this.windowACK(5000000);
+                this.setPeerBandwidth(5000000, 2);
+                this.outChunkSize = 4096;
                 this.setChunkSize(this.outChunkSize);
                 this.respondConnect();
                 console.log('rtmp connect app: '+this.connectCmdObj.app);
@@ -469,7 +480,7 @@ function NMRtmpConn(id, socket, conns, producers) {
                 level: 'status',
                 code: 'NetConnection.Connect.Success',
                 description: 'Connection succeeded.',
-                objectEncoding: 0
+                objectEncoding: this.objectEncoding
             }
         };
         var rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -496,7 +507,7 @@ function NMRtmpConn(id, socket, conns, producers) {
                 level: 'error',
                 code: 'NetConnection.Connect.Rejected',
                 description: 'Connection failed.',
-                objectEncoding: 0
+                objectEncoding: this.objectEncoding
             }
         };
         var rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -516,8 +527,7 @@ function NMRtmpConn(id, socket, conns, producers) {
             cmd: "_result",
             transId: cmd.transId,
             cmdObj: null,
-            info: 1,
-            objectEncoding: 0
+            info: 1
 
         };
         var rtmpBody = AMF.encodeAmf0Cmd(opt);
