@@ -39,6 +39,7 @@ class NodeRtmpSession extends EventEmitter {
     this.audioCodec = 0;
     this.videoCodec = 0;
 
+    this.gopCacheEnable = config.gop_cache;
     this.gopCacheQueue = null;
 
     this.on('connect', this.onConnect);
@@ -362,8 +363,8 @@ class NodeRtmpSession extends EventEmitter {
     }
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
 
-    if(this.gopCacheQueue != null) {
-      if(this.aacSequenceHeader != null &&rtmpBody[1]==0) {
+    if (this.gopCacheQueue != null) {
+      if (this.aacSequenceHeader != null && rtmpBody[1] == 0) {
         //skip aac sequence header
       } else {
         this.gopCacheQueue.add(rtmpMessage);
@@ -390,7 +391,7 @@ class NodeRtmpSession extends EventEmitter {
         if (frame_type == 1 && rtmpBody[1] == 0) {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstVideoReceived = true;
-          this.gopCacheQueue = new Set();
+          this.gopCacheQueue = this.gopCacheEnable ? new Set() : null;
         }
       } else {
         this.isFirstVideoReceived = true;
@@ -399,21 +400,21 @@ class NodeRtmpSession extends EventEmitter {
 
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
 
-    if (codec_id == 7) {
+    if (codec_id == 7 && this.gopCacheQueue != null) {
       if (frame_type == 1 && rtmpBody[1] == 1) {
         this.gopCacheQueue.clear();
       }
-
       if (frame_type == 1 && rtmpBody[1] == 0) {
         //skip avc sequence header
       } else {
         this.gopCacheQueue.add(rtmpMessage);
       }
-
-      for (let player of this.players) {
-        this.sessions.get(player).emit('data', rtmpMessage);
-      }
     }
+
+    for (let player of this.players) {
+      this.sessions.get(player).emit('data', rtmpMessage);
+    }
+
   }
 
   handleUserControlMessage(userControlMessage) {
@@ -744,8 +745,8 @@ class NodeRtmpSession extends EventEmitter {
         this.emit('data', rtmpMessage);
       }
       //send gop cache
-      if(publisher.gopCacheQueue != null) {
-        for(let rtmpMessage of publisher.gopCacheQueue) {
+      if (publisher.gopCacheQueue != null) {
+        for (let rtmpMessage of publisher.gopCacheQueue) {
           this.emit('data', rtmpMessage);
         }
       }
