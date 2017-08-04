@@ -1,7 +1,16 @@
-//  Created by Mingliang Chen on 15/1/16.
-//  Copyright (c) 2015 Nodemedia. All rights reserved.
+const NodeMediaServer = require('./node_media_server')
 
-// var heapdump = require('heapdump');
-var NMServer = require('./nm_server');
-var server = new NMServer();
-server.run();
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 128
+  },
+  http: {
+    port: 8000
+  }
+}
+
+var nms = new NodeMediaServer(config)
+nms.run()
+
+

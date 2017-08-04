@@ -18,11 +18,11 @@ var amf3dRules = {
     0x0A: amf3decObject,
     0x0B: amf3decXml,
     0x0C: amf3decByteArray //,
-        //    0x0D: amf3decVecInt,
-        //    0x0E: amf3decVecUInt,
-        //    0x0F: amf3decVecDouble,
-        //    0x10: amf3decVecObject,
-        //    0x11: amf3decDict // No dictionary support for the moment!
+    //    0x0D: amf3decVecInt,
+    //    0x0E: amf3decVecUInt,
+    //    0x0F: amf3decVecDouble,
+    //    0x10: amf3decVecObject,
+    //    0x11: amf3decDict // No dictionary support for the moment!
 };
 
 var amf3eRules = {
@@ -57,7 +57,8 @@ var amf0dRules = {
     //    0x0D: amf0decUnsupported, // Has been never originally implemented by Adobe!
     //    0x0E: amf0decRecSet, // Has been never originally implemented by Adobe!
     0x0F: amf0decXmlDoc,
-    0x10: amf0decTypedObj
+    0x10: amf0decTypedObj,
+    0x11: amf0decSwitchAmf3
 };
 
 var amf0eRules = {
@@ -103,10 +104,7 @@ function amfType(o) {
  * @returns {{len: number, value: undefined}}
  */
 function amf3decUndefined() {
-    return {
-        len: 1,
-        value: undefined
-    }
+    return { len: 1, value: undefined }
 }
 
 /**
@@ -124,10 +122,7 @@ function amf3encUndefined() {
  * @returns {{len: number, value: null}}
  */
 function amf3decNull() {
-    return {
-        len: 1,
-        value: null
-    }
+    return { len: 1, value: null }
 }
 
 /**
@@ -145,10 +140,7 @@ function amf3encNull() {
  * @returns {{len: number, value: boolean}}
  */
 function amf3decFalse() {
-    return {
-        len: 1,
-        value: false
-    }
+    return { len: 1, value: false }
 }
 
 /**
@@ -166,10 +158,7 @@ function amf3encFalse() {
  * @returns {{len: number, value: boolean}}
  */
 function amf3decTrue() {
-    return {
-        len: 1,
-        value: true
-    }
+    return { len: 1, value: true }
 }
 
 /**
@@ -199,10 +188,7 @@ function amf3decUI29(buf) {
 
     if (len == 5) val = val | b; // Preserve the major bit of the last byte
 
-    return {
-        len: len,
-        value: val
-    }
+    return { len: len, value: val }
 }
 
 /**
@@ -271,10 +257,7 @@ function amf3decString(buf) {
     var sLen = amf3decUI29(buf);
     var s = sLen & 1;
     sLen = sLen >> 1; // The real length without the lowest bit
-    if (s) return {
-        len: sLen.value + 5,
-        value: buf.slice(5, sLen.value + 5).toString('utf8')
-    };
+    if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
     throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
 }
 
@@ -299,10 +282,7 @@ function amf3decXmlDoc(buf) {
     var sLen = amf3decUI29(buf);
     var s = sLen & 1;
     sLen = sLen >> 1; // The real length without the lowest bit
-    if (s) return {
-        len: sLen.value + 5,
-        value: buf.slice(5, sLen.value + 5).toString('utf8')
-    };
+    if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
     throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
 }
 
@@ -327,10 +307,7 @@ function amf3decXml(buf) {
     var sLen = amf3decUI29(buf);
     var s = sLen & 1;
     sLen = sLen >> 1; // The real length without the lowest bit
-    if (s) return {
-        len: sLen.value + 5,
-        value: buf.slice(5, sLen.value + 5).toString('utf8')
-    };
+    if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
     throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
 }
 
@@ -355,10 +332,7 @@ function amf3decByteArray(buf) {
     var sLen = amf3decUI29(buf);
     var s = sLen & 1; // TODO: Check if we follow the same rule!
     sLen = sLen >> 1; // The real length without the lowest bit
-    if (s) return {
-        len: sLen.value + 5,
-        value: buf.slice(5, sLen.value + 5)
-    };
+    if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5) };
     throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
 }
 
@@ -380,10 +354,7 @@ function amf3encByteArray(str) {
  * @returns {{len: number, value: (*|Number)}}
  */
 function amf3decDouble(buf) {
-    return {
-        len: 9,
-        value: buf.readDoubleBE(1)
-    }
+    return { len: 9, value: buf.readDoubleBE(1) }
 }
 
 /**
@@ -403,13 +374,10 @@ function amf3encDouble(num) {
  * @param buf
  * @returns {{len: *, value: (*|Number)}}
  */
-function amf3decDate(buf) { // The UI29 should be 1
+function amf3decDate(buf) {  // The UI29 should be 1
     var uTz = amf3decUI29(buf);
     var ts = buf.readDoubleBE(uTz.len);
-    return {
-        len: uTz.len + 8,
-        value: ts
-    }
+    return { len: uTz.len + 8, value: ts }
 }
 
 /**
@@ -434,10 +402,7 @@ function amf3decArray(buf) {
     var count = amf3decUI29(buf.slice(1));
     var obj = amf3decObject(buf.slice(count.len));
     if (count.value % 2 == 1) throw new Error("This is a reference to another array, which currently we don't support!");
-    return {
-        len: count.len + obj.len,
-        value: obj.value
-    }
+    return { len: count.len + obj.len, value: obj.value }
 }
 
 /**
@@ -452,7 +417,9 @@ function amf3encArray() {
  * @param buf
  */
 function amf3decObject(buf) {
-
+    var obj = {};
+    let pos = 0;
+    return obj;
 }
 
 /**
@@ -471,10 +438,7 @@ function amf3encObject(o) {
  * @returns {{len: number, value: (*|Number)}}
  */
 function amf0decNumber(buf) {
-    return {
-        len: 9,
-        value: buf.readDoubleBE(1)
-    }
+    return { len: 9, value: buf.readDoubleBE(1) }
 }
 
 /**
@@ -495,10 +459,7 @@ function amf0encNumber(num) {
  * @returns {{len: number, value: boolean}}
  */
 function amf0decBool(buf) {
-    return {
-        len: 2,
-        value: (buf.readUInt8(1) != 0)
-    }
+    return { len: 2, value: (buf.readUInt8(1) != 0) }
 }
 
 /**
@@ -518,10 +479,7 @@ function amf0encBool(num) {
  * @returns {{len: number, value: null}}
  */
 function amf0decNull() {
-    return {
-        len: 1,
-        value: null
-    }
+    return { len: 1, value: null }
 }
 
 /**
@@ -539,10 +497,7 @@ function amf0encNull() {
  * @returns {{len: number, value: undefined}}
  */
 function amf0decUndefined() {
-    return {
-        len: 1,
-        value: undefined
-    }
+    return { len: 1, value: undefined }
 }
 
 /**
@@ -563,10 +518,7 @@ function amf0encUndefined() {
 function amf0decDate(buf) {
     //    var s16 = buf.readInt16BE(1);
     var ts = buf.readDoubleBE(3);
-    return {
-        len: 11,
-        value: ts
-    }
+    return { len: 11, value: ts }
 }
 
 /**
@@ -609,10 +561,7 @@ function amf0decObject(buf) { // TODO: Implement references!
         len += val.len;
         iBuf = iBuf.slice(prop.len + val.len);
     }
-    return {
-        len: len,
-        value: obj
-    }
+    return { len: len, value: obj }
 }
 
 /**
@@ -639,10 +588,7 @@ function amf0encObject(o) {
  */
 function amf0decRef(buf) {
     var index = buf.readUInt16BE(1);
-    return {
-        len: 3,
-        value: 'ref' + index
-    }
+    return { len: 3, value: 'ref' + index }
 }
 
 /**
@@ -664,10 +610,7 @@ function amf0encRef(index) {
  */
 function amf0decString(buf) {
     var sLen = buf.readUInt16BE(1);
-    return {
-        len: 3 + sLen,
-        value: buf.toString('utf8', 3, 3 + sLen)
-    }
+    return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) }
 }
 
 /**
@@ -677,10 +620,7 @@ function amf0decString(buf) {
  */
 function amf0decUString(buf) {
     var sLen = buf.readUInt16BE(0);
-    return {
-        len: 2 + sLen,
-        value: buf.toString('utf8', 2, 2 + sLen)
-    }
+    return { len: 2 + sLen, value: buf.toString('utf8', 2, 2 + sLen) }
 }
 
 /**
@@ -714,10 +654,7 @@ function amf0encString(str) {
  */
 function amf0decLongString(buf) {
     var sLen = buf.readUInt32BE(1);
-    return {
-        len: 5 + sLen,
-        value: buf.toString('utf8', 5, 5 + sLen)
-    }
+    return { len: 5 + sLen, value: buf.toString('utf8', 5, 5 + sLen) }
 }
 
 /**
@@ -740,10 +677,7 @@ function amf0encLongString(str) {
 function amf0decArray(buf) {
     //    var count = buf.readUInt32BE(1);
     var obj = amf0decObject(buf.slice(4));
-    return {
-        len: 5 + obj.len,
-        value: obj.value
-    }
+    return { len: 5 + obj.len, value: obj.value }
 }
 
 /**
@@ -751,8 +685,7 @@ function amf0decArray(buf) {
  */
 function amf0encArray(a) {
     var l = 0;
-    if (a instanceof Array) l = a.length;
-    else l = Object.keys(a).length;
+    if (a instanceof Array) l = a.length; else l = Object.keys(a).length;
     console.log('Array encode', l, a);
     var buf = new Buffer(5);
     buf.writeUInt8(8, 0);
@@ -792,10 +725,7 @@ function amf0cnvObject2Array(oData) {
  */
 function amf0decXmlDoc(buf) {
     var sLen = buf.readUInt16BE(1);
-    return {
-        len: 3 + sLen,
-        value: buf.toString('utf8', 3, 3 + sLen)
-    }
+    return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) }
 }
 
 /**
@@ -824,10 +754,7 @@ function amf0decSArray(buf) {
         a.push(ret.value);
         len += ret.len;
     }
-    return {
-        len: len,
-        value: amf0markSArray(a)
-    }
+    return { len: len, value: amf0markSArray(a) }
 }
 
 /**
@@ -847,9 +774,7 @@ function amf0encSArray(a) {
 }
 
 function amf0markSArray(a) {
-    Object.defineProperty(a, 'sarray', {
-        value: true
-    });
+    Object.defineProperty(a, 'sarray', { value: true });
     return a;
 }
 
@@ -862,10 +787,17 @@ function amf0decTypedObj(buf) {
     var className = amf0decString(buf);
     var obj = amf0decObject(buf.slice(className.len - 1));
     obj.value.__className__ = className.value;
-    return {
-        len: className.len + obj.len - 1,
-        value: obj.value
-    }
+    return { len: className.len + obj.len - 1, value: obj.value }
+}
+
+/**
+ * AMF0 Decode Switch AMF3 Object
+ * @param buf
+ * @returns {{len: number, value: ({}|*)}}
+ */
+function amf0decSwitchAmf3(buf) {
+    var r = amf3DecodeOne(buf.slice(1));
+    return r;
 }
 
 /**
@@ -883,8 +815,8 @@ function amf0encTypedObj() {
  */
 function amfXDecodeOne(rules, buffer) {
     if (!rules[buffer.readUInt8(0)]) {
-        console.log('Unknown field', buffer.readUInt8(0));
-        throw new Error("Error: Unknown field");
+        console.error('Unknown field', buffer.readUInt8(0));
+        return null;
     }
     return rules[buffer.readUInt8(0)](buffer);
 }
@@ -981,7 +913,7 @@ function amf3EncodeOne(o) {
  */
 function amf3Encode(a) {
     var buf = new Buffer(0);
-    a.forEach(function(o) {
+    a.forEach(function (o) {
         buf = Buffer.concat([buf, amf3EncodeOne(o)]);
     });
     return buf;
@@ -994,7 +926,7 @@ function amf3Encode(a) {
  */
 function amf0Encode(a) {
     var buf = new Buffer(0);
-    a.forEach(function(o) {
+    a.forEach(function (o) {
         buf = Buffer.concat([buf, amf0EncodeOne(o)]);
     });
     return buf;
@@ -1004,7 +936,6 @@ function amf0Encode(a) {
 var rtmpCmdDecode = {
     "_result": ["transId", "cmdObj", "info"],
     "_error": ["transId", "cmdObj", "info", "streamId"], // Info / Streamid are optional
-    "@setDataFrame": ["method", "cmdObj"],
     "onStatus": ["transId", "cmdObj", "info"],
     "releaseStream": ["transId", "cmdObj", "streamId"],
     "getStreamLength": ["transId", "cmdObj", "streamId"],
@@ -1023,10 +954,44 @@ var rtmpCmdDecode = {
     "receiveVideo": ["transId", "cmdObj", "bool"],
     "publish": ["transId", "cmdObj", "streamName", "type"],
     "seek": ["transId", "cmdObj", "ms"],
-    "pause": ["transId", "cmdObj", "pause", "ms"],
-    "|RtmpSampleAccess": ["bool1", "bool2"],
-    "onMetaData": ["cmdObj"]
+    "pause": ["transId", "cmdObj", "pause", "ms"]
 };
+
+var rtmpDataDecode = {
+    "@setDataFrame": ["method", "dataObj"],
+    "onMetaData": ["cmdObj"],
+    "|RtmpSampleAccess": ["bool1", "bool2"],
+};
+
+
+
+
+/**
+ * Decode a data!
+ * @param dbuf
+ * @returns {{cmd: (*|string|String|*), value: *}}
+ */
+function decodeAmf0Data(dbuf) {
+    var buffer = dbuf;
+    var resp = {};
+
+    var cmd = amf0DecodeOne(buffer);
+    resp.cmd = cmd.value;
+    buffer = buffer.slice(cmd.len);
+
+    if (rtmpDataDecode[cmd.value]) {
+        rtmpDataDecode[cmd.value].forEach(function (n) {
+            if (buffer.length > 0) {
+                var r = amf0DecodeOne(buffer);
+                buffer = buffer.slice(r.len);
+                resp[n] = r.value;
+            }
+        });
+    } else {
+        console.log('Unknown command', resp);
+    }
+    return resp
+}
 
 /**
  * Decode a command!
@@ -1042,7 +1007,7 @@ function decodeAMF0Cmd(dbuf) {
     buffer = buffer.slice(cmd.len);
 
     if (rtmpCmdDecode[cmd.value]) {
-        rtmpCmdDecode[cmd.value].forEach(function(n) {
+        rtmpCmdDecode[cmd.value].forEach(function (n) {
             if (buffer.length > 0) {
                 var r = amf0DecodeOne(buffer);
                 buffer = buffer.slice(r.len);
@@ -1064,12 +1029,27 @@ function encodeAMF0Cmd(opt) {
     var data = amf0EncodeOne(opt.cmd);
 
     if (rtmpCmdDecode[opt.cmd]) {
-        rtmpCmdDecode[opt.cmd].forEach(function(n) {
+        rtmpCmdDecode[opt.cmd].forEach(function (n) {
             if (opt.hasOwnProperty(n))
                 data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
         });
     } else {
         console.log('Unknown command', opt);
+    }
+    // console.log('Encoded as',data.toString('hex'));
+    return data
+}
+
+function encodeAMF0Data(opt) {
+    var data = amf0EncodeOne(opt.cmd);
+
+    if (rtmpDataDecode[opt.cmd]) {
+        rtmpDataDecode[opt.cmd].forEach(function (n) {
+            if (opt.hasOwnProperty(n))
+                data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
+        });
+    } else {
+        console.log('Unknown data', opt);
     }
     // console.log('Encoded as',data.toString('hex'));
     return data
@@ -1089,7 +1069,7 @@ function decodeAMF3Cmd(dbuf) {
     buffer = buffer.slice(cmd.len);
 
     if (rtmpCmdDecode[cmd.value]) {
-        rtmpCmdDecode[cmd.value].forEach(function(n) {
+        rtmpCmdDecode[cmd.value].forEach(function (n) {
             if (buffer.length > 0) {
                 var r = amf3DecodeOne(buffer);
                 buffer = buffer.slice(r.len);
@@ -1111,7 +1091,7 @@ function encodeAMF3Cmd(opt) {
     var data = amf0EncodeOne(opt.cmd);
 
     if (rtmpCmdDecode[opt.cmd]) {
-        rtmpCmdDecode[opt.cmd].forEach(function(n) {
+        rtmpCmdDecode[opt.cmd].forEach(function (n) {
             if (opt.hasOwnProperty(n))
                 data = Buffer.concat([data, amf3EncodeOne(opt[n])]);
         });
@@ -1125,5 +1105,73 @@ module.exports = {
     decodeAmf3Cmd: decodeAMF3Cmd,
     encodeAmf3Cmd: encodeAMF3Cmd,
     decodeAmf0Cmd: decodeAMF0Cmd,
-    encodeAmf0Cmd: encodeAMF0Cmd
+    encodeAmf0Cmd: encodeAMF0Cmd,
+    decodeAmf0Data: decodeAmf0Data,
+    encodeAmf0Data: encodeAMF0Data,
+    amfType: amfType,
+    amf0Encode: amf0Encode,
+    amf0EncodeOne: amf0EncodeOne,
+    amf0Decode: amf0Decode,
+    amf0DecodeOne: amf0DecodeOne,
+    amf3Encode: amf3Encode,
+    amf3EncodeOne: amf3EncodeOne,
+    amf3Decode: amf3Decode,
+    amf3DecodeOne: amf3DecodeOne,
+    amf0cnvA2O: amf0cnvArray2Object,
+    amf0cnvO2A: amf0cnvObject2Array,
+    amf0markSArray: amf0markSArray,
+    amf0decArray: amf0decArray,
+    amf0decBool: amf0decBool,
+    amf0decDate: amf0decDate,
+    amf0decLongString: amf0decLongString,
+    amf0decNull: amf0decNull,
+    amf0decNumber: amf0decNumber,
+    amf0decObject: amf0decObject,
+    amf0decRef: amf0decRef,
+    amf0decSArray: amf0decSArray,
+    amf0decString: amf0decString,
+    amf0decTypedObj: amf0decTypedObj,
+    amf0decUndefined: amf0decUndefined,
+    amf0decXmlDoc: amf0decXmlDoc,
+    amf0encArray: amf0encArray,
+    amf0encBool: amf0encBool,
+    amf0encDate: amf0encDate,
+    amf0encLongString: amf0encLongString,
+    amf0encNull: amf0encNull,
+    amf0encNumber: amf0encNumber,
+    amf0encObject: amf0encObject,
+    amf0encRef: amf0encRef,
+    amf0encSArray: amf0encSArray,
+    amf0encString: amf0encString,
+    amf0encTypedObj: amf0encTypedObj,
+    amf0encUndefined: amf0encUndefined,
+    amf0encXmlDoc: amf0encXmlDoc,
+    amf3decArray: amf3decArray,
+    amf3decByteArray: amf3decByteArray,
+    amf3decDate: amf3decDate,
+    amf3decDouble: amf3decDouble,
+    amf3decFalse: amf3decFalse,
+    amf3decInteger: amf3decInteger,
+    amf3decNull: amf3decNull,
+    amf3decObject: amf3decObject,
+    amf3decString: amf3decString,
+    amf3decTrue: amf3decTrue,
+    amf3decUI29: amf3decUI29,
+    amf3decUndefined: amf3decUndefined,
+    amf3decXml: amf3decXml,
+    amf3decXmlDoc: amf3decXmlDoc,
+    amf3encArray: amf3encArray,
+    amf3encByteArray: amf3encByteArray,
+    amf3encDate: amf3encDate,
+    amf3encDouble: amf3encDouble,
+    amf3encFalse: amf3encFalse,
+    amf3encInteger: amf3encInteger,
+    amf3encNull: amf3encNull,
+    amf3encObject: amf3encObject,
+    amf3encString: amf3encString,
+    amf3encTrue: amf3encTrue,
+    amf3encUI29: amf3encUI29,
+    amf3encUndefined: amf3encUndefined,
+    amf3encXml: amf3encXml,
+    amf3encXmlDoc: amf3encXmlDoc
 };
