@@ -39,6 +39,8 @@ class NodeRtmpSession extends EventEmitter {
     this.audioCodec = 0;
     this.videoCodec = 0;
 
+    this.gopCacheQueue = null;
+
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
     this.on('play', this.onPlay);
@@ -347,14 +349,27 @@ class NodeRtmpSession extends EventEmitter {
       sound_format = (sound_format >> 4) & 0x0f;
       console.log(`Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate}`);
       this.audioCodec = sound_format;
-      if (sound_format == 10 && rtmpBody[1] == 0) {
+      if (sound_format == 10) {
         //cache aac sequence header
-
-        this.aacSequenceHeader = Buffer.from(rtmpBody);
+        if (rtmpBody[1] == 0) {
+          this.aacSequenceHeader = Buffer.from(rtmpBody);
+          this.isFirstAudioReceived = true;
+        }
+      } else {
+        this.isFirstAudioReceived = true;
       }
-      this.isFirstAudioReceived = true;
+
     }
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
+
+    if(this.gopCacheQueue != null) {
+      if(this.aacSequenceHeader != null &&rtmpBody[1]==0) {
+        //skip aac sequence header
+      } else {
+        this.gopCacheQueue.add(rtmpMessage);
+      }
+    }
+
     for (let player of this.players) {
       this.sessions.get(player).emit('data', rtmpMessage);
     }
@@ -362,22 +377,42 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   handleVideoMessage(rtmpHeader, rtmpBody) {
+    let frame_type = rtmpBody[0];
+    let codec_id = frame_type & 0x0f;
+    frame_type = (frame_type >> 4) & 0x0f;
+
     if (!this.isFirstVideoReceived) {
-      let frame_type = rtmpBody[0];
-      let codec_id = frame_type & 0x0f;
-      frame_type = (frame_type >> 4) & 0x0f;
       this.videoCodec = codec_id;
       console.log(`Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id}`);
 
-      if (codec_id == 7 && rtmpBody[1] == 0) {
+      if (codec_id == 7) {
         //cache avc sequence header
-        this.avcSequenceHeader = Buffer.from(rtmpBody);
+        if (frame_type == 1 && rtmpBody[1] == 0) {
+          this.avcSequenceHeader = Buffer.from(rtmpBody);
+          this.isFirstVideoReceived = true;
+          this.gopCacheQueue = new Set();
+        }
+      } else {
+        this.isFirstVideoReceived = true;
       }
-      this.isFirstVideoReceived = true;
     }
+
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
-    for (let player of this.players) {
-      this.sessions.get(player).emit('data', rtmpMessage);
+
+    if (codec_id == 7) {
+      if (frame_type == 1 && rtmpBody[1] == 1) {
+        this.gopCacheQueue.clear();
+      }
+
+      if (frame_type == 1 && rtmpBody[1] == 0) {
+        //skip avc sequence header
+      } else {
+        this.gopCacheQueue.add(rtmpMessage);
+      }
+
+      for (let player of this.players) {
+        this.sessions.get(player).emit('data', rtmpMessage);
+      }
     }
   }
 
@@ -606,18 +641,6 @@ class NodeRtmpSession extends EventEmitter {
     this.emit('data', rtmpMessage);
   }
 
-
-
-  onConnect(cmdObj) {
-    this.connectCmdObj = cmdObj;
-    this.objectEncoding = cmdObj.objectEncoding != null ? cmdObj.objectEncoding : 0;
-    this.windowACK(5000000);
-    this.setPeerBandwidth(5000000, 2);
-    this.setChunkSize(this.outChunkSize);
-    this.respondConnect();
-    console.log('rtmp connect app: ' + cmdObj.app);
-  }
-
   respondPlayError() {
     const rtmpHeader = {
       chunkStreamID: 5,
@@ -638,6 +661,17 @@ class NodeRtmpSession extends EventEmitter {
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.emit('data', rtmpMessage);
+  }
+
+
+  onConnect(cmdObj) {
+    this.connectCmdObj = cmdObj;
+    this.objectEncoding = cmdObj.objectEncoding != null ? cmdObj.objectEncoding : 0;
+    this.windowACK(5000000);
+    this.setPeerBandwidth(5000000, 2);
+    this.setChunkSize(this.outChunkSize);
+    this.respondConnect();
+    console.log('rtmp connect app: ' + cmdObj.app);
   }
 
   onPublish(streamName) {
@@ -687,7 +721,7 @@ class NodeRtmpSession extends EventEmitter {
         this.emit('data', metaDataRtmpMessage);
       }
 
-      //sendSequenceHeader
+      //send aacSequenceHeader
       if (publisher.audioCodec == 10) {
         let rtmpHeader = {
           chunkStreamID: 4,
@@ -698,7 +732,7 @@ class NodeRtmpSession extends EventEmitter {
         let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.aacSequenceHeader);
         this.emit('data', rtmpMessage);
       }
-
+      //send avcSequenceHeader
       if (publisher.videoCodec == 7) {
         let rtmpHeader = {
           chunkStreamID: 6,
@@ -708,6 +742,12 @@ class NodeRtmpSession extends EventEmitter {
         };
         let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.avcSequenceHeader);
         this.emit('data', rtmpMessage);
+      }
+      //send gop cache
+      if(publisher.gopCacheQueue != null) {
+        for(let rtmpMessage of publisher.gopCacheQueue) {
+          this.emit('data', rtmpMessage);
+        }
       }
 
     } else {
