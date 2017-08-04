@@ -8,7 +8,7 @@ A Node.js implementation of RTMP Server
  - 无第三方库依赖
  - 支持H.264/AAC/SPEEX/NELLYMOSER
  - 基于Generator实现的高性能解析器
- - 跨平台 Windows/Linux/Unix
+ - 跨平台 Windows/Linux/Unix，高性能(IOCP/EPOLL/KQUEUE)
  - 支持GOP cache，FlashPlayer/NodeMediaClient 毫秒级首屏打开速度
 
 # Todo
