@@ -24,7 +24,7 @@ class NodeRtmpServer {
         socket.end();
       });
 
-      socket.on('error',(e)=>{
+      socket.on('error', (e) => {
         console.error(`ID:${id} socket error:`);
         session.stop();
       });
@@ -52,7 +52,7 @@ class NodeRtmpServer {
     })
   }
 
-  generateNewSessionID() {
+  generateNewSessionID() {ƒ
     let SessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
