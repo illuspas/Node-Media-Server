@@ -5,13 +5,13 @@ A Node.js implementation of RTMP Server
   node app.js
 
 # Todo
-本项目写着玩的，用以学习rtmp协议，不保证实现。
  - 优化发送队列
- - 支持更多协议  RTMPT/HTTP-FLV/HLS
- - 支持更多编码 speex/nellymoser
+ - GOP 缓存
+ - 支持更多协议  RTMPT/RTMPE/HTTP-FLV/HLS
  - 流状态监控
  - 流状态回调
  - 实时录制
+ - 多进程支持
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
