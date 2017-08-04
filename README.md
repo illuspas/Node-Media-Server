@@ -6,10 +6,12 @@ A Node.js implementation of RTMP Server
 
 # Todo
  - 优化发送队列
+ - GOP 缓存
  - 支持更多协议  RTMPT/RTMPE/HTTP-FLV/HLS
  - 流状态监控
  - 流状态回调
  - 实时录制
+ - 多进程支持
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
