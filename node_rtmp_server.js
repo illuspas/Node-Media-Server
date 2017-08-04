@@ -3,8 +3,8 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
-const Net = require('net')
-const NodeRtmpSession = require('./node_rtmp_session')
+const Net = require('net');
+const NodeRtmpSession = require('./node_rtmp_session');
 
 class NodeRtmpServer {
   constructor(config, sessions, publishers) {
@@ -52,7 +52,7 @@ class NodeRtmpServer {
     })
   }
 
-  generateNewSessionID() {ƒ
+  generateNewSessionID() {
     let SessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
