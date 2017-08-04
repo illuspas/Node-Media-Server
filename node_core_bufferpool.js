@@ -1,3 +1,9 @@
+//
+//  Created by Mingliang Chen on 17/8/1.
+//  illuspas[a]gmail.com
+//  Copyright (c) 2017 Nodemedia. All rights reserved.
+//
+
 const Readable = require('stream').Readable;
 
 class BufferPool extends Readable {
