@@ -25,7 +25,7 @@ class NodeRtmpServer {
       });
 
       socket.on('error', (e) => {
-        console.error(`ID:${id} socket error:`);
+        // console.error(`ID:${id} socket error:`);
         session.stop();
       });
 
@@ -34,7 +34,7 @@ class NodeRtmpServer {
       });
 
       socket.on('end', () => {
-        console.log(`ID:${id} socket end`);
+        // console.log(`ID:${id} socket end`);
         session.stop();
       });
 

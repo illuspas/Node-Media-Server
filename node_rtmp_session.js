@@ -228,7 +228,13 @@ class NodeRtmpSession extends EventEmitter {
     }
     console.log('rtmp parse message [stop]');
     if (this.isPublisher) {
+      for (let playerId of this.players) {
+        this.sessions.get(playerId).respondUnpublish();
+      }
+      this.players.clear();
+      this.players = null;
       this.publishers.delete(this.streamId);
+
     } else {
       let publisherId = this.publishers.get(this.streamId);
       if (publisherId != null) {
@@ -236,6 +242,9 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
     this.emit('end');
+    this.publishers = null;
+    this.sessions = null;
+    this.bp = null;
   }
 
   createRtmpMessage(rtmpHeader, rtmpBody) {
@@ -371,8 +380,8 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
 
-    for (let player of this.players) {
-      this.sessions.get(player).emit('data', rtmpMessage);
+    for (let playerId of this.players) {
+      this.sessions.get(playerId).emit('data', rtmpMessage);
     }
 
   }
@@ -411,8 +420,8 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
 
-    for (let player of this.players) {
-      this.sessions.get(player).emit('data', rtmpMessage);
+    for (let playerId of this.players) {
+      this.sessions.get(playerId).emit('data', rtmpMessage);
     }
 
   }
@@ -664,6 +673,27 @@ class NodeRtmpSession extends EventEmitter {
     this.emit('data', rtmpMessage);
   }
 
+  respondUnpublish() {
+    const rtmpHeader = {
+      chunkStreamID: 5,
+      timestamp: 0,
+      messageTypeID: 0x14,
+      messageStreamID: 1
+    };
+    const opt = {
+      cmd: 'onStatus',
+      transId: 0,
+      cmdObj: null,
+      info: {
+        level: 'status',
+        code: 'NetStream.Play.UnpublishNotify',
+        description: `Stream ${this.streamId} stop publishing`
+      }
+    };
+    let rtmpBody = AMF.encodeAmf0Cmd(opt);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
+    this.emit('data', rtmpMessage);
+  }
 
   onConnect(cmdObj) {
     this.connectCmdObj = cmdObj;
