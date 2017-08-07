@@ -9,35 +9,14 @@ const NodeRtmpSession = require('./node_rtmp_session');
 class NodeRtmpServer {
   constructor(config, sessions, publishers) {
     this.port = config.port;
-    this.sessions = sessions;
 
     this.tcpServer = Net.createServer((socket) => {
-      const id = this.generateNewSessionID();
-      let session = new NodeRtmpSession(config, id, sessions, publishers);
+      let id = this.generateNewSessionID(sessions);
+      let session = new NodeRtmpSession(config, socket);
       sessions.set(id, session);
-
-      session.on('data', (data) => {
-        socket.write(data);
-      });
-
-      session.on('end', () => {
-        socket.end();
-      });
-
-      socket.on('error', (e) => {
-        // console.error(`ID:${id} socket error:`);
-        session.stop();
-      });
-
-      socket.on('data', (data) => {
-        session.push(data);
-      });
-
-      socket.on('end', () => {
-        // console.log(`ID:${id} socket end`);
-        session.stop();
-      });
-
+      session.id = id;
+      session.sessions = sessions;
+      session.publishers = publishers;
       session.run();
     })
   }
@@ -52,7 +31,7 @@ class NodeRtmpServer {
     })
   }
 
-  generateNewSessionID() {
+  generateNewSessionID(sessions) {
     let SessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
@@ -60,7 +39,7 @@ class NodeRtmpServer {
       for (var i = 0; i < 8; i++) {
         SessionID += possible.charAt((Math.random() * numPossible) | 0);
       }
-    } while (this.sessions.has(SessionID))
+    } while (sessions.has(SessionID))
     return SessionID;
   }
 }
