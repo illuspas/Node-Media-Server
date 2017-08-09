@@ -476,6 +476,7 @@ class NodeRtmpSession extends EventEmitter {
         //skip avc sequence header
       } else {
         this.rtmpGopCacheQueue.add(rtmpMessage);
+        this.flvGopCacheQueue.add(flvMessage);
       }
     }
 
