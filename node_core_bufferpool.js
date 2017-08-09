@@ -26,7 +26,7 @@ class BufferPool extends Readable {
     super.push(buf);
     this.totalBufferLength += buf.length;
     if (this.needBufferLength > 0 && this.needBufferLength <= this.totalBufferLength) {
-      this.gFun.next();
+      this.gFun.next(false);
     }
   }
 

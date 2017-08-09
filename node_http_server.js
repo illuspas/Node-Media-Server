@@ -10,29 +10,15 @@ const NodeHttpSession = require('./node_http_session');
 class NodeHttpServer {
   constructor(config, sessions, publishers) {
     this.port = config.port;
-    this.sessions = sessions;
+
 
     this.httpServer = Http.createServer((req, res) => {
-      const id = this.generateNewSessionID();
-      let session = new NodeHttpSession(config, id, sessions, publishers);
+      let id = this.generateNewSessionID(sessions);
+      let session = new NodeHttpSession(config, req, res);
       sessions.set(id, session);
-
-      session.on('data', (data) => {
-        res.write();
-      });
-
-      session.on('end', () => {
-        res.end();
-      });
-
-      req.on('data', (data) => {
-        session.push(data);
-      });
-
-      req.on('end', () => {
-        session.stop();
-      });
-
+      session.id = id;
+      session.sessions = sessions;
+      session.publishers = publishers;
       session.run();
     });
   }
@@ -46,7 +32,7 @@ class NodeHttpServer {
     });
   }
 
-  generateNewSessionID() {
+  generateNewSessionID(sessions) {
     let SessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
@@ -54,7 +40,7 @@ class NodeHttpServer {
       for (var i = 0; i < 8; i++) {
         SessionID += possible.charAt((Math.random() * numPossible) | 0);
       }
-    } while (this.sessions.has(SessionID))
+    } while (sessions.has(SessionID))
     return SessionID;
   }
 }
