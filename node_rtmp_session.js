@@ -294,7 +294,7 @@ class NodeRtmpSession extends EventEmitter {
     this.socket = null;
   }
 
-  static createRtmpMessage(rtmpHeader, rtmpBody) {
+  createRtmpMessage(rtmpHeader, rtmpBody) {
     let formatTypeID = 0;
     let useExtendedTimestamp = false;
     let timestamp;
@@ -304,16 +304,16 @@ class NodeRtmpSession extends EventEmitter {
     let type3Header = new Buffer([(3 << 6) | rtmpHeader.chunkStreamID]);
 
     if (rtmpHeader.chunkStreamID == null) {
-      //console.warn("[rtmp] warning: NodeRtmpSession.createRtmpMessage(): chunkStreamID is not set for RTMP message");
+      //console.warn("[rtmp] warning: createRtmpMessage(): chunkStreamID is not set for RTMP message");
     }
     if (rtmpHeader.timestamp == null) {
-      //console.warn("[rtmp] warning: NodeRtmpSession.createRtmpMessage(): timestamp is not set for RTMP message");
+      //console.warn("[rtmp] warning: createRtmpMessage(): timestamp is not set for RTMP message");
     }
     if (rtmpHeader.messageTypeID == null) {
-      //console.warn("[rtmp] warning: NodeRtmpSession.createRtmpMessage(): messageTypeID is not set for RTMP message");
+      //console.warn("[rtmp] warning: createRtmpMessage(): messageTypeID is not set for RTMP message");
     }
     if (rtmpHeader.messageStreamID == null) {
-      //console.warn("[rtmp] warning: NodeRtmpSession.createRtmpMessage(): messageStreamID is not set for RTMP message");
+      //console.warn("[rtmp] warning: createRtmpMessage(): messageStreamID is not set for RTMP message");
     }
 
     if (rtmpHeader.timestamp >= 0xffffff) {
@@ -419,7 +419,7 @@ class NodeRtmpSession extends EventEmitter {
     }
     // console.log(`Send Audio message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} bytesRead=${this.socket.bytesRead}`);
 
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, rtmpBody);
     if (this.rtmpGopCacheQueue != null) {
       if (this.aacSequenceHeader != null && rtmpBody[1] == 0) {
@@ -465,7 +465,7 @@ class NodeRtmpSession extends EventEmitter {
     }
     // console.log(`Send Video message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} `);
 
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, rtmpBody);
 
     if (codec_id == 7 && this.rtmpGopCacheQueue != null) {
@@ -606,7 +606,7 @@ class NodeRtmpSession extends EventEmitter {
       messageStreamID: 0
     };
     let rtmpBody = new Buffer([0, 6, (currentTimestamp >> 24) & 0xff, (currentTimestamp >> 16) & 0xff, (currentTimestamp >> 8) & 0xff, currentTimestamp & 0xff])
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
     // console.log('pingRequest',rtmpMessage.toString('hex'));
   }
@@ -633,7 +633,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -653,7 +653,7 @@ class NodeRtmpSession extends EventEmitter {
 
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -675,7 +675,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   };
 
@@ -697,7 +697,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -719,7 +719,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
 
     this.socket.write(rtmpMessage);
 
@@ -737,7 +737,7 @@ class NodeRtmpSession extends EventEmitter {
     };
 
     rtmpBody = AMF.encodeAmf0Data(opt);
-    rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -759,7 +759,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -781,7 +781,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
-    let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, rtmpBody);
+    let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     this.socket.write(rtmpMessage);
   }
 
@@ -837,7 +837,7 @@ class NodeRtmpSession extends EventEmitter {
           messageStreamID: 1
         };
 
-        let metaDataRtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, publisher.metaData);
+        let metaDataRtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.metaData);
         this.socket.write(metaDataRtmpMessage);
       }
 
@@ -849,7 +849,7 @@ class NodeRtmpSession extends EventEmitter {
           messageTypeID: 0x08,
           messageStreamID: 1
         };
-        let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, publisher.aacSequenceHeader);
+        let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.aacSequenceHeader);
         this.socket.write(rtmpMessage);
       }
       //send avcSequenceHeader
@@ -860,7 +860,7 @@ class NodeRtmpSession extends EventEmitter {
           messageTypeID: 0x09,
           messageStreamID: 1
         };
-        let rtmpMessage = NodeRtmpSession.createRtmpMessage(rtmpHeader, publisher.avcSequenceHeader);
+        let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.avcSequenceHeader);
         this.socket.write(rtmpMessage);
       }
       //send gop cache
