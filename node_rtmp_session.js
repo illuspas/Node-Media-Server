@@ -24,7 +24,7 @@ class NodeRtmpSession extends EventEmitter {
 
     this.socket = socket;
     this.players = null;
-    this.streamId = '';
+
     this.inChunkSize = 128;
     this.outChunkSize = config.chunk_size;
     this.previousChunkMessage = {};
@@ -34,7 +34,8 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = null;
 
     this.isStarting = false;
-    this.isPublisher = false;
+    this.isPublishing = false;
+    this.isPlaying = false;
     this.isFirstAudioReceived = false;
     this.isFirstVideoReceived = false;
     this.metaData = null;
@@ -51,9 +52,19 @@ class NodeRtmpSession extends EventEmitter {
     this.inBytes = 0;
     this.inLastAck = 0;
 
+    this.playStreamId = '';
+    this.playArgs = '';
+    this.playChunkStreamId = 0;
+
+    this.publishStreamId = '';
+    this.publishArgs = '';
+    this.publishChunkStreamId = 0;
+
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
     this.on('play', this.onPlay);
+    this.on('closeStream', this.onCloseStream);
+    this.on('deleteStream', this.onDeleteStream);
 
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
@@ -269,20 +280,10 @@ class NodeRtmpSession extends EventEmitter {
     }
 
     console.log('rtmp parse message [stop]');
-    if (this.isPublisher) {
-      for (let playerId of this.players) {
-        this.sessions.get(playerId).respondUnpublish();
-      }
-      this.players.clear();
-      this.players = null;
-      this.publishers.delete(this.streamId);
 
-    } else {
-      let publisherId = this.publishers.get(this.streamId);
-      if (publisherId != null) {
-        this.sessions.get(publisherId).players.delete(this.id);
-      }
-    }
+    this.onCloseStream(this.playChunkStreamId);
+    this.onCloseStream(this.publishChunkStreamId);
+
     if (this.pingInterval != null) {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
@@ -377,22 +378,22 @@ class NodeRtmpSession extends EventEmitter {
       case 15:
         //AMF3 DataMessage
         let amf3Data = AMF.decodeAmf0Data(rtmpBody.slice(1));
-        this.handleAMFDataMessage(amf3Data);
+        this.handleAMFDataMessage(rtmpHeader.chunkStreamID, amf3Data);
         break;
       case 17:
         //AMF3 CommandMessage
         let amf3Cmd = AMF.decodeAmf0Cmd(rtmpBody.slice(1));
-        this.handleAMFCommandMessage(amf3Cmd);
+        this.handleAMFCommandMessage(rtmpHeader.chunkStreamID, amf3Cmd);
         break;
       case 18:
         //AMF0 DataMessage
         let amf0Data = AMF.decodeAmf0Data(rtmpBody);
-        this.handleAMFDataMessage(amf0Data);
+        this.handleAMFDataMessage(rtmpHeader.chunkStreamID, amf0Data);
         break;
       case 20:
         //AMF0 CommandMessage
         let amf0Cmd = AMF.decodeAmf0Cmd(rtmpBody);
-        this.handleAMFCommandMessage(amf0Cmd);
+        this.handleAMFCommandMessage(rtmpHeader.chunkStreamID, amf0Cmd);
         break;
     }
   }
@@ -505,7 +506,7 @@ class NodeRtmpSession extends EventEmitter {
     }
   }
 
-  handleAMFDataMessage(dataMessage) {
+  handleAMFDataMessage(chunkStreamID, dataMessage) {
     // console.log('handleAMFDataMessage', dataMessage);
     switch (dataMessage.cmd) {
       case '@setDataFrame':
@@ -523,7 +524,7 @@ class NodeRtmpSession extends EventEmitter {
     }
   }
 
-  handleAMFCommandMessage(commandMessage) {
+  handleAMFCommandMessage(chunkStreamID, commandMessage) {
     // console.log('handleAMFCommandMessage:', commandMessage);
     switch (commandMessage.cmd) {
       case 'connect':
@@ -536,16 +537,16 @@ class NodeRtmpSession extends EventEmitter {
         // this.respondFCPublish();
         break;
       case 'publish':
-        this.emit('publish', commandMessage.streamName);
+        this.emit('publish', chunkStreamID, commandMessage.streamName);
         break;
       case 'play':
-        this.emit('play', commandMessage.streamName);
+        this.emit('play', chunkStreamID, commandMessage.streamName);
         break;
       case 'closeStream':
-        // this.closeStream();
+        this.emit('closeStream', chunkStreamID);
         break;
       case 'deleteStream':
-        // this.deleteStream();
+        this.emit('deleteStream', chunkStreamID);
         break;
       case 'pause':
         // this.pauseOrUnpauseStream();
@@ -657,7 +658,7 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.write(rtmpMessage);
   }
 
-  respondPublishError() {
+  respondPublishError(code, description) {
     let rtmpHeader = {
       chunkStreamID: 5,
       timestamp: 0,
@@ -670,8 +671,8 @@ class NodeRtmpSession extends EventEmitter {
       cmdObj: null,
       info: {
         level: 'error',
-        code: 'NetStream.Publish.BadName',
-        description: 'Already publishing'
+        code: code,
+        description: description
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -720,7 +721,6 @@ class NodeRtmpSession extends EventEmitter {
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
-
     this.socket.write(rtmpMessage);
 
     rtmpHeader = {
@@ -741,7 +741,7 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.write(rtmpMessage);
   }
 
-  respondPlayError() {
+  respondPlayError(code, description) {
     let rtmpHeader = {
       chunkStreamID: 5,
       timestamp: 0,
@@ -754,8 +754,8 @@ class NodeRtmpSession extends EventEmitter {
       cmdObj: null,
       info: {
         level: 'error',
-        code: 'NetStream.Play.StreamNotFound',
-        description: `Stream ${this.streamId} Not Found`
+        code: code,
+        description: description
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -777,7 +777,7 @@ class NodeRtmpSession extends EventEmitter {
       info: {
         level: 'status',
         code: 'NetStream.Play.UnpublishNotify',
-        description: `Stream ${this.streamId} stop publishing`
+        description: `Stream ${this.publishStreamId} stop publishing`
       }
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -799,35 +799,48 @@ class NodeRtmpSession extends EventEmitter {
     console.log('rtmp connect app: ' + cmdObj.app);
   }
 
-  onPublish(streamName) {
+  onPublish(chunkStreamID, streamName) {
     let app = this.connectCmdObj.app;
-    this.streamId = app + '/' + streamName;
-
-    if (this.publishers.has(this.streamId)) {
-      console.warn("[rtmp publish] Already has a stream id " + this.streamId);
-      this.respondPublishError();
+    this.publishStreamId = app + '/' + streamName.split('?')[0];
+    this.publishArgs = streamName.split('?')[1];
+    if (this.publishers.has(this.publishStreamId)) {
+      console.warn("[rtmp publish] Already has a stream id " + this.publishStreamId);
+      this.respondPublishError('NetStream.Publish.BadName', 'Stream already publishing');
+    } else if (this.isPublishing) {
+      console.warn("[rtmp publish] NetConnection is publishing ");
+      this.respondPublishError('NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      console.log("[rtmp publish] new stream id " + this.streamId);
-      this.publishers.set(this.streamId, this.id);
-      this.isPublisher = true;
+      console.log("[rtmp publish] new stream id " + this.publishStreamId + " args:" + this.publishArgs);
+      this.publishers.set(this.publishStreamId, this.id);
+      this.isPublishing = true;
+      this.publishChunkStreamId = chunkStreamID;
       this.players = new Set();
       this.respondPublish();
     }
 
   }
 
-  onPlay(streamName) {
+  onPlay(chunkStreamID, streamName) {
     let app = this.connectCmdObj.app;
-    this.streamId = app + '/' + streamName;
+    this.playStreamId = app + '/' + streamName.split('?')[0];
+    this.playArgs = streamName.split('?')[1];
 
-    if (this.publishers.has(this.streamId)) {
-      console.log("[rtmp play] join stream " + this.streamId);
-      let publisherId = this.publishers.get(this.streamId);
+    if (!this.publishers.has(this.playStreamId)) {
+      console.warn("[rtmp play] stream not found " + this.playStreamId);
+      this.respondPlayError('NetStream.Play.StreamNotFound', `Stream ${this.playStreamId} Not Found`);
+    } else if (this.isPlaying) {
+      console.warn("[rtmp publish] NetConnection is playing");
+      this.respondPlayError('NetStream.Play.BadConnection', 'Connection already playing');
+    } else {
+      console.log("[rtmp play] join stream " + this.playStreamId + " args:" + this.playArgs);
+      let publisherId = this.publishers.get(this.playStreamId);
       let publisher = this.sessions.get(publisherId);
       let players = publisher.players;
       players.add(this.id);
       this.respondPlay();
       this.sendStreamBegin();
+      this.isPlaying = true;
+      this.playChunkStreamId = chunkStreamID;
       //metaData
       if (publisher.metaData != null) {
         let rtmpHeader = {
@@ -869,11 +882,35 @@ class NodeRtmpSession extends EventEmitter {
           this.socket.write(rtmpMessage);
         }
       }
-
-    } else {
-      this.respondPlayError();
-      console.warn("[rtmp play] stream not found " + this.streamId);
     }
+  }
+
+  onCloseStream(chunkStreamID) {
+    if (this.isPlaying && this.playChunkStreamId == chunkStreamID) {
+      let publisherId = this.publishers.get(this.playStreamId);
+      if (publisherId != null) {
+        this.sessions.get(publisherId).players.delete(this.id);
+      }
+      this.isPlaying = false;
+      this.playChunkStreamId = 0;
+    }
+
+    if (this.isPublishing && this.publishChunkStreamId == chunkStreamID) {
+      for (let playerId of this.players) {
+        this.sessions.get(playerId).respondUnpublish();
+      }
+      this.players.clear();
+      this.players = null;
+      this.publishers.delete(this.publishStreamId);
+      this.isPublishing = false;
+      this.publishChunkStreamId = 0;
+    }
+
+
+  }
+
+  onDeleteStream(chunkStreamID) {
+    this.onCloseStream(chunkStreamID);
   }
 
 }

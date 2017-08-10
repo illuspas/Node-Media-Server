@@ -950,6 +950,7 @@ var rtmpCmdDecode = {
     "play": ["transId", "cmdObj", "streamName", "start", "duration", "reset"],
     "play2": ["transId", "cmdObj", "params"],
     "deleteStream": ["transId", "cmdObj", "streamId"],
+    "closeStream": ["transId", "cmdObj"],
     "receiveAudio": ["transId", "cmdObj", "bool"],
     "receiveVideo": ["transId", "cmdObj", "bool"],
     "publish": ["transId", "cmdObj", "streamName", "type"],
