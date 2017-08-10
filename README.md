@@ -11,6 +11,7 @@ A Node.js implementation of RTMP Server
  - 跨平台 Windows/Linux/Unix，高性能(IOCP/EPOLL/KQUEUE)
  - 支持GOP cache，FlashPlayer/NodeMediaClient 毫秒级首屏打开速度
  - 支持HTTP-FLV
+ - 支持一个NetConnection上既做Play又做Publish
  
 # Todo
  - 优化发送队列
