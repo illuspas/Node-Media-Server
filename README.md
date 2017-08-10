@@ -10,7 +10,8 @@ A Node.js implementation of RTMP Server
  - 基于Generator实现的高性能解析器
  - 跨平台 Windows/Linux/Unix，高性能(IOCP/EPOLL/KQUEUE)
  - 支持GOP cache，FlashPlayer/NodeMediaClient 毫秒级首屏打开速度
- - 支持HTTP-FLV
+ - 支持LIVE-HTTP-FLV,支持flv.js播放
+ - 支持一个NetConnection上既做Play又做Publish
  
 # Todo
  - 优化发送队列
