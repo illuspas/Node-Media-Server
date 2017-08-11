@@ -472,6 +472,7 @@ class NodeRtmpSession extends EventEmitter {
     if (codec_id == 7 && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && rtmpBody[1] == 1) {
         this.rtmpGopCacheQueue.clear();
+        this.flvGopCacheQueue.clear();
       }
       if (frame_type == 1 && rtmpBody[1] == 0) {
         //skip avc sequence header
