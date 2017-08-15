@@ -1,4 +1,8 @@
 # Node-Media-Server
+[![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
+[![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
+[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
+
 A Node.js implementation of RTMP Server 
 
 # Features
@@ -10,11 +14,11 @@ A Node.js implementation of RTMP Server
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
 
 # Usage 
-```
+```bash
 npm install node-media-server
 ```
 
-```
+```js
 const NodeMediaServer = require('node-media-server')
 
 const config = {
