@@ -11,7 +11,11 @@ A Node.js implementation of RTMP Server
 
 # Usage 
 ```
-const NodeMediaServer = require('./node_media_server')
+npm install node-media-server
+```
+
+```
+const NodeMediaServer = require('node-media-server')
 
 const config = {
   rtmp: {
