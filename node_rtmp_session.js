@@ -19,8 +19,6 @@ class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
     this.bp = new BufferPool();
-    this.bp.on('error', (e) => {
-    })
 
     this.socket = socket;
     this.players = null;
@@ -49,7 +47,6 @@ class NodeRtmpSession extends EventEmitter {
     this.flvGopCacheQueue = null;
 
     this.ackSize = 0;
-    this.inBytes = 0;
     this.inLastAck = 0;
 
     this.playStreamId = '';
@@ -67,8 +64,8 @@ class NodeRtmpSession extends EventEmitter {
     this.on('deleteStream', this.onDeleteStream);
 
     this.socket.on('data', this.onSocketData.bind(this));
+    this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
-    this.socket.on('end', this.onSocketEnd.bind(this));
   }
 
   run() {
@@ -78,22 +75,23 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   stop() {
-    this.isStarting = false;
-    this.bp.stop();
+    if(this.isStarting) {
+      this.isStarting = false;
+      this.bp.stop();
+    }
   }
 
   onSocketData(data) {
     this.bp.push(data);
   }
 
-  onSocketEnd() {
+  onSocketError(e) {
     this.stop();
   }
 
-  onSocketError(e) {
-
+  onSocketClose() {
+    this.stop();
   }
-
 
   * handleData() {
     console.log('rtmp handshake [start]');
@@ -110,6 +108,7 @@ class NodeRtmpSession extends EventEmitter {
     let c2 = this.bp.read(1536);
     console.log('rtmp handshake [done]');
     console.log('rtmp parse message [start]');
+    this.bp.readBytes = 0;
     while (this.isStarting) {
       let message = {};
       let chunkMessageHeader = null;
@@ -119,8 +118,6 @@ class NodeRtmpSession extends EventEmitter {
         if (yield) break;
       }
       let chunkBasicHeader = this.bp.read(1);
-      this.inBytes++;
-
       message.formatType = chunkBasicHeader[0] >> 6;
       message.chunkStreamID = chunkBasicHeader[0] & 0x3F;
       if (message.chunkStreamID === 0) {
@@ -129,7 +126,6 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         let exStreamID = this.bp.read(1);
-        this.inBytes += 1;
         message.chunkStreamID = exStreamID[0] + 64;
       } else if (message.chunkStreamID === 1) {
         // Chunk basic header 3
@@ -137,7 +133,6 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         let exStreamID = this.bp.read(2);
-        this.inBytes += 2;
         message.chunkStreamID = (exStreamID[0] << 8) + exStreamID[1] + 64;
       } else {
         // Chunk basic header 1
@@ -149,7 +144,6 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         chunkMessageHeader = this.bp.read(11);
-        this.inBytes += 11;
         message.timestamp = chunkMessageHeader.readUIntBE(0, 3);
         if (message.timestamp === 0xffffff) {
           message.extendedTimestampType = EXTENDED_TIMESTAMP_TYPE_ABSOLUTE;
@@ -168,7 +162,6 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         chunkMessageHeader = this.bp.read(7);
-        this.inBytes += 7;
         message.timestampDelta = chunkMessageHeader.readUIntBE(0, 3);
         if (message.timestampDelta === 0xffffff) {
           message.extendedTimestampType = EXTENDED_TIMESTAMP_TYPE_DELTA;
@@ -192,7 +185,6 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         chunkMessageHeader = this.bp.read(3);
-        this.inBytes += 3;
         message.timestampDelta = chunkMessageHeader.readUIntBE(0, 3);
         if (message.timestampDelta === 0xffffff) {
           message.extendedTimestampType = EXTENDED_TIMESTAMP_TYPE_DELTA;
@@ -234,11 +226,9 @@ class NodeRtmpSession extends EventEmitter {
           if (yield) break;
         }
         let extTimestamp = this.bp.read(4);
-        this.inBytes += 4;
         message.timestamp = extTimestamp.readUInt32BE();
       } else if (message.extendedTimestampType === EXTENDED_TIMESTAMP_TYPE_DELTA) {
         let extTimestamp = this.bp.read(4);
-        this.inBytes += 4;
         message.timestampDelta = extTimestamp.readUInt32BE();
       }
 
@@ -251,7 +241,6 @@ class NodeRtmpSession extends EventEmitter {
         if (yield) break;
       }
       let chunkBody = this.bp.read(chunkBodySize);
-      this.inBytes += chunkBodySize;
       message.receivedLength += chunkBodySize;
       message.chunks.push(chunkBody);
       if (message.receivedLength == message.messageLength) {
@@ -269,13 +258,13 @@ class NodeRtmpSession extends EventEmitter {
       }
       this.previousChunkMessage[message.chunkStreamID] = message;
 
-      if (this.inBytes >= 0xf0000000) {
-        this.inBytes = 0;
+      if (this.bp.readBytes >= 0xf0000000) {
+        this.bp.readBytes = 0;
         this.inLastAck = 0;
       }
-      if (this.ackSize > 0 && this.inBytes - this.inLastAck >= this.ackSize) {
-        this.inLastAck = this.inBytes;
-        this.sendACK(this.inBytes);
+      if (this.ackSize > 0 && this.bp.readBytes - this.inLastAck >= this.ackSize) {
+        this.inLastAck = this.bp.readBytes;
+        this.sendACK(this.bp.readBytes);
       }
     }
 

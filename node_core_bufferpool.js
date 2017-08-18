@@ -12,8 +12,9 @@ class BufferPool extends Readable {
   }
 
   init (gFun) {
-    this.totalBufferLength = 0;
-    this.needBufferLength = 0;
+    this.readBytes = 0;
+    this.poolBytes = 0;
+    this.needBytes = 0;
     this.gFun = gFun;
     this.gFun.next(false);
   }
@@ -24,21 +25,26 @@ class BufferPool extends Readable {
 
   push (buf) {
     super.push(buf);
-    this.totalBufferLength += buf.length;
-    if (this.needBufferLength > 0 && this.needBufferLength <= this.totalBufferLength) {
+    this.poolBytes += buf.length;
+    this.readBytes += buf.length;
+    if (this.needBytes > 0 && this.needBytes <= this.poolBytes) {
       this.gFun.next(false);
     }
   }
 
+  _read(size) {
+
+  }
+
   read (size) {
-    this.totalBufferLength -= size;
+    this.poolBytes -= size;
     return super.read(size);
   }
 
   need (size) {
-    let ret = this.totalBufferLength < size;
+    let ret = this.poolBytes < size;
     if (ret) {
-      this.needBufferLength = size;
+      this.needBytes = size;
     }
     return ret;
   }

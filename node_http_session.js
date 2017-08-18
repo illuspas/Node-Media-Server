@@ -26,7 +26,7 @@ class NodeHttpSession extends EventEmitter {
     this.on('publish', this.onPublish);
 
     this.req.on('data', this.onReqData.bind(this));
-    this.req.socket.on('end', this.onReqClose.bind(this));
+    this.req.socket.on('close', this.onReqClose.bind(this));
     this.req.on('error', this.onReqError.bind(this));
 
   }
@@ -76,12 +76,14 @@ class NodeHttpSession extends EventEmitter {
   }
 
   onReqError(e) {
-    console.log('on req error', e);
+    this.stop();
   }
 
   stop() {
-    this.isStarting = false;
-    this.bp.stop();
+    if(this.isStarting) {
+      this.isStarting = false;
+      this.bp.stop();
+    }
   }
 
   * handleData() {
