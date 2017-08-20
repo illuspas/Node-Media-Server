@@ -388,6 +388,9 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   handleAudioMessage(rtmpHeader, rtmpBody) {
+    if(!this.isPublishing)  {
+      return;
+    }
     if (!this.isFirstAudioReceived) {
       let sound_format = rtmpBody[0];
       let sound_type = sound_format & 0x01;
@@ -427,12 +430,14 @@ class NodeRtmpSession extends EventEmitter {
       } else if (session instanceof NodeHttpSession) {
         session.res.write(flvMessage);
       }
-
     }
 
   }
 
   handleVideoMessage(rtmpHeader, rtmpBody) {
+    if(!this.isPublishing)  {
+      return;
+    }
     let frame_type = rtmpBody[0];
     let codec_id = frame_type & 0x0f;
     frame_type = (frame_type >> 4) & 0x0f;
@@ -753,7 +758,7 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.write(rtmpMessage);
   }
 
-  respondUnpublish() {
+  respondUnpublish(code) {
     let rtmpHeader = {
       chunkStreamID: 5,
       timestamp: 0,
@@ -766,7 +771,7 @@ class NodeRtmpSession extends EventEmitter {
       cmdObj: null,
       info: {
         level: 'status',
-        code: 'NetStream.Play.UnpublishNotify',
+        code: code,
         description: `Stream ${this.publishStreamId} stop publishing`
       }
     };
@@ -887,13 +892,14 @@ class NodeRtmpSession extends EventEmitter {
 
     if (this.isPublishing && this.publishChunkStreamId == chunkStreamID) {
       for (let playerId of this.players) {
-        this.sessions.get(playerId).respondUnpublish();
+        this.sessions.get(playerId).respondUnpublish('NetStream.Play.UnpublishNotify');
       }
       this.players.clear();
       this.players = null;
       this.publishers.delete(this.publishStreamId);
       this.isPublishing = false;
       this.publishChunkStreamId = 0;
+      this.respondUnpublish('NetStream.Unpublish.Success');
     }
 
 

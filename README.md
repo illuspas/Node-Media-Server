@@ -71,14 +71,13 @@ Stream key : STREAM_NAME
 # Accessing the live stream
 ## via RTMP 
 ```bash
-ffplay -analyzeduration 1000 rtmp://localhost/live/STREAM_NAME
+ffplay rtmp://localhost/live/STREAM_NAME
 ```
 
 ## via http-flv
 ```bash
-ffplay -analyzeduration 1000 rtmp://localhost:8000/live/STREAM_NAME.flv
+ffplay http://localhost:8000/live/STREAM_NAME.flv
 ```
-> If gop_cache is enable,'-analyzeduration 1000' will make the video initial "startup" very fast.
 
 ## via flv.js
 
