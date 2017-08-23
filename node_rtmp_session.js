@@ -40,8 +40,11 @@ class NodeRtmpSession extends EventEmitter {
     this.isFirstAudioReceived = false;
     this.isFirstVideoReceived = false;
     this.metaData = null;
+    this.metaDataId = 0;
     this.aacSequenceHeader = null;
+    this.aacSequenceHeaderId = 0;
     this.avcSequenceHeader = null;
+    this.avcSequenceHeaderId = 0;
     this.audioCodec = 0;
     this.videoCodec = 0;
 
@@ -410,6 +413,7 @@ class NodeRtmpSession extends EventEmitter {
         //cache aac sequence header
         if (rtmpBody[1] == 0) {
           this.aacSequenceHeader = Buffer.from(rtmpBody);
+          this.aacSequenceHeaderId = rtmpHeader.chunkStreamID;
           this.isFirstAudioReceived = true;
         }
       } else {
@@ -417,6 +421,7 @@ class NodeRtmpSession extends EventEmitter {
       }
 
     }
+    // console.log('Audio chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
     // console.log(`Send Audio message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} bytesRead=${this.socket.bytesRead}`);
 
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
@@ -457,6 +462,7 @@ class NodeRtmpSession extends EventEmitter {
         //cache avc sequence header
         if (frame_type == 1 && rtmpBody[1] == 0) {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
+          this.avcSequenceHeaderId = rtmpHeader.chunkStreamID;
           this.isFirstVideoReceived = true;
           this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
           this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
@@ -465,6 +471,7 @@ class NodeRtmpSession extends EventEmitter {
         this.isFirstVideoReceived = true;
       }
     }
+    // console.log('Video chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
     // console.log(`Send Video message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} `);
 
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
@@ -518,6 +525,7 @@ class NodeRtmpSession extends EventEmitter {
             cmdObj: dataMessage.dataObj
           };
           this.metaData = AMF.encodeAmf0Data(opt);
+          this.metaDataId = chunkStreamID;
         }
         break;
       default:
@@ -542,12 +550,14 @@ class NodeRtmpSession extends EventEmitter {
         this.publishStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
         this.publishArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
         this.publishChunkStreamId = chunkStreamID;
+        console.log('publish chunkStreamID='+chunkStreamID);
         this.emit('publish');
         break;
       case 'play':
         this.playStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
         this.playArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
         this.playChunkStreamId = chunkStreamID;
+        console.log('play chunkStreamID='+chunkStreamID);
         this.emit('play');
         break;
       case 'closeStream':
@@ -808,7 +818,7 @@ class NodeRtmpSession extends EventEmitter {
     console.log('rtmp connect app: ' + cmdObj.app);
   }
 
-  onPublish(chunkStreamID, streamName) {
+  onPublish() {
     if (this.config.auth !== undefined && this.config.auth.enable) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamId, this.config.auth.secret);
       if (!results) {
@@ -828,7 +838,6 @@ class NodeRtmpSession extends EventEmitter {
       console.log("[rtmp publish] new stream id " + this.publishStreamId);
       this.publishers.set(this.publishStreamId, this.id);
       this.isPublishing = true;
-      this.publishChunkStreamId = chunkStreamID;
       this.players = new Set();
       this.respondPublish();
       setTimeout(() => {
@@ -875,7 +884,7 @@ class NodeRtmpSession extends EventEmitter {
       //metaData
       if (publisher.metaData != null) {
         let rtmpHeader = {
-          chunkStreamID: 5,
+          chunkStreamID: this.metaDataId,
           timestamp: 0,
           messageTypeID: 0x12,
           messageStreamID: 1
@@ -888,7 +897,7 @@ class NodeRtmpSession extends EventEmitter {
       //send aacSequenceHeader
       if (publisher.audioCodec == 10) {
         let rtmpHeader = {
-          chunkStreamID: 4,
+          chunkStreamID: this.aacSequenceHeaderId,
           timestamp: 0,
           messageTypeID: 0x08,
           messageStreamID: 1
@@ -899,7 +908,7 @@ class NodeRtmpSession extends EventEmitter {
       //send avcSequenceHeader
       if (publisher.videoCodec == 7) {
         let rtmpHeader = {
-          chunkStreamID: 6,
+          chunkStreamID: this.avcSequenceHeaderId,
           timestamp: 0,
           messageTypeID: 0x09,
           messageStreamID: 1
