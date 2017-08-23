@@ -99,8 +99,8 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 </script>
 ```
 
-## Authentication
-### Encryption URL consists of:
+# Authentication
+## Encryption URL consists of:
 > rtmp://hostname:port/appname/stream?sign=expires-HashValue  
 > http://hostname:port/appname/stream.flv?sign=expires-HashValue  
 
