@@ -11,6 +11,10 @@ const config = {
   http: {
     port: 8000,
     allow_origin: '*'
+  },
+  auth: {
+    enable: false,
+    secret: 'nodemedia2017privatekey'
   }
 }
 

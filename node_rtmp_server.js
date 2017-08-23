@@ -5,13 +5,14 @@
 //
 const Net = require('net');
 const NodeRtmpSession = require('./node_rtmp_session');
+const NodeCoreUtils = require('./node_core_utils');
 
 class NodeRtmpServer {
   constructor(config, sessions, publishers) {
-    this.port = config.port;
+    this.port = config.rtmp.port;
 
     this.tcpServer = Net.createServer((socket) => {
-      let id = this.generateNewSessionID(sessions);
+      let id = NodeCoreUtils.generateNewSessionID(sessions);
       let session = new NodeRtmpSession(config, socket);
       sessions.set(id, session);
       session.id = id;
@@ -31,17 +32,6 @@ class NodeRtmpServer {
     })
   }
 
-  generateNewSessionID(sessions) {
-    let SessionID = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
-    const numPossible = possible.length;
-    do {
-      for (var i = 0; i < 8; i++) {
-        SessionID += possible.charAt((Math.random() * numPossible) | 0);
-      }
-    } while (sessions.has(SessionID))
-    return SessionID;
-  }
 }
 
 module.exports = NodeRtmpServer

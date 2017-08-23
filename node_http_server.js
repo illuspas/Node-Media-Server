@@ -6,14 +6,15 @@
 
 const Http = require('http');
 const NodeHttpSession = require('./node_http_session');
+const NodeCoreUtils = require('./node_core_utils');
 
 class NodeHttpServer {
   constructor(config, sessions, publishers) {
-    this.port = config.port;
+    this.port = config.http.port;
 
 
     this.httpServer = Http.createServer((req, res) => {
-      let id = this.generateNewSessionID(sessions);
+      let id = NodeCoreUtils.generateNewSessionID(sessions);
       let session = new NodeHttpSession(config, req, res);
       sessions.set(id, session);
       session.id = id;
@@ -30,18 +31,6 @@ class NodeHttpServer {
     this.httpServer.on('error', (e) => {
       console.log(`Node Media Http Server ${e}`);
     });
-  }
-
-  generateNewSessionID(sessions) {
-    let SessionID = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
-    const numPossible = possible.length;
-    do {
-      for (var i = 0; i < 8; i++) {
-        SessionID += possible.charAt((Math.random() * numPossible) | 0);
-      }
-    } while (sessions.has(SessionID))
-    return SessionID;
   }
 }
 

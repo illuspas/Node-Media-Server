@@ -8,17 +8,19 @@ const URL = require('url');
 
 const AMF = require('./node_core_amf');
 const BufferPool = require('./node_core_bufferpool');
+const NodeCoreUtils = require('./node_core_utils');
 
 class NodeHttpSession extends EventEmitter {
   constructor(config, req, res) {
     super();
+    this.config = config;
     this.req = req;
     this.res = res;
     this.bp = new BufferPool();
     this.bp.on('error', (e) => {
 
     });
-    this.allow_origin = config.allow_origin == undefined ? '*' : config.allow_origin;
+    this.allow_origin = config.http.allow_origin == undefined ? '*' : config.http.allow_origin;
     this.isPublisher = false;
 
     this.on('connect', this.onConnect);
@@ -34,8 +36,19 @@ class NodeHttpSession extends EventEmitter {
   run() {
     let method = this.req.method;
     let urlInfo = URL.parse(this.req.url, true);
-    let streamId = urlInfo.pathname.split('.')[0].slice(1);
+    let streamId = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
+
+
+    if (this.config.auth !== undefined && this.config.auth.enable) {
+      let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamId, this.config.auth.secret);
+      if (!results) {
+        console.log(`[http-flv] Unauthorized. ID=${this.id} streamId=${streamId} sign=${urlInfo.query.sign}`);
+        this.res.statusCode = 401;
+        this.res.end();
+        return;
+      }
+    }
 
     if (format != 'flv') {
       console.log('Unsupported format=' + format);
@@ -43,6 +56,7 @@ class NodeHttpSession extends EventEmitter {
       this.res.end();
       return;
     }
+
     this.streamId = streamId;
     if (method == 'GET') {
       //Play 
@@ -80,7 +94,7 @@ class NodeHttpSession extends EventEmitter {
   }
 
   stop() {
-    if(this.isStarting) {
+    if (this.isStarting) {
       this.isStarting = false;
       this.bp.stop();
     }

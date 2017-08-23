@@ -4,11 +4,13 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 const EventEmitter = require('events');
+const QueryString = require('querystring');
 
 const AMF = require('./node_core_amf');
 const Handshake = require('./node_rtmp_handshake');
 const BufferPool = require('./node_core_bufferpool');
 const NodeHttpSession = require('./node_http_session');
+const NodeCoreUtils = require('./node_core_utils');
 
 const EXTENDED_TIMESTAMP_TYPE_NOT_USED = 'not-used';
 const EXTENDED_TIMESTAMP_TYPE_ABSOLUTE = 'absolute';
@@ -18,17 +20,18 @@ const TIMESTAMP_ROUNDOFF = 4294967296;
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
+    this.config = config;
     this.bp = new BufferPool();
 
     this.socket = socket;
     this.players = null;
 
     this.inChunkSize = 128;
-    this.outChunkSize = config.chunk_size;
+    this.outChunkSize = config.rtmp.chunk_size;
     this.previousChunkMessage = {};
 
-    this.ping = config.ping === undefined ? 60000 : config.ping * 1000;
-    this.pingTimeout = config.ping_timeout;
+    this.ping = config.rtmp.ping === undefined ? 60000 : config.rtmp.ping * 1000;
+    this.pingTimeout = config.rtmp.ping_timeout;
     this.pingInterval = null;
 
     this.isStarting = false;
@@ -42,7 +45,7 @@ class NodeRtmpSession extends EventEmitter {
     this.audioCodec = 0;
     this.videoCodec = 0;
 
-    this.gopCacheEnable = config.gop_cache;
+    this.gopCacheEnable = config.rtmp.gop_cache;
     this.rtmpGopCacheQueue = null;
     this.flvGopCacheQueue = null;
 
@@ -75,7 +78,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   stop() {
-    if(this.isStarting) {
+    if (this.isStarting) {
       this.isStarting = false;
       this.bp.stop();
     }
@@ -388,7 +391,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   handleAudioMessage(rtmpHeader, rtmpBody) {
-    if(!this.isPublishing)  {
+    if (!this.isPublishing) {
       return;
     }
     if (!this.isFirstAudioReceived) {
@@ -435,7 +438,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   handleVideoMessage(rtmpHeader, rtmpBody) {
-    if(!this.isPublishing)  {
+    if (!this.isPublishing) {
       return;
     }
     let frame_type = rtmpBody[0];
@@ -796,8 +799,19 @@ class NodeRtmpSession extends EventEmitter {
 
   onPublish(chunkStreamID, streamName) {
     let app = this.connectCmdObj.app;
-    this.publishStreamId = app + '/' + streamName.split('?')[0];
-    this.publishArgs = streamName.split('?')[1];
+    this.publishStreamId = '/' + app + '/' + streamName.split('?')[0];
+    this.publishArgs = QueryString.parse(streamName.split('?')[1]);
+
+    if (this.config.auth !== undefined && this.config.auth.enable) {
+      let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamId, this.config.auth.secret);
+      if (!results) {
+        console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamId=${this.publishStreamId} sign=${this.publishArgs.sign}`);
+        this.respondPublishError('NetStream.publish.Unauthorized', 'Authorization required.');
+        return;
+      }
+    }
+
+
     if (this.publishers.has(this.publishStreamId)) {
       console.warn("[rtmp publish] Already has a stream id " + this.publishStreamId);
       this.respondPublishError('NetStream.Publish.BadName', 'Stream already publishing');
@@ -805,7 +819,7 @@ class NodeRtmpSession extends EventEmitter {
       console.warn("[rtmp publish] NetConnection is publishing ");
       this.respondPublishError('NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      console.log("[rtmp publish] new stream id " + this.publishStreamId + " args:" + this.publishArgs);
+      console.log("[rtmp publish] new stream id " + this.publishStreamId);
       this.publishers.set(this.publishStreamId, this.id);
       this.isPublishing = true;
       this.publishChunkStreamId = chunkStreamID;
@@ -817,8 +831,17 @@ class NodeRtmpSession extends EventEmitter {
 
   onPlay(chunkStreamID, streamName) {
     let app = this.connectCmdObj.app;
-    this.playStreamId = app + '/' + streamName.split('?')[0];
-    this.playArgs = streamName.split('?')[1];
+    this.playStreamId = '/' + app + '/' + streamName.split('?')[0];
+    this.playArgs = QueryString.parse(streamName.split('?')[1]);
+
+    if (this.config.auth !== undefined && this.config.auth.enable) {
+      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamId, this.config.auth.secret);
+      if (!results) {
+        console.log(`[rtmp play] Unauthorized. ID=${this.id} streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
+        this.respondPlayError('NetStream.play.Unauthorized', 'Authorization required.');
+        return;
+      }
+    }
 
     if (!this.publishers.has(this.playStreamId)) {
       console.warn("[rtmp play] stream not found " + this.playStreamId);
@@ -827,7 +850,7 @@ class NodeRtmpSession extends EventEmitter {
       console.warn("[rtmp publish] NetConnection is playing");
       this.respondPlayError('NetStream.Play.BadConnection', 'Connection already playing');
     } else {
-      console.log("[rtmp play] join stream " + this.playStreamId + " args:" + this.playArgs);
+      console.log("[rtmp play] join stream " + this.playStreamId);
       let publisherId = this.publishers.get(this.playStreamId);
       let publisher = this.sessions.get(publisherId);
       let players = publisher.players;
