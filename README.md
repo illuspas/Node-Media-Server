@@ -145,3 +145,16 @@ https://github.com/iizukanao/node-rtsp-rtmp-server
 
 Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols  
 https://github.com/delian/node-amfutils
+
+# Publisher and Player SDK
+## Android
+https://github.com/NodeMedia/NodeMediaClient-Android
+
+## iOS
+https://github.com/NodeMedia/NodeMediaClient-iOS
+
+## Flash Publisher
+https://github.com/NodeMedia/NodeMediaClient-Web
+
+## Raspberry pi Publisher
+https://github.com/NodeMedia/NodeMediaDevice
