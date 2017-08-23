@@ -8,7 +8,7 @@ const NodeRtmpSession = require('./node_rtmp_session');
 const NodeCoreUtils = require('./node_core_utils');
 
 class NodeRtmpServer {
-  constructor(config, sessions, publishers) {
+  constructor(config, sessions, publishers, idlePlayers) {
     this.port = config.rtmp.port;
 
     this.tcpServer = Net.createServer((socket) => {
@@ -18,6 +18,7 @@ class NodeRtmpServer {
       session.id = id;
       session.sessions = sessions;
       session.publishers = publishers;
+      session.idlePlayers = idlePlayers;
       session.run();
     })
   }

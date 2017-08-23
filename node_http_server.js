@@ -9,7 +9,7 @@ const NodeHttpSession = require('./node_http_session');
 const NodeCoreUtils = require('./node_core_utils');
 
 class NodeHttpServer {
-  constructor(config, sessions, publishers) {
+  constructor(config, sessions, publishers, idlePlayers) {
     this.port = config.http.port;
 
 
@@ -20,6 +20,7 @@ class NodeHttpServer {
       session.id = id;
       session.sessions = sessions;
       session.publishers = publishers;
+      session.idlePlayers = idlePlayers;
       session.run();
     });
   }

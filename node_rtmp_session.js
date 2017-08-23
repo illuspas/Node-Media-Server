@@ -52,6 +52,8 @@ class NodeRtmpSession extends EventEmitter {
     this.ackSize = 0;
     this.inLastAck = 0;
 
+    this.appname = '';
+
     this.playStreamId = '';
     this.playArgs = '';
     this.playChunkStreamId = 0;
@@ -281,6 +283,7 @@ class NodeRtmpSession extends EventEmitter {
       this.pingInterval = null;
     }
     this.sessions.delete(this.id);
+    this.idlePlayers = null;
     this.publishers = null;
     this.sessions = null;
     this.bp = null;
@@ -535,10 +538,16 @@ class NodeRtmpSession extends EventEmitter {
         // this.respondFCPublish();
         break;
       case 'publish':
-        this.emit('publish', chunkStreamID, commandMessage.streamName);
+        this.publishStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
+        this.publishArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
+        this.publishChunkStreamId = chunkStreamID;
+        this.emit('publish');
         break;
       case 'play':
-        this.emit('play', chunkStreamID, commandMessage.streamName);
+        this.playStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
+        this.playArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
+        this.playChunkStreamId = chunkStreamID;
+        this.emit('play');
         break;
       case 'closeStream':
         this.emit('closeStream', chunkStreamID);
@@ -785,6 +794,7 @@ class NodeRtmpSession extends EventEmitter {
 
   onConnect(cmdObj) {
     this.connectCmdObj = cmdObj;
+    this.appname = cmdObj.app;
     this.objectEncoding = cmdObj.objectEncoding != null ? cmdObj.objectEncoding : 0;
     this.sendWindowACK(5000000);
     this.setPeerBandwidth(5000000, 2);
@@ -798,10 +808,6 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onPublish(chunkStreamID, streamName) {
-    let app = this.connectCmdObj.app;
-    this.publishStreamId = '/' + app + '/' + streamName.split('?')[0];
-    this.publishArgs = QueryString.parse(streamName.split('?')[1]);
-
     if (this.config.auth !== undefined && this.config.auth.enable) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamId, this.config.auth.secret);
       if (!results) {
@@ -810,7 +816,6 @@ class NodeRtmpSession extends EventEmitter {
         return;
       }
     }
-
 
     if (this.publishers.has(this.publishStreamId)) {
       console.warn("[rtmp publish] Already has a stream id " + this.publishStreamId);
@@ -825,15 +830,19 @@ class NodeRtmpSession extends EventEmitter {
       this.publishChunkStreamId = chunkStreamID;
       this.players = new Set();
       this.respondPublish();
+      setTimeout(() => {
+        for (let idlePlayerId of this.idlePlayers) {
+          let idlePlayer = this.sessions.get(idlePlayerId);
+          if (idlePlayer.playStreamId === this.publishStreamId) {
+            idlePlayer.emit('play');
+            this.idlePlayers.delete(idlePlayerId);
+          }
+        }
+      }, 100);
     }
-
   }
 
-  onPlay(chunkStreamID, streamName) {
-    let app = this.connectCmdObj.app;
-    this.playStreamId = '/' + app + '/' + streamName.split('?')[0];
-    this.playArgs = QueryString.parse(streamName.split('?')[1]);
-
+  onPlay() {
     if (this.config.auth !== undefined && this.config.auth.enable) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamId, this.config.auth.secret);
       if (!results) {
@@ -844,9 +853,13 @@ class NodeRtmpSession extends EventEmitter {
     }
 
     if (!this.publishers.has(this.playStreamId)) {
-      console.warn("[rtmp play] stream not found " + this.playStreamId);
-      this.respondPlayError('NetStream.Play.StreamNotFound', `Stream ${this.playStreamId} Not Found`);
-    } else if (this.isPlaying) {
+      console.log("[rtmp play] stream not found " + this.playStreamId);
+      // this.respondPlayError('NetStream.Play.StreamNotFound', `Stream ${this.playStreamId} Not Found`);
+      this.idlePlayers.add(this.id);
+      return;
+    }
+
+    if (this.isPlaying) {
       console.warn("[rtmp publish] NetConnection is playing");
       this.respondPlayError('NetStream.Play.BadConnection', 'Connection already playing');
     } else {
@@ -858,7 +871,6 @@ class NodeRtmpSession extends EventEmitter {
       this.respondPlay();
       this.sendStreamBegin();
       this.isPlaying = true;
-      this.playChunkStreamId = chunkStreamID;
       //metaData
       if (publisher.metaData != null) {
         let rtmpHeader = {
@@ -924,8 +936,6 @@ class NodeRtmpSession extends EventEmitter {
       this.publishChunkStreamId = 0;
       this.respondUnpublish('NetStream.Unpublish.Success');
     }
-
-
   }
 
   onDeleteStream(chunkStreamID) {

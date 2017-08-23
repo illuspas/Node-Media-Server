@@ -57,10 +57,11 @@ class NodeHttpSession extends EventEmitter {
       return;
     }
 
-    this.streamId = streamId;
+
     if (method == 'GET') {
       //Play 
-      console.log("[http-flv play] play stream " + this.streamId);
+      this.playStreamId = streamId;
+      console.log("[http-flv play] play stream " + this.playStreamId);
       this.emit('play');
 
     } else if (method == 'POST') {
@@ -114,12 +115,13 @@ class NodeHttpSession extends EventEmitter {
     if (this.isPublisher) {
 
     } else {
-      let publisherId = this.publishers.get(this.streamId);
+      let publisherId = this.publishers.get(this.playStreamId);
       if (publisherId != null) {
         this.sessions.get(publisherId).players.delete(this.id);
       }
     }
     this.sessions.delete(this.id);
+    this.idlePlayers = null;
     this.publishers = null;
     this.sessions = null;
     this.bp = null;
@@ -136,71 +138,72 @@ class NodeHttpSession extends EventEmitter {
   }
 
   onPlay() {
-    if (this.publishers.has(this.streamId)) {
-      let publisherId = this.publishers.get(this.streamId);
-      let publisher = this.sessions.get(publisherId);
-      let players = publisher.players;
-      players.add(this.id);
-
-      this.res.setHeader('Content-Type', 'video/x-flv');
-      this.res.setHeader('Access-Control-Allow-Origin', this.allow_origin);
-      //send FLV header 
-      let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
-      if (publisher.isFirstAudioReceived) {
-        FLVHeader[4] |= 0b00000100;
-      }
-
-      if (publisher.isFirstVideoReceived) {
-        FLVHeader[4] |= 0b00000001;
-      }
-      this.res.write(FLVHeader);
-      if (publisher.metaData != null) {
-        //send Metadata 
-        let rtmpHeader = {
-          chunkStreamID: 5,
-          timestamp: 0,
-          messageTypeID: 0x12,
-          messageStreamID: 1
-        };
-
-        let metaDataFlvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.metaData);
-        this.res.write(metaDataFlvMessage);
-      }
-      //send aacSequenceHeader
-      if (publisher.audioCodec == 10) {
-        let rtmpHeader = {
-          chunkStreamID: 4,
-          timestamp: 0,
-          messageTypeID: 0x08,
-          messageStreamID: 1
-        };
-        let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
-        this.res.write(flvMessage);
-      }
-      //send avcSequenceHeader
-      if (publisher.videoCodec == 7) {
-        let rtmpHeader = {
-          chunkStreamID: 6,
-          timestamp: 0,
-          messageTypeID: 0x09,
-          messageStreamID: 1
-        };
-        let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
-        this.res.write(flvMessage);
-      }
-      //send gop cache
-      if (publisher.flvGopCacheQueue != null) {
-        for (let flvMessage of publisher.flvGopCacheQueue) {
-          this.res.write(flvMessage);
-        }
-      }
-    } else {
-      this.res.statusCode = 404;
-      this.res.end();
-      return
+    if (!this.publishers.has(this.playStreamId)) {
+      console.log("[http-flv play] stream not found " + this.playStreamId);
+      this.idlePlayers.add(this.id);
+      return;
     }
 
-    console.log("[http-flv play] join stream " + this.streamId);
+    let publisherId = this.publishers.get(this.playStreamId);
+    let publisher = this.sessions.get(publisherId);
+    let players = publisher.players;
+    players.add(this.id);
+
+    this.res.setHeader('Content-Type', 'video/x-flv');
+    this.res.setHeader('Access-Control-Allow-Origin', this.allow_origin);
+    //send FLV header 
+    let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    if (publisher.isFirstAudioReceived) {
+      FLVHeader[4] |= 0b00000100;
+    }
+
+    if (publisher.isFirstVideoReceived) {
+      FLVHeader[4] |= 0b00000001;
+    }
+    this.res.write(FLVHeader);
+    if (publisher.metaData != null) {
+      //send Metadata 
+      let rtmpHeader = {
+        chunkStreamID: 5,
+        timestamp: 0,
+        messageTypeID: 0x12,
+        messageStreamID: 1
+      };
+
+      let metaDataFlvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.metaData);
+      this.res.write(metaDataFlvMessage);
+    }
+    //send aacSequenceHeader
+    if (publisher.audioCodec == 10) {
+      let rtmpHeader = {
+        chunkStreamID: 4,
+        timestamp: 0,
+        messageTypeID: 0x08,
+        messageStreamID: 1
+      };
+      let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
+      this.res.write(flvMessage);
+    }
+    //send avcSequenceHeader
+    if (publisher.videoCodec == 7) {
+      let rtmpHeader = {
+        chunkStreamID: 6,
+        timestamp: 0,
+        messageTypeID: 0x09,
+        messageStreamID: 1
+      };
+      let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
+      this.res.write(flvMessage);
+    }
+    //send gop cache
+    if (publisher.flvGopCacheQueue != null) {
+      for (let flvMessage of publisher.flvGopCacheQueue) {
+        this.res.write(flvMessage);
+      }
+    }
+
+
+    console.log("[http-flv play] join stream " + this.playStreamId);
   }
 
   onPublish() {

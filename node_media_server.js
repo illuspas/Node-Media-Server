@@ -11,8 +11,9 @@ class NodeMediaServer {
     constructor(config) {
         this.sessions = new Map();
         this.publishers = new Map();
-        this.nrs = new NodeRtmpServer(config, this.sessions, this.publishers);
-        this.nhs = new NodeHttpServer(config, this.sessions, this.publishers);
+        this.idlePlayers = new Set();
+        this.nrs = new NodeRtmpServer(config, this.sessions, this.publishers, this.idlePlayers);
+        this.nhs = new NodeHttpServer(config, this.sessions, this.publishers, this.idlePlayers);
     }
 
     run() {
