@@ -12,6 +12,7 @@ A Node.js implementation of RTMP Server
  - Support H.264/AAC/SPEEX/NELLYMOSER
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
+ - Support xycdn style authentication
 
 # Usage 
 ```bash
@@ -97,6 +98,46 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
     }
 </script>
 ```
+
+## Authentication
+### Encryption URL consists of:
+> rtmp://hostname:port/appname/stream?sign=expires-HashValue  
+> http://hostname:port/appname/stream.flv?sign=expires-HashValue  
+
+1.Publish or play address:
+>rtmp://192.168.0.10/live/stream
+
+2.expiration time: 2017/8/23 11:25:21 ,The calculated expiration timestamp is
+>1503458721
+
+3.Config set auth->secret: 'nodemedia2017privatekey'
+```
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  },
+  auth: {
+    enable: true,
+    secret: 'nodemedia2017privatekey'
+  }
+}
+```
+
+4.The combination HashValue is:
+>HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
+>HashValue = 80c1d1ad2e0c2ab63eebb50eed64201a
+
+5.Final request address
+> rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a  
+> The 'sign' keyword can not be modified
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
