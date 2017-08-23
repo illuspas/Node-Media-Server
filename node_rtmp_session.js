@@ -282,6 +282,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
+    this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
