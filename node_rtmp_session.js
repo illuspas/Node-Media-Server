@@ -872,7 +872,9 @@ class NodeRtmpSession extends EventEmitter {
     if (this.isPublishing && this.publishStreamId == streamID) {
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Unpublish.Success', `${this.publishStreamPath} is now unpublished.`);
       for (let playerId of this.players) {
-        this.sessions.get(playerId).sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
+        let player = this.sessions.get(playerId);
+        // player.sendStreamStatus(STREAM_EOF,player.playStreamId);
+        player.sendStatusMessage(player.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
       }
       this.players.clear();
       this.players = null;

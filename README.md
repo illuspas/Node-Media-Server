@@ -13,6 +13,7 @@ A Node.js implementation of RTMP Server
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support xycdn style authentication
+ - Support NetStream.Play and NetStream.Publish in one NetConnection
 
 # Usage 
 ```bash
