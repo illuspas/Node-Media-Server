@@ -22,6 +22,7 @@ class NodeHttpSession extends EventEmitter {
     });
     this.allow_origin = config.http.allow_origin == undefined ? '*' : config.http.allow_origin;
     this.isPublisher = false;
+    this.playStreamPath = '';
 
     this.on('connect', this.onConnect);
     this.on('play', this.onPlay);
@@ -36,14 +37,14 @@ class NodeHttpSession extends EventEmitter {
   run() {
     let method = this.req.method;
     let urlInfo = URL.parse(this.req.url, true);
-    let streamId = urlInfo.pathname.split('.')[0];
+    let streamPath = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
 
 
     if (this.config.auth !== undefined && this.config.auth.enable) {
-      let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamId, this.config.auth.secret);
+      let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[http-flv] Unauthorized. ID=${this.id} streamId=${streamId} sign=${urlInfo.query.sign}`);
+        console.log(`[http-flv] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
         this.res.statusCode = 401;
         this.res.end();
         return;
@@ -51,7 +52,7 @@ class NodeHttpSession extends EventEmitter {
     }
 
     if (format != 'flv') {
-      console.log('Unsupported format=' + format);
+      console.log('[http-flv] Unsupported format=' + format);
       this.res.statusCode = 403;
       this.res.end();
       return;
@@ -60,19 +61,19 @@ class NodeHttpSession extends EventEmitter {
 
     if (method == 'GET') {
       //Play 
-      this.playStreamId = streamId;
-      console.log("[http-flv play] play stream " + this.playStreamId);
+      this.playStreamPath = streamPath;
+      console.log("[http-flv play] play stream " + this.playStreamPath);
       this.emit('play');
 
     } else if (method == 'POST') {
       //Publish
 
-      console.log('Unsupported method=' + method);
+      console.log('[http-flv] Unsupported method=' + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
     } else {
-      console.log('Unsupported method=' + method);
+      console.log('[http-flv] Unsupported method=' + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
@@ -103,7 +104,7 @@ class NodeHttpSession extends EventEmitter {
 
   * handleData() {
 
-    console.log('http-flv parse message [start]');
+    console.log('[http-flv message parser] start');
     while (this.isStarting) {
       if (this.bp.need(9)) {
         if (yield) break;
@@ -111,11 +112,11 @@ class NodeHttpSession extends EventEmitter {
       }
     }
 
-    console.log('http-flv parse message [stop]');
+    console.log('[http-flv message parser] done');
     if (this.isPublisher) {
 
     } else {
-      let publisherId = this.publishers.get(this.playStreamId);
+      let publisherId = this.publishers.get(this.playStreamPath);
       if (publisherId != null) {
         this.sessions.get(publisherId).players.delete(this.id);
       }
@@ -139,13 +140,13 @@ class NodeHttpSession extends EventEmitter {
   }
 
   onPlay() {
-    if (!this.publishers.has(this.playStreamId)) {
-      console.log("[http-flv play] stream not found " + this.playStreamId);
+    if (!this.publishers.has(this.playStreamPath)) {
+      console.log("[http-flv play] stream not found " + this.playStreamPath);
       this.idlePlayers.add(this.id);
       return;
     }
 
-    let publisherId = this.publishers.get(this.playStreamId);
+    let publisherId = this.publishers.get(this.playStreamPath);
     let publisher = this.sessions.get(publisherId);
     let players = publisher.players;
     players.add(this.id);
@@ -204,7 +205,7 @@ class NodeHttpSession extends EventEmitter {
     }
 
 
-    console.log("[http-flv play] join stream " + this.playStreamId);
+    console.log("[http-flv play] join stream " + this.playStreamPath);
   }
 
   onPublish() {

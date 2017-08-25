@@ -17,6 +17,12 @@ const EXTENDED_TIMESTAMP_TYPE_ABSOLUTE = 'absolute';
 const EXTENDED_TIMESTAMP_TYPE_DELTA = 'delta';
 const TIMESTAMP_ROUNDOFF = 4294967296;
 
+const STREAM_BEGIN = 0x00;
+const STREAM_EOF = 0x01;
+const STREAM_DRY = 0x02;
+const STREAM_EMPTY = 0x1f;
+const STREAM_READY = 0x20;
+
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
@@ -55,13 +61,15 @@ class NodeRtmpSession extends EventEmitter {
 
     this.appname = '';
 
-    this.playStreamId = '';
-    this.playArgs = '';
-    this.playChunkStreamId = 0;
+    this.streams = 0;
 
-    this.publishStreamId = '';
+    this.playStreamId = 0;
+    this.playStreamPath = '';
+    this.playArgs = '';
+
+    this.publishStreamId = 0;
+    this.publishStreamPath = '';
     this.publishArgs = '';
-    this.publishChunkStreamId = 0;
 
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
@@ -99,7 +107,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   * handleData() {
-    console.log('rtmp handshake [start]');
+    console.log('[rtmp handshake] start');
     if (this.bp.need(1537)) {
       if (yield) return;
     }
@@ -111,8 +119,8 @@ class NodeRtmpSession extends EventEmitter {
       if (yield) return;
     }
     let c2 = this.bp.read(1536);
-    console.log('rtmp handshake [done]');
-    console.log('rtmp parse message [start]');
+    console.log('[rtmp handshake] done');
+    console.log('[rtmp message parser]  start');
     this.bp.readBytes = 0;
     while (this.isStarting) {
       let message = {};
@@ -130,15 +138,15 @@ class NodeRtmpSession extends EventEmitter {
         if (this.bp.need(1)) {
           if (yield) break;
         }
-        let exStreamID = this.bp.read(1);
-        message.chunkStreamID = exStreamID[0] + 64;
+        let exCSID = this.bp.read(1);
+        message.chunkStreamID = exCSID[0] + 64;
       } else if (message.chunkStreamID === 1) {
         // Chunk basic header 3
         if (this.bp.need(2)) {
           if (yield) break;
         }
-        let exStreamID = this.bp.read(2);
-        message.chunkStreamID = (exStreamID[0] << 8) + exStreamID[1] + 64;
+        let exCSID = this.bp.read(2);
+        message.chunkStreamID = (exCSID[0] << 8) + exCSID[1] + 64;
       } else {
         // Chunk basic header 1
       }
@@ -272,10 +280,10 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
 
-    console.log('rtmp parse message [stop]');
+    console.log('[rtmp message parser] done');
 
-    this.onCloseStream(this.playChunkStreamId);
-    this.onCloseStream(this.publishChunkStreamId);
+    this.onCloseStream(this.playStreamId);
+    this.onCloseStream(this.publishStreamId);
 
     if (this.pingInterval != null) {
       clearImmediate(this.pingInterval);
@@ -372,22 +380,22 @@ class NodeRtmpSession extends EventEmitter {
       case 15:
         //AMF3 DataMessage
         let amf3Data = AMF.decodeAmf0Data(rtmpBody.slice(1));
-        this.handleAMFDataMessage(rtmpHeader.chunkStreamID, amf3Data);
+        this.handleAMFDataMessage(rtmpHeader.messageStreamID, amf3Data);
         break;
       case 17:
         //AMF3 CommandMessage
         let amf3Cmd = AMF.decodeAmf0Cmd(rtmpBody.slice(1));
-        this.handleAMFCommandMessage(rtmpHeader.chunkStreamID, amf3Cmd);
+        this.handleAMFCommandMessage(rtmpHeader.messageStreamID, amf3Cmd);
         break;
       case 18:
         //AMF0 DataMessage
         let amf0Data = AMF.decodeAmf0Data(rtmpBody);
-        this.handleAMFDataMessage(rtmpHeader.chunkStreamID, amf0Data);
+        this.handleAMFDataMessage(rtmpHeader.messageStreamID, amf0Data);
         break;
       case 20:
         //AMF0 CommandMessage
         let amf0Cmd = AMF.decodeAmf0Cmd(rtmpBody);
-        this.handleAMFCommandMessage(rtmpHeader.chunkStreamID, amf0Cmd);
+        this.handleAMFCommandMessage(rtmpHeader.messageStreamID, amf0Cmd);
         break;
     }
   }
@@ -406,7 +414,7 @@ class NodeRtmpSession extends EventEmitter {
     }
   }
 
-  handleAMFDataMessage(chunkStreamID, dataMessage) {
+  handleAMFDataMessage(streamID, dataMessage) {
     // console.log('handleAMFDataMessage', dataMessage);
     switch (dataMessage.cmd) {
       case '@setDataFrame':
@@ -423,7 +431,7 @@ class NodeRtmpSession extends EventEmitter {
     }
   }
 
-  handleAMFCommandMessage(chunkStreamID, commandMessage) {
+  handleAMFCommandMessage(streamID, commandMessage) {
     // console.log('handleAMFCommandMessage:', commandMessage);
     switch (commandMessage.cmd) {
       case 'connect':
@@ -436,24 +444,24 @@ class NodeRtmpSession extends EventEmitter {
         // this.respondFCPublish();
         break;
       case 'publish':
-        this.publishStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
+        this.publishStreamPath = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
         this.publishArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
-        this.publishChunkStreamId = chunkStreamID;
-        // console.log('publish chunkStreamID=' + chunkStreamID);
+        this.publishStreamId = streamID;
+        // console.log('publish streamID=' + streamID);
         this.emit('publish');
         break;
       case 'play':
-        this.playStreamId = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
+        this.playStreamPath = '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
         this.playArgs = QueryString.parse(commandMessage.streamName.split('?')[1]);
-        this.playChunkStreamId = chunkStreamID;
-        // console.log('play chunkStreamID=' + chunkStreamID);
+        this.playStreamId = streamID;
+        // console.log('play streamID=' + streamID);
         this.emit('play');
         break;
       case 'closeStream':
-        this.emit('closeStream', chunkStreamID);
+        this.emit('closeStream', streamID);
         break;
       case 'deleteStream':
-        this.emit('deleteStream', chunkStreamID);
+        this.emit('deleteStream', streamID);
         break;
       case 'pause':
         // this.pauseOrUnpauseStream();
@@ -465,7 +473,7 @@ class NodeRtmpSession extends EventEmitter {
         // this.respondFCUnpublish();
         break;
       default:
-        console.warn("[rtmp:receive] unknown AMF command: " + commandMessage.cmd);
+        console.warn("[rtmp handleCommandMessage] unknown AMF command: " + commandMessage.cmd);
         break;
     }
   }
@@ -480,7 +488,7 @@ class NodeRtmpSession extends EventEmitter {
       let sound_size = (sound_format >> 1) & 0x01;
       let sound_rate = (sound_format >> 2) & 0x03;
       sound_format = (sound_format >> 4) & 0x0f;
-      console.log(`Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate}`);
+      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate}`);
       this.audioCodec = sound_format;
       if (sound_format == 10) {
         //cache aac sequence header
@@ -510,6 +518,7 @@ class NodeRtmpSession extends EventEmitter {
     for (let playerId of this.players) {
       let session = this.sessions.get(playerId);
       if (session instanceof NodeRtmpSession) {
+        rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
       } else if (session instanceof NodeHttpSession) {
         session.res.write(flvMessage);
@@ -527,7 +536,7 @@ class NodeRtmpSession extends EventEmitter {
 
     if (!this.isFirstVideoReceived) {
       this.videoCodec = codec_id;
-      console.log(`Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id}`);
+      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id}`);
 
       if (codec_id == 7) {
         //cache avc sequence header
@@ -563,6 +572,7 @@ class NodeRtmpSession extends EventEmitter {
     for (let playerId of this.players) {
       let session = this.sessions.get(playerId);
       if (session instanceof NodeRtmpSession) {
+        rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
       } else if (session instanceof NodeHttpSession) {
         session.res.write(flvMessage);
@@ -599,29 +609,10 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.write(rtmpBuffer);
   };
 
-
-  sendStreamBegin() {
-    let rtmpBuffer = new Buffer('020000000000060400000000000000000001', 'hex');
-    this.socket.write(rtmpBuffer);
-  }
-
-  sendStreamEOF() {
-    let rtmpBuffer = new Buffer('020000000000060400000000000100000001', 'hex');
-    this.socket.write(rtmpBuffer);
-  }
-
-  sendStreamDRY() {
-    let rtmpBuffer = new Buffer('020000000000060400000000000200000001', 'hex');
-    this.socket.write(rtmpBuffer);
-  }
-
-  sendStreamEmpty() {
-    let rtmpBuffer = new Buffer('020000000000060400000000001f00000001', 'hex');
-    this.socket.write(rtmpBuffer);
-  }
-
-  sendStreamReady() {
-    let rtmpBuffer = new Buffer('020000000000060400000000002000000001', 'hex');
+  sendStreamStatus(st, id) {
+    let rtmpBuffer = new Buffer('020000000000060400000000000000000000', 'hex');
+    rtmpBuffer.writeUInt16BE(st, 12);
+    rtmpBuffer.writeUInt32BE(id, 14);
     this.socket.write(rtmpBuffer);
   }
 
@@ -644,12 +635,12 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.write(rtmpMessage);
   }
 
-  sendStatusMessage(level, code, description) {
+  sendStatusMessage(id, level, code, description) {
     let rtmpHeader = {
       chunkStreamID: 5,
       timestamp: 0,
       messageTypeID: 0x14,
-      messageStreamID: 1
+      messageStreamID: id
     };
     let opt = {
       cmd: 'onStatus',
@@ -707,7 +698,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   respondCreateStream(cmd) {
-    // //console.log(cmd);
+    this.streams++;
     let rtmpHeader = {
       chunkStreamID: 3,
       timestamp: 0,
@@ -718,7 +709,7 @@ class NodeRtmpSession extends EventEmitter {
       cmd: "_result",
       transId: cmd.transId,
       cmdObj: null,
-      info: 1
+      info: this.streams
 
     };
     let rtmpBody = AMF.encodeAmf0Cmd(opt);
@@ -727,9 +718,9 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   respondPlay() {
-    this.sendStreamBegin();
-    this.sendStatusMessage('status', 'NetStream.Play.Reset', 'Playing and resetting stream.');
-    this.sendStatusMessage('status', 'NetStream.Play.Start', 'Started playing stream.');
+    this.sendStreamStatus(STREAM_BEGIN, this.playStreamId);
+    this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Reset', 'Playing and resetting stream.');
+    this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Start', 'Started playing stream.');
     this.sendRtmpSampleAccess();
   }
 
@@ -745,35 +736,35 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = setInterval(() => {
       this.pingRequest();
     }, this.ping);
-    console.log('rtmp connect app: ' + cmdObj.app);
+    console.log('[rtmp connect]  app: ' + cmdObj.app);
   }
 
   onPublish() {
     if (this.config.auth !== undefined && this.config.auth.enable) {
-      let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamId, this.config.auth.secret);
+      let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamId=${this.publishStreamId} sign=${this.publishArgs.sign}`);
-        this.sendStatusMessage('error', 'NetStream.publish.Unauthorized', 'Authorization required.');
+        console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamPath=${this.publishStreamPath} sign=${this.publishArgs.sign}`);
+        this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Authorization required.');
         return;
       }
     }
 
-    if (this.publishers.has(this.publishStreamId)) {
-      console.warn("[rtmp publish] Already has a stream id " + this.publishStreamId);
-      this.sendStatusMessage('error', 'NetStream.Publish.BadName', 'Stream already publishing');
+    if (this.publishers.has(this.publishStreamPath)) {
+      console.warn("[rtmp publish] Already has a stream path " + this.publishStreamPath);
+      this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadName', 'Stream already publishing');
     } else if (this.isPublishing) {
       console.warn("[rtmp publish] NetConnection is publishing ");
-      this.sendStatusMessage('error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
+      this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      console.log("[rtmp publish] new stream id " + this.publishStreamId);
-      this.publishers.set(this.publishStreamId, this.id);
+      console.log("[rtmp publish] new stream path " + this.publishStreamPath + ' streamId:' + this.publishStreamId);
+      this.publishers.set(this.publishStreamPath, this.id);
       this.isPublishing = true;
       this.players = new Set();
-      this.sendStatusMessage('status', 'NetStream.Publish.Start', `${this.publishStreamId} is now published.`);
+      this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
       setTimeout(() => {
         for (let idlePlayerId of this.idlePlayers) {
           let idlePlayer = this.sessions.get(idlePlayerId);
-          if (idlePlayer.playStreamId === this.publishStreamId) {
+          if (idlePlayer.playStreamPath === this.publishStreamPath) {
             idlePlayer.emit('play');
             this.idlePlayers.delete(idlePlayerId);
           }
@@ -784,32 +775,32 @@ class NodeRtmpSession extends EventEmitter {
 
   onPlay() {
     if (this.config.auth !== undefined && this.config.auth.enable) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamId, this.config.auth.secret);
+      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[rtmp play] Unauthorized. ID=${this.id} streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
-        this.sendStatusMessage('error', 'NetStream.play.Unauthorized', 'Authorization required.');
+        console.log(`[rtmp play] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+        this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.play.Unauthorized', 'Authorization required.');
         return;
       }
     }
 
     if (this.isPlaying) {
-      console.warn("[rtmp publish] NetConnection is playing");
-      this.sendStatusMessage('error', 'NetStream.Play.BadConnection', 'Connection already playing');
-    } else if (!this.publishers.has(this.playStreamId)) {
-      console.log("[rtmp play] stream not found " + this.playStreamId);
+      console.warn("[rtmp play] NetConnection is playing");
+      this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.Play.BadConnection', 'Connection already playing');
+    } else if (!this.publishers.has(this.playStreamPath)) {
+      console.log("[rtmp play] stream not found " + this.playStreamPath + ' streamId:' + this.playStreamId);
       this.respondPlay();
       // this.sendStreamEmpty();
       this.isIdling = true;
       this.idlePlayers.add(this.id);
     } else {
       if (this.isIdling) {
-        this.sendStatusMessage('status', 'NetStream.Play.PublishNotify', `${this.publishStreamId} is now published.`);
+        this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.PublishNotify', `${this.publishStreamPath} is now published.`);
         this.isIdling = false;
       } else {
         this.respondPlay();
       }
-      let publisherId = this.publishers.get(this.playStreamId);
-      let publisher = this.sessions.get(publisherId);
+      let publisherPath = this.publishers.get(this.playStreamPath);
+      let publisher = this.sessions.get(publisherPath);
       let players = publisher.players;
 
       this.isPlaying = true;
@@ -819,7 +810,7 @@ class NodeRtmpSession extends EventEmitter {
           chunkStreamID: 5,
           timestamp: 0,
           messageTypeID: 0x12,
-          messageStreamID: 1
+          messageStreamID: this.playStreamId
         };
 
         let metaDataRtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.metaData);
@@ -832,7 +823,7 @@ class NodeRtmpSession extends EventEmitter {
           chunkStreamID: 4,
           timestamp: 0,
           messageTypeID: 0x08,
-          messageStreamID: 1
+          messageStreamID: this.playStreamId
         };
         let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.aacSequenceHeader);
         this.socket.write(rtmpMessage);
@@ -843,7 +834,7 @@ class NodeRtmpSession extends EventEmitter {
           chunkStreamID: 6,
           timestamp: 0,
           messageTypeID: 0x09,
-          messageStreamID: 1
+          messageStreamID: this.playStreamId
         };
         let rtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.avcSequenceHeader);
         this.socket.write(rtmpMessage);
@@ -851,49 +842,49 @@ class NodeRtmpSession extends EventEmitter {
       //send gop cache
       if (publisher.rtmpGopCacheQueue != null) {
         for (let rtmpMessage of publisher.rtmpGopCacheQueue) {
+          rtmpMessage.writeUInt32LE(this.playStreamId, 8);
           this.socket.write(rtmpMessage);
         }
       }
-      console.log("[rtmp play] join stream " + this.playStreamId);
+      console.log("[rtmp play] join stream " + this.playStreamPath + ' streamId:' + this.playStreamId);
       players.add(this.id);
     }
   }
 
-  onCloseStream(chunkStreamID) {
-    if (this.isIdling && this.playChunkStreamId == chunkStreamID) {
+  onCloseStream(streamID, del) {
+    if (this.isIdling && this.playStreamId == streamID) {
+      this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
       this.idlePlayers.delete(this.id);
       this.isIdling = false;
-      this.playChunkStreamId = 0;
-      this.sendStatusMessage('status', 'NetStream.Play.Stop', 'Stopped playing stream.');
+      this.playStreamId = del ? 0 : this.playStreamId;
     }
 
-    if (this.isPlaying && this.playChunkStreamId == chunkStreamID) {
-      let publisherId = this.publishers.get(this.playStreamId);
-      if (publisherId != null) {
-        this.sessions.get(publisherId).players.delete(this.id);
+    if (this.isPlaying && this.playStreamId == streamID) {
+      this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
+      let publisherPath = this.publishers.get(this.playStreamPath);
+      if (publisherPath != null) {
+        this.sessions.get(publisherPath).players.delete(this.id);
       }
       this.isPlaying = false;
-      this.playChunkStreamId = 0;
-      this.sendStatusMessage('status', 'NetStream.Play.Stop', 'Stopped playing stream.');
+      this.playStreamId = del ? 0 : this.playStreamId;
     }
 
-    if (this.isPublishing && this.publishChunkStreamId == chunkStreamID) {
+    if (this.isPublishing && this.publishStreamId == streamID) {
+      this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Unpublish.Success', `${this.publishStreamPath} is now unpublished.`);
       for (let playerId of this.players) {
-        this.sessions.get(playerId).sendStatusMessage('status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
+        this.sessions.get(playerId).sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
       }
       this.players.clear();
       this.players = null;
-      this.publishers.delete(this.publishStreamId);
+      this.publishers.delete(this.publishStreamPath);
       this.isPublishing = false;
-      this.publishChunkStreamId = 0;
-      this.sendStatusMessage('status', 'NetStream.Unpublish.Success', `${this.publishStreamId} is now unpublished.`);
+      this.publishStreamId = del ? 0 : this.publishStreamId;
     }
   }
 
-  onDeleteStream(chunkStreamID) {
-    this.onCloseStream(chunkStreamID);
+  onDeleteStream(streamID) {
+    this.onCloseStream(streamID, true);
   }
-
 }
 
 module.exports = NodeRtmpSession
