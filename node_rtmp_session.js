@@ -740,7 +740,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onPublish() {
-    if (this.config.auth !== undefined && this.config.auth.enable) {
+    if (this.config.auth !== undefined && this.config.auth.publish) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
         console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamPath=${this.publishStreamPath} sign=${this.publishArgs.sign}`);
@@ -774,7 +774,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onPlay() {
-    if (this.config.auth !== undefined && this.config.auth.enable) {
+    if (this.config.auth !== undefined && this.config.auth.play) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
         console.log(`[rtmp play] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);

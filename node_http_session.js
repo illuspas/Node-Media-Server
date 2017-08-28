@@ -40,17 +40,6 @@ class NodeHttpSession extends EventEmitter {
     let streamPath = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
 
-
-    if (this.config.auth !== undefined && this.config.auth.enable) {
-      let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamPath, this.config.auth.secret);
-      if (!results) {
-        console.log(`[http-flv] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
-        this.res.statusCode = 401;
-        this.res.end();
-        return;
-      }
-    }
-
     if (format != 'flv') {
       console.log('[http-flv] Unsupported format=' + format);
       this.res.statusCode = 403;
@@ -61,6 +50,16 @@ class NodeHttpSession extends EventEmitter {
 
     if (method == 'GET') {
       //Play 
+      if (this.config.auth !== undefined && this.config.auth.play) {
+        let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamPath, this.config.auth.secret);
+        if (!results) {
+          console.log(`[http-flv] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
+          this.res.statusCode = 401;
+          this.res.end();
+          return;
+        }
+      }
+
       this.playStreamPath = streamPath;
       console.log("[http-flv play] play stream " + this.playStreamPath);
       this.emit('play');

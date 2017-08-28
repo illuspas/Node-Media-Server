@@ -13,7 +13,8 @@ const config = {
     allow_origin: '*'
   },
   auth: {
-    enable: false,
+    play: false,
+    publish: false,
     secret: 'nodemedia2017privatekey'
   }
 }
