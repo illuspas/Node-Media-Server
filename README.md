@@ -126,7 +126,8 @@ const config = {
     allow_origin: '*'
   },
   auth: {
-    enable: true,
+    play: true,
+    publish: true,
     secret: 'nodemedia2017privatekey'
   }
 }
