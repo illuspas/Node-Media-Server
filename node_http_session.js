@@ -121,6 +121,7 @@ class NodeHttpSession extends EventEmitter {
         this.sessions.get(publisherId).players.delete(this.id);
       }
     }
+    this.res.end();
     this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);
     this.idlePlayers = null;
