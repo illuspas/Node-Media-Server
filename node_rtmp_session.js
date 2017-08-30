@@ -762,11 +762,13 @@ class NodeRtmpSession extends EventEmitter {
       this.players = new Set();
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
       setTimeout(() => {
-        for (let idlePlayerId of this.idlePlayers) {
-          let idlePlayer = this.sessions.get(idlePlayerId);
-          if (idlePlayer.playStreamPath === this.publishStreamPath) {
-            idlePlayer.emit('play');
-            this.idlePlayers.delete(idlePlayerId);
+        if (this.idlePlayers) {
+          for (let idlePlayerId of this.idlePlayers) {
+            let idlePlayer = this.sessions.get(idlePlayerId);
+            if (idlePlayer.playStreamPath === this.publishStreamPath) {
+              idlePlayer.emit('play');
+              this.idlePlayers.delete(idlePlayerId);
+            }
           }
         }
       }, 100);
