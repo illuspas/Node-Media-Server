@@ -892,7 +892,12 @@ class NodeRtmpSession extends EventEmitter {
         this.idlePlayers.add(playerId);
         player.isPlaying = false;
         player.isIdling = true;
-        player.sendStreamStatus(STREAM_EOF, player.playStreamId);
+        if (player instanceof NodeRtmpSession) {
+          player.sendStatusMessage(player.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
+        } else {
+          player.stop();
+        }
+        //player.sendStreamStatus(STREAM_EOF, player.playStreamId);
       }
 
       this.players.clear();
