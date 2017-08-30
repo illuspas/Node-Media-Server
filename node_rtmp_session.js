@@ -845,8 +845,8 @@ class NodeRtmpSession extends EventEmitter {
           this.socket.write(rtmpMessage);
         }
       }
-      if(this.isIdling) {
-        this.sendStreamStatus(STREAM_READY,this.playStreamId);
+      if (this.isIdling) {
+        this.sendStreamStatus(STREAM_READY, this.playStreamId);
         this.isIdling = false;
       }
 
@@ -877,17 +877,22 @@ class NodeRtmpSession extends EventEmitter {
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Unpublish.Success', `${this.publishStreamPath} is now unpublished.`);
       for (let playerId of this.players) {
         let player = this.sessions.get(playerId);
-        // player.sendStreamStatus(STREAM_EOF,player.playStreamId);
-        player.sendStatusMessage(player.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
+        if (player instanceof NodeRtmpSession) {
+          player.sendStatusMessage(player.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
+        } else {
+          player.stop();
+        }
       }
 
       //let the players to idlePlayers
-      for(let playerId of this.players) {
+      for (let playerId of this.players) {
         let player = this.sessions.get(playerId);
         this.idlePlayers.add(playerId);
         player.isPlaying = false;
         player.isIdling = true;
-        player.sendStreamStatus(STREAM_EOF,player.playStreamId);
+        if (player instanceof NodeRtmpSession) {
+          player.sendStreamStatus(STREAM_EOF, player.playStreamId);
+        }
       }
 
       this.players.clear();
