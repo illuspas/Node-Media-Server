@@ -12,6 +12,9 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
+  websocket: {
+    port: 19350
+  },
   auth: {
     enable: false,
     secret: 'nodemedia2017privatekey'
