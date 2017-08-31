@@ -71,6 +71,8 @@ class NodeRtmpSession extends EventEmitter {
     this.publishStreamPath = '';
     this.publishArgs = '';
 
+    this.publishNotifyTimeout = null;
+
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
     this.on('play', this.onPlay);
@@ -288,6 +290,10 @@ class NodeRtmpSession extends EventEmitter {
     if (this.pingInterval != null) {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
+    }
+    if(this.publishNotifyTimeout != null) {
+      clearTimeout(this.publishNotifyTimeout);
+      this.publishNotifyTimeout = null;
     }
     this.sessions.delete(this.id);
     this.idlePlayers = null;
@@ -761,7 +767,7 @@ class NodeRtmpSession extends EventEmitter {
       this.isPublishing = true;
       this.players = new Set();
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
-      setTimeout(() => {
+      this.publishNotifyTimeout = setTimeout(() => {
         for (let idlePlayerId of this.idlePlayers) {
           let idlePlayer = this.sessions.get(idlePlayerId);
           if (idlePlayer.playStreamPath === this.publishStreamPath) {
