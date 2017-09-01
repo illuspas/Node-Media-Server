@@ -16,13 +16,11 @@ class NodeMediaServer {
         this.idlePlayers = new Set();
         this.nrs = new NodeRtmpServer(config, this.sessions, this.publishers, this.idlePlayers);
         this.nhs = new NodeHttpServer(config, this.sessions, this.publishers, this.idlePlayers);
-        this.nws = new NodeWebsocketServer(config, this.sessions, this.publishers, this.idlePlayers);
     }
 
     run() {
         this.nrs.run();
         this.nhs.run();
-        this.nws.run();
     }
 }
 

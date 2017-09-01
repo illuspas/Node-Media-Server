@@ -29,7 +29,7 @@ class NodeRtmpServer {
     })
 
     this.tcpServer.on('error', (e) => {
-      console.log(`Node Media Rtmp Server ${e}`);
+      console.error(`Node Media Rtmp Server ${e}`);
     })
   }
 
