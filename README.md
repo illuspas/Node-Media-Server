@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 
-A Node.js implementation of RTMP Server 
+A Node.js implementation of RTMP/HTTP/WebSocket Media Server 
 
 # Features
  - ~~No third-party library dependencies~~
