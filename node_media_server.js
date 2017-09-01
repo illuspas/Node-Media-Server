@@ -6,8 +6,6 @@
 
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
-const NodeWebsocketServer = require('./node_ws_server');
-
 
 class NodeMediaServer {
     constructor(config) {
