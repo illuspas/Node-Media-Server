@@ -112,7 +112,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
         var videoElement = document.getElementById('videoElement');
         var flvPlayer = flvjs.createPlayer({
             type: 'flv',
-            url: 'ws://localhost:8001/live/STREAM_NAME.flv'
+            url: 'ws://localhost:8000/live/STREAM_NAME.flv'
         });
         flvPlayer.attachMediaElement(videoElement);
         flvPlayer.load();
