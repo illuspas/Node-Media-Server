@@ -125,6 +125,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## Encryption URL consists of:
 > rtmp://hostname:port/appname/stream?sign=expires-HashValue  
 > http://hostname:port/appname/stream.flv?sign=expires-HashValue  
+> ws://hostname:port/appname/stream.flv?sign=expires-HashValue  
 
 1.Publish or play address:
 >rtmp://192.168.0.10/live/stream
