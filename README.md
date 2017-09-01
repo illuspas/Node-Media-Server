@@ -6,14 +6,16 @@
 A Node.js implementation of RTMP Server 
 
 # Features
- - No third-party library dependencies
+ - ~~No third-party library dependencies~~
  - High performance RTMP parser based on ES6 Generator implementation
  - Cross platform support Windows/Linux/Unix
  - Support H.264/AAC/SPEEX/NELLYMOSER
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
+ - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support xycdn style authentication
  - Support NetStream.Play and NetStream.Publish in one NetConnection
+ 
 
 # Usage 
 ```bash
@@ -34,7 +36,10 @@ const config = {
   http: {
     port: 8000,
     allow_origin: '*'
-  }
+  },
+  websocket: {
+    port: 8001,
+  },
 }
 
 var nms = new NodeMediaServer(config)
@@ -81,7 +86,7 @@ ffplay rtmp://localhost/live/STREAM_NAME
 ffplay http://localhost:8000/live/STREAM_NAME.flv
 ```
 
-## via flv.js
+## via flv.js over http
 
 ```html
 <script src="https://cdn.bootcss.com/flv.js/1.3.2/flv.min.js"></script>
@@ -92,6 +97,25 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
         var flvPlayer = flvjs.createPlayer({
             type: 'flv',
             url: 'http://localhost:8000/live/STREAM_NAME.flv'
+        });
+        flvPlayer.attachMediaElement(videoElement);
+        flvPlayer.load();
+        flvPlayer.play();
+    }
+</script>
+```
+
+## via flv.js over websocket
+
+```html
+<script src="https://cdn.bootcss.com/flv.js/1.3.2/flv.min.js"></script>
+<video id="videoElement"></video>
+<script>
+    if (flvjs.isSupported()) {
+        var videoElement = document.getElementById('videoElement');
+        var flvPlayer = flvjs.createPlayer({
+            type: 'flv',
+            url: 'ws://localhost:8001/live/STREAM_NAME.flv'
         });
         flvPlayer.attachMediaElement(videoElement);
         flvPlayer.load();
