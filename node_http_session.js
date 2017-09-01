@@ -28,9 +28,19 @@ class NodeHttpSession extends EventEmitter {
     this.on('play', this.onPlay);
     this.on('publish', this.onPublish);
 
-    this.req.on('data', this.onReqData.bind(this));
-    this.req.socket.on('close', this.onReqClose.bind(this));
-    this.req.on('error', this.onReqError.bind(this));
+    if (req.headers.upgrade === 'websocket') {
+      this.res.on('message', this.onReqData.bind(this));
+      this.res.on('close', this.onReqClose.bind(this));
+      this.res.on('error', this.onReqError.bind(this));
+      this.res.write = this.res.send;
+      this.res.end = this.res.close;
+      this.TAG = 'websocket-flv'
+    } else {
+      this.req.on('data', this.onReqData.bind(this));
+      this.req.socket.on('close', this.onReqClose.bind(this));
+      this.req.on('error', this.onReqError.bind(this));
+      this.TAG = 'http-flv'
+    }
 
   }
 
@@ -41,7 +51,7 @@ class NodeHttpSession extends EventEmitter {
     let format = urlInfo.pathname.split('.')[1];
 
     if (format != 'flv') {
-      console.log('[http-flv] Unsupported format=' + format);
+      console.log(`[${this.TAG}] Unsupported format=${format}`);
       this.res.statusCode = 403;
       this.res.end();
       return;
@@ -53,7 +63,7 @@ class NodeHttpSession extends EventEmitter {
       if (this.config.auth !== undefined && this.config.auth.play) {
         let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamPath, this.config.auth.secret);
         if (!results) {
-          console.log(`[http-flv] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
+          console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
           this.res.statusCode = 401;
           this.res.end();
           return;
@@ -61,18 +71,18 @@ class NodeHttpSession extends EventEmitter {
       }
 
       this.playStreamPath = streamPath;
-      console.log("[http-flv play] play stream " + this.playStreamPath);
+      console.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
       this.emit('play');
 
     } else if (method == 'POST') {
       //Publish
 
-      console.log('[http-flv] Unsupported method=' + method);
+      console.log(`[${this.TAG}] Unsupported method=` + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
     } else {
-      console.log('[http-flv] Unsupported method=' + method);
+      console.log(`[${this.TAG}] Unsupported method=` + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
@@ -103,7 +113,7 @@ class NodeHttpSession extends EventEmitter {
 
   * handleData() {
 
-    console.log('[http-flv message parser] start');
+    console.log(`[${this.TAG} message parser] start ${this.res.readyState}`);
     while (this.isStarting) {
       if (this.bp.need(9)) {
         if (yield) break;
@@ -111,7 +121,7 @@ class NodeHttpSession extends EventEmitter {
       }
     }
 
-    console.log('[http-flv message parser] done');
+    console.log(`[${this.TAG} message parser] done`);
     if (this.isPublisher) {
 
     } else {
@@ -141,7 +151,7 @@ class NodeHttpSession extends EventEmitter {
 
   onPlay() {
     if (!this.publishers.has(this.playStreamPath)) {
-      console.log("[http-flv play] stream not found " + this.playStreamPath);
+      console.log(`[${this.TAG} play] stream not found ` + this.playStreamPath);
       this.idlePlayers.add(this.id);
       return;
     }
@@ -151,8 +161,11 @@ class NodeHttpSession extends EventEmitter {
     let players = publisher.players;
     players.add(this.id);
 
-    this.res.setHeader('Content-Type', 'video/x-flv');
-    this.res.setHeader('Access-Control-Allow-Origin', this.allow_origin);
+    if (this.res.setHeader !== undefined) {
+      this.res.setHeader('Content-Type', 'video/x-flv');
+      this.res.setHeader('Access-Control-Allow-Origin', this.allow_origin);
+    }
+
     //send FLV header 
     let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     if (publisher.isFirstAudioReceived) {
@@ -205,7 +218,7 @@ class NodeHttpSession extends EventEmitter {
     }
 
 
-    console.log("[http-flv play] join stream " + this.playStreamPath);
+    console.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
   }
 
   onPublish() {

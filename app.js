@@ -12,6 +12,9 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
+  websocket: {
+    port: 8001,
+  },
   auth: {
     play: false,
     publish: false,

@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/illuspas/Node-Media-Server/issues"
   },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme"
+  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
+  "dependencies": {
+    "ws": "^3.1.0"
+  }
 }
