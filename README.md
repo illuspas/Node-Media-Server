@@ -36,10 +36,7 @@ const config = {
   http: {
     port: 8000,
     allow_origin: '*'
-  },
-  websocket: {
-    port: 8001,
-  },
+  }
 }
 
 var nms = new NodeMediaServer(config)
