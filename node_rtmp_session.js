@@ -291,7 +291,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
-    if(this.publishNotifyTimeout != null) {
+    if (this.publishNotifyTimeout != null) {
       clearTimeout(this.publishNotifyTimeout);
       this.publishNotifyTimeout = null;
     }
@@ -527,7 +527,9 @@ class NodeRtmpSession extends EventEmitter {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
       } else if (session instanceof NodeHttpSession) {
-        session.res.write(flvMessage);
+        session.res.write(flvMessage, null, (e) => {
+          //websocket will throw a error if not set the cb when closed
+        });
       }
     }
   }
@@ -581,7 +583,7 @@ class NodeRtmpSession extends EventEmitter {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
       } else if (session instanceof NodeHttpSession) {
-        session.res.write(flvMessage,null,(e)=>{
+        session.res.write(flvMessage, null, (e) => {
           //websocket will throw a error if not set the cb when closed
         });
       }

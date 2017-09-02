@@ -113,7 +113,7 @@ class NodeHttpSession extends EventEmitter {
 
   * handleData() {
 
-    console.log(`[${this.TAG} message parser] start ${this.res.readyState}`);
+    console.log(`[${this.TAG} message parser] start`);
     while (this.isStarting) {
       if (this.bp.need(9)) {
         if (yield) break;
