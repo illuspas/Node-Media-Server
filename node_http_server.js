@@ -4,10 +4,12 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 
+const Fs = require('fs');
 const Http = require('http');
 const WebSocket = require('ws');
-const NodeHttpSession = require('./node_http_session');
+const Express = require('express');
 const NodeCoreUtils = require('./node_core_utils');
+const NodeHttpSession = require('./node_http_session');
 
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
@@ -17,7 +19,27 @@ class NodeHttpServer {
     this.publishers = publishers;
     this.idlePlayers = idlePlayers;
 
-    this.httpServer = Http.createServer(this.onConnect.bind(this));
+    this.expressApp = Express();
+
+    this.expressApp.all('*.flv', (req, res, next) => {
+      if(req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'range');
+        res.end();
+      } else {
+        if (Fs.existsSync(__dirname + '/public' + req.url)) {
+          res.setHeader('Content-Type', 'video/x-flv');
+          res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+          next();
+        } else {
+          this.onConnect(req, res);
+        }
+      }
+    });
+
+    this.expressApp.use(Express.static(__dirname + '/public'));
+    this.httpServer = Http.createServer(this.expressApp);
   }
 
   run() {
