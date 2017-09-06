@@ -86,7 +86,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## via flv.js over http
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.3.2/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.3.3/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -105,7 +105,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## via flv.js over websocket
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.3.2/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.3.3/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
