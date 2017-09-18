@@ -9,7 +9,7 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - ~~No third-party library dependencies~~
  - High performance RTMP parser based on ES6 Generator implementation
  - Cross platform support Windows/Linux/Unix
- - Support H.264/AAC/SPEEX/NELLYMOSER
+ - Support H.264/H.265/AAC/SPEEX/NELLYMOSER
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
@@ -163,6 +163,11 @@ const config = {
 > rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a  
 > The 'sign' keyword can not be modified
 
+# H.265 over RTMP
+H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.
+Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
+Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios) 
+
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
 https://github.com/iizukanao/node-rtsp-rtmp-server
@@ -182,3 +187,6 @@ https://github.com/NodeMedia/NodeMediaClient-Web
 
 ## Raspberry pi Publisher
 https://github.com/NodeMedia/NodeMediaDevice
+
+## FFmpeg-hw-win32
+https://github.com/illuspas/ffmpeg-hw-win32
