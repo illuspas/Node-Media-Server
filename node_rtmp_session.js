@@ -546,7 +546,7 @@ class NodeRtmpSession extends EventEmitter {
       this.videoCodec = codec_id;
       console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id}`);
 
-      if (codec_id == 7) {
+      if (codec_id == 7 || codec_id == 12) {
         //cache avc sequence header
         if (frame_type == 1 && rtmpBody[1] == 0) {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
@@ -564,7 +564,7 @@ class NodeRtmpSession extends EventEmitter {
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, rtmpBody);
 
-    if (codec_id == 7 && this.rtmpGopCacheQueue != null) {
+    if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && rtmpBody[1] == 1) {
         this.rtmpGopCacheQueue.clear();
         this.flvGopCacheQueue.clear();
@@ -838,7 +838,7 @@ class NodeRtmpSession extends EventEmitter {
         this.socket.write(rtmpMessage);
       }
       //send avcSequenceHeader
-      if (publisher.videoCodec == 7) {
+      if (publisher.videoCodec == 7 || publisher.videoCodec == 12) {
         let rtmpHeader = {
           chunkStreamID: 6,
           timestamp: 0,
