@@ -295,6 +295,9 @@ class NodeRtmpSession extends EventEmitter {
       clearTimeout(this.publishNotifyTimeout);
       this.publishNotifyTimeout = null;
     }
+    this.socket.removeAllListeners('data');
+    this.socket.removeAllListeners('close');
+    this.socket.removeAllListeners('error');
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
