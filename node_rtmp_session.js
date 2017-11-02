@@ -98,6 +98,25 @@ class NodeRtmpSession extends EventEmitter {
         if (this.isStarting) {
             this.isStarting = false;
             this.bp.stop();
+            console.log('[rtmp message parser] done');
+
+            this.onCloseStream(this.playStreamId);
+            this.onCloseStream(this.publishStreamId);
+
+            if (this.pingInterval != null) {
+                clearImmediate(this.pingInterval);
+                this.pingInterval = null;
+            }
+            if (this.publishNotifyTimeout != null) {
+                clearTimeout(this.publishNotifyTimeout);
+                this.publishNotifyTimeout = null;
+            }
+            this.sessions.delete(this.id);
+            this.idlePlayers = null;
+            this.publishers = null;
+            this.sessions = null;
+            this.bp = null;
+            this.socket = null;
         }
     }
 
@@ -259,25 +278,7 @@ class NodeRtmpSession extends EventEmitter {
             }
         }
 
-        console.log('[rtmp message parser] done');
 
-        this.onCloseStream(this.playStreamId);
-        this.onCloseStream(this.publishStreamId);
-
-        if (this.pingInterval != null) {
-            clearImmediate(this.pingInterval);
-            this.pingInterval = null;
-        }
-        if (this.publishNotifyTimeout != null) {
-            clearTimeout(this.publishNotifyTimeout);
-            this.publishNotifyTimeout = null;
-        }
-        this.sessions.delete(this.id);
-        this.idlePlayers = null;
-        this.publishers = null;
-        this.sessions = null;
-        this.bp = null;
-        this.socket = null;
     }
 
     createRtmpMessage(rtmpHeader, rtmpBody) {

@@ -107,38 +107,33 @@ class NodeHttpSession extends EventEmitter {
         if (this.isStarting) {
             this.isStarting = false;
             this.bp.stop();
+            console.log(`[${this.TAG} message parser] done`);
+            if (this.isPublisher) {
+
+            } else {
+                let publisherId = this.publishers.get(this.playStreamPath);
+                if (publisherId != null) {
+                    this.sessions.get(publisherId).players.delete(this.id);
+                }
+            }
+            this.res.end();
+            this.idlePlayers.delete(this.id);
+            this.sessions.delete(this.id);
+            this.idlePlayers = null;
+            this.publishers = null;
+            this.sessions = null;
+            this.bp = null;
+            this.req = null;
+            this.res = null;
         }
     }
 
     *
     handleData() {
-
         console.log(`[${this.TAG} message parser] start`);
         while (this.isStarting) {
-            if (this.bp.need(9)) {
-                if (yield) break;
-
-            }
+            yield 9
         }
-
-        console.log(`[${this.TAG} message parser] done`);
-        if (this.isPublisher) {
-
-        } else {
-            let publisherId = this.publishers.get(this.playStreamPath);
-            if (publisherId != null) {
-                this.sessions.get(publisherId).players.delete(this.id);
-            }
-        }
-        this.res.end();
-        this.idlePlayers.delete(this.id);
-        this.sessions.delete(this.id);
-        this.idlePlayers = null;
-        this.publishers = null;
-        this.sessions = null;
-        this.bp = null;
-        this.req = null;
-        this.res = null;
     }
 
     respondUnpublish() {
