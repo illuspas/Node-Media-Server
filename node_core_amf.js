@@ -18,11 +18,11 @@ var amf3dRules = {
     0x0A: amf3decObject,
     0x0B: amf3decXml,
     0x0C: amf3decByteArray //,
-    //    0x0D: amf3decVecInt,
-    //    0x0E: amf3decVecUInt,
-    //    0x0F: amf3decVecDouble,
-    //    0x10: amf3decVecObject,
-    //    0x11: amf3decDict // No dictionary support for the moment!
+        //    0x0D: amf3decVecInt,
+        //    0x0E: amf3decVecUInt,
+        //    0x0F: amf3decVecDouble,
+        //    0x10: amf3decVecObject,
+        //    0x11: amf3decDict // No dictionary support for the moment!
 };
 
 var amf3eRules = {
@@ -188,7 +188,7 @@ function amf3decUI29(buf) {
 
     if (len == 5) val = val | b; // Preserve the major bit of the last byte
 
-    return { len: len, value: val }
+    return { len, value: val }
 }
 
 /**
@@ -374,7 +374,7 @@ function amf3encDouble(num) {
  * @param buf
  * @returns {{len: *, value: (*|Number)}}
  */
-function amf3decDate(buf) {  // The UI29 should be 1
+function amf3decDate(buf) { // The UI29 should be 1
     var uTz = amf3decUI29(buf);
     var ts = buf.readDoubleBE(uTz.len);
     return { len: uTz.len + 8, value: ts }
@@ -561,7 +561,7 @@ function amf0decObject(buf) { // TODO: Implement references!
         len += val.len;
         iBuf = iBuf.slice(prop.len + val.len);
     }
-    return { len: len, value: obj }
+    return { len, value: obj }
 }
 
 /**
@@ -685,7 +685,8 @@ function amf0decArray(buf) {
  */
 function amf0encArray(a) {
     var l = 0;
-    if (a instanceof Array) l = a.length; else l = Object.keys(a).length;
+    if (a instanceof Array) l = a.length;
+    else l = Object.keys(a).length;
     console.log('Array encode', l, a);
     var buf = new Buffer(5);
     buf.writeUInt8(8, 0);
@@ -754,7 +755,7 @@ function amf0decSArray(buf) {
         a.push(ret.value);
         len += ret.len;
     }
-    return { len: len, value: amf0markSArray(a) }
+    return { len, value: amf0markSArray(a) }
 }
 
 /**
@@ -913,7 +914,7 @@ function amf3EncodeOne(o) {
  */
 function amf3Encode(a) {
     var buf = new Buffer(0);
-    a.forEach(function (o) {
+    a.forEach(function(o) {
         buf = Buffer.concat([buf, amf3EncodeOne(o)]);
     });
     return buf;
@@ -926,7 +927,7 @@ function amf3Encode(a) {
  */
 function amf0Encode(a) {
     var buf = new Buffer(0);
-    a.forEach(function (o) {
+    a.forEach(function(o) {
         buf = Buffer.concat([buf, amf0EncodeOne(o)]);
     });
     return buf;
@@ -981,7 +982,7 @@ function decodeAmf0Data(dbuf) {
     buffer = buffer.slice(cmd.len);
 
     if (rtmpDataDecode[cmd.value]) {
-        rtmpDataDecode[cmd.value].forEach(function (n) {
+        rtmpDataDecode[cmd.value].forEach(function(n) {
             if (buffer.length > 0) {
                 var r = amf0DecodeOne(buffer);
                 buffer = buffer.slice(r.len);
@@ -999,7 +1000,7 @@ function decodeAmf0Data(dbuf) {
  * @param dbuf
  * @returns {{cmd: (*|string|String|*), value: *}}
  */
-function decodeAMF0Cmd(dbuf) {
+function decodeAmf0Cmd(dbuf) {
     var buffer = dbuf;
     var resp = {};
 
@@ -1008,7 +1009,7 @@ function decodeAMF0Cmd(dbuf) {
     buffer = buffer.slice(cmd.len);
 
     if (rtmpCmdDecode[cmd.value]) {
-        rtmpCmdDecode[cmd.value].forEach(function (n) {
+        rtmpCmdDecode[cmd.value].forEach(function(n) {
             if (buffer.length > 0) {
                 var r = amf0DecodeOne(buffer);
                 buffer = buffer.slice(r.len);
@@ -1026,11 +1027,11 @@ function decodeAMF0Cmd(dbuf) {
  * @param opt
  * @returns {*}
  */
-function encodeAMF0Cmd(opt) {
+function encodeAmf0Cmd(opt) {
     var data = amf0EncodeOne(opt.cmd);
 
     if (rtmpCmdDecode[opt.cmd]) {
-        rtmpCmdDecode[opt.cmd].forEach(function (n) {
+        rtmpCmdDecode[opt.cmd].forEach(function(n) {
             if (opt.hasOwnProperty(n))
                 data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
         });
@@ -1041,11 +1042,11 @@ function encodeAMF0Cmd(opt) {
     return data
 }
 
-function encodeAMF0Data(opt) {
+function encodeAmf0Data(opt) {
     var data = amf0EncodeOne(opt.cmd);
 
     if (rtmpDataDecode[opt.cmd]) {
-        rtmpDataDecode[opt.cmd].forEach(function (n) {
+        rtmpDataDecode[opt.cmd].forEach(function(n) {
             if (opt.hasOwnProperty(n))
                 data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
         });
@@ -1061,7 +1062,7 @@ function encodeAMF0Data(opt) {
  * @param dbuf
  * @returns {{}}
  */
-function decodeAMF3Cmd(dbuf) {
+function decodeAmf3Cmd(dbuf) {
     var buffer = dbuf;
     var resp = {};
 
@@ -1070,7 +1071,7 @@ function decodeAMF3Cmd(dbuf) {
     buffer = buffer.slice(cmd.len);
 
     if (rtmpCmdDecode[cmd.value]) {
-        rtmpCmdDecode[cmd.value].forEach(function (n) {
+        rtmpCmdDecode[cmd.value].forEach(function(n) {
             if (buffer.length > 0) {
                 var r = amf3DecodeOne(buffer);
                 buffer = buffer.slice(r.len);
@@ -1088,11 +1089,11 @@ function decodeAMF3Cmd(dbuf) {
  * @param opt
  * @returns {*}
  */
-function encodeAMF3Cmd(opt) {
+function encodeAmf3Cmd(opt) {
     var data = amf0EncodeOne(opt.cmd);
 
     if (rtmpCmdDecode[opt.cmd]) {
-        rtmpCmdDecode[opt.cmd].forEach(function (n) {
+        rtmpCmdDecode[opt.cmd].forEach(function(n) {
             if (opt.hasOwnProperty(n))
                 data = Buffer.concat([data, amf3EncodeOne(opt[n])]);
         });
@@ -1103,76 +1104,76 @@ function encodeAMF3Cmd(opt) {
 }
 
 module.exports = {
-    decodeAmf3Cmd: decodeAMF3Cmd,
-    encodeAmf3Cmd: encodeAMF3Cmd,
-    decodeAmf0Cmd: decodeAMF0Cmd,
-    encodeAmf0Cmd: encodeAMF0Cmd,
-    decodeAmf0Data: decodeAmf0Data,
-    encodeAmf0Data: encodeAMF0Data,
-    amfType: amfType,
-    amf0Encode: amf0Encode,
-    amf0EncodeOne: amf0EncodeOne,
-    amf0Decode: amf0Decode,
-    amf0DecodeOne: amf0DecodeOne,
-    amf3Encode: amf3Encode,
-    amf3EncodeOne: amf3EncodeOne,
-    amf3Decode: amf3Decode,
-    amf3DecodeOne: amf3DecodeOne,
+    decodeAmf3Cmd,
+    encodeAmf3Cmd,
+    decodeAmf0Cmd,
+    encodeAmf0Cmd,
+    decodeAmf0Data,
+    encodeAmf0Data,
+    amfType,
+    amf0Encode,
+    amf0EncodeOne,
+    amf0Decode,
+    amf0DecodeOne,
+    amf3Encode,
+    amf3EncodeOne,
+    amf3Decode,
+    amf3DecodeOne,
     amf0cnvA2O: amf0cnvArray2Object,
     amf0cnvO2A: amf0cnvObject2Array,
-    amf0markSArray: amf0markSArray,
-    amf0decArray: amf0decArray,
-    amf0decBool: amf0decBool,
-    amf0decDate: amf0decDate,
-    amf0decLongString: amf0decLongString,
-    amf0decNull: amf0decNull,
-    amf0decNumber: amf0decNumber,
-    amf0decObject: amf0decObject,
-    amf0decRef: amf0decRef,
-    amf0decSArray: amf0decSArray,
-    amf0decString: amf0decString,
-    amf0decTypedObj: amf0decTypedObj,
-    amf0decUndefined: amf0decUndefined,
-    amf0decXmlDoc: amf0decXmlDoc,
-    amf0encArray: amf0encArray,
-    amf0encBool: amf0encBool,
-    amf0encDate: amf0encDate,
-    amf0encLongString: amf0encLongString,
-    amf0encNull: amf0encNull,
-    amf0encNumber: amf0encNumber,
-    amf0encObject: amf0encObject,
-    amf0encRef: amf0encRef,
-    amf0encSArray: amf0encSArray,
-    amf0encString: amf0encString,
-    amf0encTypedObj: amf0encTypedObj,
-    amf0encUndefined: amf0encUndefined,
-    amf0encXmlDoc: amf0encXmlDoc,
-    amf3decArray: amf3decArray,
-    amf3decByteArray: amf3decByteArray,
-    amf3decDate: amf3decDate,
-    amf3decDouble: amf3decDouble,
-    amf3decFalse: amf3decFalse,
-    amf3decInteger: amf3decInteger,
-    amf3decNull: amf3decNull,
-    amf3decObject: amf3decObject,
-    amf3decString: amf3decString,
-    amf3decTrue: amf3decTrue,
-    amf3decUI29: amf3decUI29,
-    amf3decUndefined: amf3decUndefined,
-    amf3decXml: amf3decXml,
-    amf3decXmlDoc: amf3decXmlDoc,
-    amf3encArray: amf3encArray,
-    amf3encByteArray: amf3encByteArray,
-    amf3encDate: amf3encDate,
-    amf3encDouble: amf3encDouble,
-    amf3encFalse: amf3encFalse,
-    amf3encInteger: amf3encInteger,
-    amf3encNull: amf3encNull,
-    amf3encObject: amf3encObject,
-    amf3encString: amf3encString,
-    amf3encTrue: amf3encTrue,
-    amf3encUI29: amf3encUI29,
-    amf3encUndefined: amf3encUndefined,
-    amf3encXml: amf3encXml,
-    amf3encXmlDoc: amf3encXmlDoc
+    amf0markSArray,
+    amf0decArray,
+    amf0decBool,
+    amf0decDate,
+    amf0decLongString,
+    amf0decNull,
+    amf0decNumber,
+    amf0decObject,
+    amf0decRef,
+    amf0decSArray,
+    amf0decString,
+    amf0decTypedObj,
+    amf0decUndefined,
+    amf0decXmlDoc,
+    amf0encArray,
+    amf0encBool,
+    amf0encDate,
+    amf0encLongString,
+    amf0encNull,
+    amf0encNumber,
+    amf0encObject,
+    amf0encRef,
+    amf0encSArray,
+    amf0encString,
+    amf0encTypedObj,
+    amf0encUndefined,
+    amf0encXmlDoc,
+    amf3decArray,
+    amf3decByteArray,
+    amf3decDate,
+    amf3decDouble,
+    amf3decFalse,
+    amf3decInteger,
+    amf3decNull,
+    amf3decObject,
+    amf3decString,
+    amf3decTrue,
+    amf3decUI29,
+    amf3decUndefined,
+    amf3decXml,
+    amf3decXmlDoc,
+    amf3encArray,
+    amf3encByteArray,
+    amf3encDate,
+    amf3encDouble,
+    amf3encFalse,
+    amf3encInteger,
+    amf3encNull,
+    amf3encObject,
+    amf3encString,
+    amf3encTrue,
+    amf3encUI29,
+    amf3encUndefined,
+    amf3encXml,
+    amf3encXmlDoc
 };

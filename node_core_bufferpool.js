@@ -7,47 +7,48 @@
 const Readable = require('stream').Readable;
 
 class BufferPool extends Readable {
-  constructor (options) {
-    super(options);
-  }
-
-  init (gFun) {
-    this.readBytes = 0;
-    this.poolBytes = 0;
-    this.needBytes = 0;
-    this.gFun = gFun;
-    this.gFun.next(false);
-  }
-
-  stop() {
-    this.gFun.next(true);
-  }
-
-  push (buf) {
-    super.push(buf);
-    this.poolBytes += buf.length;
-    this.readBytes += buf.length;
-    if (this.needBytes > 0 && this.needBytes <= this.poolBytes) {
-      this.gFun.next(false);
+    constructor(options) {
+        super(options);
     }
-  }
 
-  _read(size) {
-
-  }
-
-  read (size) {
-    this.poolBytes -= size;
-    return super.read(size);
-  }
-
-  need (size) {
-    let ret = this.poolBytes < size;
-    if (ret) {
-      this.needBytes = size;
+    init(gFun) {
+        this.readBytes = 0;
+        this.poolBytes = 0;
+        this.needBytes = 0;
+        this.gFun = gFun;
+        this.need(this.gFun.next(false).value);
     }
-    return ret;
-  }
+
+    stop() {
+        //this.gFun.next(true);
+        this.gFun.return(true)
+    }
+
+    push(buf) {
+        super.push(buf);
+        this.poolBytes += buf.length;
+        this.readBytes += buf.length;
+        if (this.needBytes > 0 && this.needBytes <= this.poolBytes) {
+            let notenough = false
+            while (!notenough) {
+                notenough = this.need(this.gFun.next(this.read(this.needBytes)).value);
+            }
+        }
+    }
+
+    _read(size) {
+
+    }
+
+    read(size) {
+        this.poolBytes -= size;
+        return super.read(size);
+    }
+
+    need(size) {
+        this.needBytes = size;
+        return this.poolBytes < size;
+    }
 }
 
 module.exports = BufferPool
