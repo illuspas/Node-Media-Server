@@ -71,8 +71,6 @@ class NodeRtmpSession extends EventEmitter {
     this.publishStreamPath = '';
     this.publishArgs = '';
 
-    this.publishNotifyTimeout = null;
-
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
     this.on('play', this.onPlay);
@@ -136,21 +134,21 @@ class NodeRtmpSession extends EventEmitter {
       message.formatType = chunkBasicHeader[0] >> 6;
       message.chunkStreamID = chunkBasicHeader[0] & 0x3F;
       if (message.chunkStreamID === 0) {
-        // Chunk basic header 2
+        // Chunk basic header 2 64-319
         if (this.bp.need(1)) {
           if (yield) break;
         }
         let exCSID = this.bp.read(1);
         message.chunkStreamID = exCSID[0] + 64;
       } else if (message.chunkStreamID === 1) {
-        // Chunk basic header 3
+        // Chunk basic header 3 64-65599
         if (this.bp.need(2)) {
           if (yield) break;
         }
         let exCSID = this.bp.read(2);
-        message.chunkStreamID = (exCSID[0] << 8) + exCSID[1] + 64;
+        message.chunkStreamID = (exCSID[1] << 8) + exCSID[0] + 64;
       } else {
-        // Chunk basic header 1
+        // Chunk basic header 1  2-63
       }
       previousChunk = this.previousChunkMessage[message.chunkStreamID];
       if (message.formatType === 0) {
@@ -291,10 +289,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
-    if (this.publishNotifyTimeout != null) {
-      clearTimeout(this.publishNotifyTimeout);
-      this.publishNotifyTimeout = null;
-    }
+
     this.socket.removeAllListeners('data');
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('error');
@@ -774,15 +769,13 @@ class NodeRtmpSession extends EventEmitter {
       this.isPublishing = true;
       this.players = new Set();
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
-      this.publishNotifyTimeout = setTimeout(() => {
-        for (let idlePlayerId of this.idlePlayers) {
-          let idlePlayer = this.sessions.get(idlePlayerId);
-          if (idlePlayer.playStreamPath === this.publishStreamPath) {
-            idlePlayer.emit('play');
-            this.idlePlayers.delete(idlePlayerId);
-          }
+      for (let idlePlayerId of this.idlePlayers) {
+        let idlePlayer = this.sessions.get(idlePlayerId);
+        if (idlePlayer.playStreamPath === this.publishStreamPath) {
+          idlePlayer.emit('play');
+          this.idlePlayers.delete(idlePlayerId);
         }
-      }, 100);
+      }
     }
   }
 
