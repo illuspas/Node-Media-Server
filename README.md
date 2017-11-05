@@ -15,7 +15,7 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support xycdn style authentication
  - Support NetStream.Play and NetStream.Publish in one NetConnection
- 
+ - Support event callback
 
 # Usage 
 ```bash
@@ -44,12 +44,12 @@ nms.run()
 ```
 
 # Todo 
-- support record stream 
-- support transcode
-- support cluster
-- support low latency hls
-- server and streams status
-- on_connect/on_publish/on_play/on_done event callback
+- [ ] support record stream 
+- [ ] support transcode
+- [ ] support cluster
+- [ ] support low latency hls
+- [ ] server and streams status
+- [x] on_connect/on_publish/on_play/on_done event callback
 
 # Publishing live streams
 ## From FFmpeg
@@ -167,6 +167,16 @@ const config = {
 H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
 Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
 Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios) 
+
+# Event callback
+- preConnect
+- postConnect
+- prePublish 
+- postPublish
+- donePublish
+- prePlay
+- postPlay
+- donePlay
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
