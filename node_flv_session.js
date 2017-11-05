@@ -51,7 +51,8 @@ class NodeFlvSession extends EventEmitter {
     let urlInfo = URL.parse(this.req.url, true);
     let streamPath = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
-    this.nodeEvent.emit('preConnect', this.id, { method, streamPath, query: urlInfo.query });
+    this.connectCmdObj = { method, streamPath, query: urlInfo.query };
+    this.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
 
     this.isStarting = true;
     this.bp.init(this.handleData())
@@ -62,7 +63,7 @@ class NodeFlvSession extends EventEmitter {
       this.res.end();
       return;
     }
-    this.nodeEvent.emit('postConnect', this.id, { method, streamPath, query: urlInfo.query });
+    this.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
     if (method == 'GET') {
       //Play 
       this.playStreamPath = streamPath;
@@ -127,7 +128,7 @@ class NodeFlvSession extends EventEmitter {
         this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
     }
-
+    this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.res.end();
     this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);

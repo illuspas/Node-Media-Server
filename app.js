@@ -31,7 +31,10 @@ nodeEvent.on('preConnect', (id, args) => {
 
 nodeEvent.on('postConnect', (id, args) => {
   console.log('[NodeEvent on postConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
 
+nodeEvent.on('doneConnect', (id, args) => {
+  console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
 });
 
 nodeEvent.on('prePublish', (id, StreamPath, args) => {

@@ -294,7 +294,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
-
+    this.nodeEvent.emit('doneConnect', this.id,this.connectCmdObj);
     this.socket.removeAllListeners('data');
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('error');
