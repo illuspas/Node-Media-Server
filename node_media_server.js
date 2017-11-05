@@ -8,7 +8,7 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 
 class NodeMediaServer {
-    constructor(config) {
+    constructor(config) {  
         this.sessions = new Map();
         this.publishers = new Map();
         this.idlePlayers = new Set();
@@ -19,6 +19,10 @@ class NodeMediaServer {
     run() {
         this.nrs.run();
         this.nhs.run();
+    }
+
+    getSession(id) {
+        return this.sessions.get(id);
     }
 }
 

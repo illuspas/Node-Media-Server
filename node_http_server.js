@@ -9,7 +9,7 @@ const Http = require('http');
 const WebSocket = require('ws');
 const Express = require('express');
 const NodeCoreUtils = require('./node_core_utils');
-const NodeHttpSession = require('./node_http_session');
+const NodeFlvSession = require('./node_flv_session');
 
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
@@ -67,7 +67,7 @@ class NodeHttpServer {
 
   onConnect(req, res) {
     let id = NodeCoreUtils.generateNewSessionID(this.sessions);
-    let session = new NodeHttpSession(this.config, req, res);
+    let session = new NodeFlvSession(this.config, req, res);
     this.sessions.set(id, session);
     session.id = id;
     session.sessions = this.sessions;

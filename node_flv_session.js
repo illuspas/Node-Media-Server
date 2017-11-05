@@ -10,7 +10,7 @@ const AMF = require('./node_core_amf');
 const BufferPool = require('./node_core_bufferpool');
 const NodeCoreUtils = require('./node_core_utils');
 
-class NodeHttpSession extends EventEmitter {
+class NodeFlvSession extends EventEmitter {
   constructor(config, req, res) {
     super();
     this.config = config;
@@ -23,6 +23,8 @@ class NodeHttpSession extends EventEmitter {
     this.allow_origin = config.http.allow_origin == undefined ? '*' : config.http.allow_origin;
     this.isPublisher = false;
     this.playStreamPath = '';
+    this.playArgs = null;
+    this.nodeEvent = NodeCoreUtils.nodeEvent;
 
     this.on('connect', this.onConnect);
     this.on('play', this.onPlay);
@@ -49,6 +51,10 @@ class NodeHttpSession extends EventEmitter {
     let urlInfo = URL.parse(this.req.url, true);
     let streamPath = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
+    this.nodeEvent.emit('preConnect', this.id, { method, streamPath, query: urlInfo.query });
+
+    this.isStarting = true;
+    this.bp.init(this.handleData())
 
     if (format != 'flv') {
       console.log(`[${this.TAG}] Unsupported format=${format}`);
@@ -56,21 +62,11 @@ class NodeHttpSession extends EventEmitter {
       this.res.end();
       return;
     }
-
-
+    this.nodeEvent.emit('postConnect', this.id, { method, streamPath, query: urlInfo.query });
     if (method == 'GET') {
       //Play 
-      if (this.config.auth !== undefined && this.config.auth.play) {
-        let results = NodeCoreUtils.verifyAuth(urlInfo.query.sign, streamPath, this.config.auth.secret);
-        if (!results) {
-          console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${urlInfo.query.sign}`);
-          this.res.statusCode = 401;
-          this.res.end();
-          return;
-        }
-      }
-
       this.playStreamPath = streamPath;
+      this.playArgs = urlInfo.query;
       console.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
       this.emit('play');
 
@@ -87,9 +83,6 @@ class NodeHttpSession extends EventEmitter {
       this.res.end();
       return;
     }
-
-    this.isStarting = true;
-    this.bp.init(this.handleData())
   }
 
   onReqData(data) {
@@ -111,13 +104,16 @@ class NodeHttpSession extends EventEmitter {
     }
   }
 
+  reject() {
+    this.stop();
+  }
+
   * handleData() {
 
     console.log(`[${this.TAG} message parser] start`);
     while (this.isStarting) {
       if (this.bp.need(9)) {
         if (yield) break;
-
       }
     }
 
@@ -128,8 +124,10 @@ class NodeHttpSession extends EventEmitter {
       let publisherId = this.publishers.get(this.playStreamPath);
       if (publisherId != null) {
         this.sessions.get(publisherId).players.delete(this.id);
+        this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
     }
+
     this.res.end();
     this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);
@@ -150,6 +148,21 @@ class NodeHttpSession extends EventEmitter {
   }
 
   onPlay() {
+
+    this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    if (!this.isStarting) {
+      return;
+    }
+    if (this.config.auth !== undefined && this.config.auth.play) {
+      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, streamPath, this.config.auth.secret);
+      if (!results) {
+        console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${this.playArgs.sign}`);
+        this.res.statusCode = 401;
+        this.res.end();
+        return;
+      }
+    }
+
     if (!this.publishers.has(this.playStreamPath)) {
       console.log(`[${this.TAG} play] stream not found ` + this.playStreamPath);
       this.idlePlayers.add(this.id);
@@ -185,7 +198,7 @@ class NodeHttpSession extends EventEmitter {
         messageStreamID: 1
       };
 
-      let metaDataFlvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.metaData);
+      let metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.metaData);
       this.res.write(metaDataFlvMessage);
     }
     //send aacSequenceHeader
@@ -196,7 +209,7 @@ class NodeHttpSession extends EventEmitter {
         messageTypeID: 0x08,
         messageStreamID: 1
       };
-      let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
+      let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
       this.res.write(flvMessage);
     }
     //send avcSequenceHeader
@@ -207,7 +220,7 @@ class NodeHttpSession extends EventEmitter {
         messageTypeID: 0x09,
         messageStreamID: 1
       };
-      let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
+      let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
       this.res.write(flvMessage);
     }
     //send gop cache
@@ -216,9 +229,8 @@ class NodeHttpSession extends EventEmitter {
         this.res.write(flvMessage);
       }
     }
-
-
     console.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
+    this.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
   }
 
   onPublish() {
@@ -241,4 +253,4 @@ class NodeHttpSession extends EventEmitter {
 
 }
 
-module.exports = NodeHttpSession;
+module.exports = NodeFlvSession;

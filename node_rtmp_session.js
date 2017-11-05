@@ -9,8 +9,9 @@ const QueryString = require('querystring');
 const AMF = require('./node_core_amf');
 const Handshake = require('./node_rtmp_handshake');
 const BufferPool = require('./node_core_bufferpool');
-const NodeHttpSession = require('./node_http_session');
+const NodeFlvSession = require('./node_flv_session');
 const NodeCoreUtils = require('./node_core_utils');
+
 
 const EXTENDED_TIMESTAMP_TYPE_NOT_USED = 'not-used';
 const EXTENDED_TIMESTAMP_TYPE_ABSOLUTE = 'absolute';
@@ -28,7 +29,7 @@ class NodeRtmpSession extends EventEmitter {
     super();
     this.config = config;
     this.bp = new BufferPool();
-
+    this.nodeEvent = NodeCoreUtils.nodeEvent;
     this.socket = socket;
     this.players = null;
 
@@ -92,6 +93,10 @@ class NodeRtmpSession extends EventEmitter {
       this.isStarting = false;
       this.bp.stop();
     }
+  }
+
+  reject() {
+    this.isStarting = false;
   }
 
   onSocketData(data) {
@@ -293,6 +298,7 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.removeAllListeners('data');
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('error');
+    this.socket.end();
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
@@ -509,7 +515,7 @@ class NodeRtmpSession extends EventEmitter {
     // console.log(`Send Audio message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} bytesRead=${this.socket.bytesRead}`);
 
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
-    let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, rtmpBody);
+    let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, rtmpBody);
     if (this.rtmpGopCacheQueue != null) {
       if (this.aacSequenceHeader != null && rtmpBody[1] == 0) {
         //skip aac sequence header
@@ -524,7 +530,7 @@ class NodeRtmpSession extends EventEmitter {
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
-      } else if (session instanceof NodeHttpSession) {
+      } else if (session instanceof NodeFlvSession) {
         session.res.write(flvMessage, null, (e) => {
           //websocket will throw a error if not set the cb when closed
         });
@@ -560,7 +566,7 @@ class NodeRtmpSession extends EventEmitter {
     // console.log(`Send Video message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} `);
 
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
-    let flvMessage = NodeHttpSession.createFlvMessage(rtmpHeader, rtmpBody);
+    let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, rtmpBody);
 
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && rtmpBody[1] == 1) {
@@ -580,7 +586,7 @@ class NodeRtmpSession extends EventEmitter {
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
-      } else if (session instanceof NodeHttpSession) {
+      } else if (session instanceof NodeFlvSession) {
         session.res.write(flvMessage, null, (e) => {
           //websocket will throw a error if not set the cb when closed
         });
@@ -733,6 +739,10 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onConnect(cmdObj) {
+    this.nodeEvent.emit('preConnect', this.id, cmdObj);
+    if (!this.isStarting) {
+      return;
+    }
     this.connectCmdObj = cmdObj;
     this.appname = cmdObj.app;
     this.objectEncoding = cmdObj.objectEncoding != null ? cmdObj.objectEncoding : 0;
@@ -745,9 +755,14 @@ class NodeRtmpSession extends EventEmitter {
       this.pingRequest();
     }, this.ping);
     console.log('[rtmp connect]  app: ' + cmdObj.app);
+    this.nodeEvent.emit('postConnect', this.id, cmdObj);
   }
 
   onPublish() {
+    this.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
+    if (!this.isStarting) {
+      return;
+    }
     if (this.config.auth !== undefined && this.config.auth.publish) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
@@ -776,10 +791,15 @@ class NodeRtmpSession extends EventEmitter {
           this.idlePlayers.delete(idlePlayerId);
         }
       }
+      this.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
     }
   }
 
   onPlay() {
+    this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    if (!this.isStarting) {
+      return;
+    }
     if (this.config.auth !== undefined && this.config.auth.play) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
@@ -858,10 +878,12 @@ class NodeRtmpSession extends EventEmitter {
 
       console.log("[rtmp play] join stream " + this.playStreamPath + ' streamId:' + this.playStreamId);
       players.add(this.id);
+      this.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
     }
   }
 
   onCloseStream(streamID, del) {
+
     if (this.isIdling && this.playStreamId == streamID) {
       this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
       this.idlePlayers.delete(this.id);
@@ -877,6 +899,7 @@ class NodeRtmpSession extends EventEmitter {
       }
       this.isPlaying = false;
       this.playStreamId = del ? 0 : this.playStreamId;
+      this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
     }
 
     if (this.isPublishing && this.publishStreamId == streamID) {
@@ -906,6 +929,7 @@ class NodeRtmpSession extends EventEmitter {
       this.publishers.delete(this.publishStreamPath);
       this.isPublishing = false;
       this.publishStreamId = del ? 0 : this.publishStreamId;
+      this.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);
     }
   }
 

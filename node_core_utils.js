@@ -4,6 +4,7 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 const Crypto = require('crypto');
+const EventEmitter = require('events');
 
 function generateNewSessionID(sessions) {
     let SessionID = '';
@@ -35,3 +36,4 @@ function verifyAuth(signStr, streamId, secretKey) {
 
 module.exports.generateNewSessionID = generateNewSessionID;
 module.exports.verifyAuth = verifyAuth;
+module.exports.nodeEvent = new EventEmitter();
