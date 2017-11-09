@@ -20,7 +20,7 @@ class BufferPool extends Readable {
     }
 
     stop() {
-        this.gFun.return(true)
+        if (this.gFun) this.gFun.return(true)
     }
 
     push(buf) {
