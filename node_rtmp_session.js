@@ -739,6 +739,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onConnect(cmdObj) {
+    cmdObj.app = cmdObj.app.replace('/','');
     this.nodeEvent.emit('preConnect', this.id, cmdObj);
     if (!this.isStarting) {
       return;
