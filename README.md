@@ -37,11 +37,6 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
-  https: {
-    port: 8443,
-    key:'./privatekey.pem',
-    cert:'./certificate.pem',
-  },
   auth: {
     play: false,
     publish: false,
@@ -232,6 +227,54 @@ Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)
 - prePlay
 - postPlay
 - donePlay
+
+# Https/Wss
+
+## Generate certificate
+```
+openssl genrsa -out privatekey.pem 1024
+openssl req -new -key privatekey.pem -out certrequest.csr 
+openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
+```
+
+## Config https
+```
+const NodeMediaServer = require('./node_media_server');
+
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  },
+  https: {
+    port: 8443,
+    key:'./privatekey.pem',
+    cert:'./certificate.pem',
+  },
+  auth: {
+    play: false,
+    publish: false,
+    secret: 'nodemedia2017privatekey'
+  }
+};
+
+
+var nms = new NodeMediaServer(config)
+nms.run();
+```
+## Accessing
+```
+https://localhost:8443/live/STREAM_NAME.flv
+wss://localhost:8443/live/STREAM_NAME.flv
+```
+>hostname must be the same as the browser address 
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
