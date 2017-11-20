@@ -6,7 +6,6 @@
 A Node.js implementation of RTMP/HTTP/WebSocket Media Server 
 
 # Features
- - ~~No third-party library dependencies~~
  - High performance RTMP parser based on ES6 Generator implementation
  - Cross platform support Windows/Linux/Unix
  - Support H.264/H.265/AAC/SPEEX/NELLYMOSER
@@ -16,6 +15,7 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - Support xycdn style authentication
  - Support NetStream.Play and NetStream.Publish in one NetConnection
  - Support event callback
+ - Support https/wss
 
 # Usage 
 ```bash
