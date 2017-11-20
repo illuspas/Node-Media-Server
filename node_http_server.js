@@ -6,6 +6,7 @@
 
 const Fs = require('fs');
 const Http = require('http');
+const Https = require('https');
 const WebSocket = require('ws');
 const Express = require('express');
 const NodeCoreUtils = require('./node_core_utils');
@@ -14,6 +15,7 @@ const NodeFlvSession = require('./node_flv_session');
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
     this.port = config.http.port;
+    this.sport = config.https.port;
     this.config = config;
     this.sessions = sessions;
     this.publishers = publishers;
@@ -21,8 +23,9 @@ class NodeHttpServer {
 
     this.expressApp = Express();
 
+
     this.expressApp.all('*.flv', (req, res, next) => {
-      if(req.method === 'OPTIONS') {
+      if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'range');
@@ -40,6 +43,18 @@ class NodeHttpServer {
 
     this.expressApp.use(Express.static(__dirname + '/public'));
     this.httpServer = Http.createServer(this.expressApp);
+
+    /**
+     * ~ openssl genrsa -out privatekey.pem 1024
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
+     */
+    let options = {
+      key: Fs.readFileSync(this.config.https.key),
+      cert: Fs.readFileSync(this.config.https.cert)
+    };
+
+    this.httpsServer = Https.createServer(options, this.expressApp);
   }
 
   run() {
@@ -49,6 +64,14 @@ class NodeHttpServer {
 
     this.httpServer.on('error', (e) => {
       console.error(`Node Media Http Server ${e}`);
+    });
+
+    this.httpsServer.listen(this.sport, () => {
+      console.log(`Node Media Https Server started on port: ${this.sport}`);
+    });
+
+    this.httpsServer.on('error', (e) => {
+      console.error(`Node Media Https Server ${e}`);
     });
 
     this.wsServer = new WebSocket.Server({ server: this.httpServer });
@@ -62,6 +85,19 @@ class NodeHttpServer {
     });
     this.wsServer.on('error', (e) => {
       console.error(`Node Media WebSocket Server ${e}`);
+    });
+
+    this.wssServer = new WebSocket.Server({ server: this.httpsServer });
+
+    this.wssServer.on('connection', (ws, req) => {
+      this.onConnect(req, ws);
+    });
+
+    this.wssServer.on('listening', () => {
+      console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+    });
+    this.wssServer.on('error', (e) => {
+      console.error(`Node Media WebSocketSecure Server ${e}`);
     });
   }
 
