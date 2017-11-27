@@ -36,6 +36,7 @@ class NodeHttpServer {
           res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
           next();
         } else {
+          req.nmsConnectionType = 'http';
           this.onConnect(req, res);
         }
       }
@@ -77,6 +78,7 @@ class NodeHttpServer {
     this.wsServer = new WebSocket.Server({ server: this.httpServer });
 
     this.wsServer.on('connection', (ws, req) => {
+      req.nmsConnectionType = 'ws';
       this.onConnect(req, ws);
     });
 
@@ -90,6 +92,7 @@ class NodeHttpServer {
     this.wssServer = new WebSocket.Server({ server: this.httpsServer });
 
     this.wssServer.on('connection', (ws, req) => {
+      req.nmsConnectionType = 'ws';
       this.onConnect(req, ws);
     });
 

@@ -30,7 +30,7 @@ class NodeFlvSession extends EventEmitter {
     this.on('play', this.onPlay);
     this.on('publish', this.onPublish);
 
-    if (req.headers.upgrade === 'websocket') {
+    if (req.nmsConnectionType === 'ws') {
       this.res.on('message', this.onReqData.bind(this));
       this.res.on('close', this.onReqClose.bind(this));
       this.res.on('error', this.onReqError.bind(this));
