@@ -155,9 +155,9 @@ class NodeFlvSession extends EventEmitter {
       return;
     }
     if (this.config.auth !== undefined && this.config.auth.play) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, streamPath, this.config.auth.secret);
+      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${streamPath} sign=${this.playArgs.sign}`);
+        console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
         this.res.statusCode = 401;
         this.res.end();
         return;
