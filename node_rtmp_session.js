@@ -294,7 +294,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
-    this.nodeEvent.emit('doneConnect', this.id,this.connectCmdObj);
+    this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.socket.removeAllListeners('data');
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('error');
@@ -307,48 +307,62 @@ class NodeRtmpSession extends EventEmitter {
     this.socket = null;
   }
 
+  createChunkBasicHeader(fmt, id) {
+    let out;
+    if (id >= 64 + 255) {
+      out = Buffer.alloc(3);
+      out[0] = (fmt << 6) | 1;
+      out[1] = (id - 64) & 0xFF;
+      out[2] = ((id - 64) >> 8) & 0xFF;
+    } else if (id >= 64) {
+      out = Buffer.alloc(2);
+      out[0] = (fmt << 6) | 0;
+      out[1] = (id - 64) & 0xFF;
+    } else {
+      out = Buffer.alloc(1);
+      out[0] = (fmt << 6) | id;
+    }
+    return out;
+  }
+
   createRtmpMessage(rtmpHeader, rtmpBody) {
-    let formatTypeID = 0;
-    let useExtendedTimestamp = false;
-    let timestamp;
+    let chunkBasicHeader = this.createChunkBasicHeader(0, rtmpHeader.chunkStreamID);
+    let chunkMessageHeader = Buffer.alloc(11);
+    let chunkExtendedTimestamp;
+    let extendedTimestamp = 0;
+    let useExtendedTimestamp = false
     let rtmpBodySize = rtmpBody.length;
     let rtmpBodyPos = 0;
     let chunkBodys = [];
-    let type3Header = new Buffer([(3 << 6) | rtmpHeader.chunkStreamID]);
 
-    if (rtmpHeader.chunkStreamID == null) {
-      //console.warn("[rtmp] warning: createRtmpMessage(): chunkStreamID is not set for RTMP message");
-    }
-    if (rtmpHeader.timestamp == null) {
-      //console.warn("[rtmp] warning: createRtmpMessage(): timestamp is not set for RTMP message");
-    }
-    if (rtmpHeader.messageTypeID == null) {
-      //console.warn("[rtmp] warning: createRtmpMessage(): messageTypeID is not set for RTMP message");
-    }
-    if (rtmpHeader.messageStreamID == null) {
-      //console.warn("[rtmp] warning: createRtmpMessage(): messageStreamID is not set for RTMP message");
-    }
+    rtmpHeader.messageLength = rtmpBody.length;
 
     if (rtmpHeader.timestamp >= 0xffffff) {
       useExtendedTimestamp = true;
-      timestamp = [0xff, 0xff, 0xff];
-    } else {
-      timestamp = [(rtmpHeader.timestamp >> 16) & 0xff, (rtmpHeader.timestamp >> 8) & 0xff, rtmpHeader.timestamp & 0xff];
+      extendedTimestamp = rtmpHeader.timestamp;
+      chunkExtendedTimestamp = Buffer.alloc(4);
+      chunkExtendedTimestamp.writeUInt32BE(extendedTimestamp);
     }
+    chunkMessageHeader.writeUIntBE(useExtendedTimestamp ? 0xffffff : rtmpHeader.timestamp, 0, 3);
+    chunkMessageHeader.writeUIntBE(rtmpHeader.messageLength, 3, 3);
+    chunkMessageHeader.writeUInt8(rtmpHeader.messageTypeID, 6);
+    chunkMessageHeader.writeUInt32LE(rtmpHeader.messageStreamID, 7);
 
-    let headerBufs = new Buffer([(formatTypeID << 6) | rtmpHeader.chunkStreamID, timestamp[0], timestamp[1], timestamp[2], (rtmpBodySize >> 16) & 0xff, (rtmpBodySize >> 8) & 0xff, rtmpBodySize & 0xff, rtmpHeader.messageTypeID, rtmpHeader.messageStreamID & 0xff, (rtmpHeader.messageStreamID >>> 8) & 0xff, (rtmpHeader.messageStreamID >>> 16) & 0xff, (rtmpHeader.messageStreamID >>> 24) & 0xff]);
+
+    chunkBodys.push(chunkBasicHeader);
+    chunkBodys.push(chunkMessageHeader);
     if (useExtendedTimestamp) {
-      let extendedTimestamp = new Buffer([(rtmpHeader.timestamp >> 24) & 0xff, (rtmpHeader.timestamp >> 16) & 0xff, (rtmpHeader.timestamp >> 8) & 0xff, rtmpHeader.timestamp & 0xff]);
-      headerBufs = Buffer.concat([headerBufs, extendedTimestamp]);
+      chunkBodys.push(chunkExtendedTimestamp);
     }
-
-    chunkBodys.push(headerBufs);
     do {
       if (rtmpBodySize > this.outChunkSize) {
         chunkBodys.push(rtmpBody.slice(rtmpBodyPos, rtmpBodyPos + this.outChunkSize));
         rtmpBodySize -= this.outChunkSize
         rtmpBodyPos += this.outChunkSize;
-        chunkBodys.push(type3Header);
+        chunkBodys.push(this.createChunkBasicHeader(3, rtmpHeader.chunkStreamID));
+        if (useExtendedTimestamp) {
+          chunkBodys.push(chunkExtendedTimestamp);
+        }
       } else {
         chunkBodys.push(rtmpBody.slice(rtmpBodyPos, rtmpBodyPos + rtmpBodySize));
         rtmpBodySize -= rtmpBodySize;
@@ -739,7 +753,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onConnect(cmdObj) {
-    cmdObj.app = cmdObj.app.replace('/','');
+    cmdObj.app = cmdObj.app.replace('/', '');
     this.nodeEvent.emit('preConnect', this.id, cmdObj);
     if (!this.isStarting) {
       return;
