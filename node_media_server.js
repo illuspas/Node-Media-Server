@@ -9,27 +9,34 @@ const NodeHttpServer = require('./node_http_server');
 const NodeCoreUtils = require('./node_core_utils');
 
 class NodeMediaServer {
-    constructor(config) {
-        this.sessions = new Map();
-        this.publishers = new Map();
-        this.idlePlayers = new Set();
-        this.nrs = new NodeRtmpServer(config, this.sessions, this.publishers, this.idlePlayers);
-        this.nhs = new NodeHttpServer(config, this.sessions, this.publishers, this.idlePlayers);
-        this.nodeEvent = NodeCoreUtils.nodeEvent;
+  constructor(config) {
+    this.config = config;
+    this.sessions = new Map();
+    this.publishers = new Map();
+    this.idlePlayers = new Set();
+    this.nodeEvent = NodeCoreUtils.nodeEvent;
+  }
+
+  run() {
+    if (this.config.rtmp) {
+      this.nrs = new NodeRtmpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nrs.run();
     }
 
-    run() {
-        this.nrs.run();
-        this.nhs.run();
+    if (this.config.http) {
+      this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nhs.run();
     }
 
-    on(eventName, listener) {
-        this.nodeEvent.on(eventName, listener);
-    }
+  }
 
-    getSession(id) {
-        return this.sessions.get(id);
-    }
+  on(eventName, listener) {
+    this.nodeEvent.on(eventName, listener);
+  }
+
+  getSession(id) {
+    return this.sessions.get(id);
+  }
 }
 
 module.exports = NodeMediaServer

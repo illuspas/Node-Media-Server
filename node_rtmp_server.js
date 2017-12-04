@@ -6,10 +6,11 @@
 const Net = require('net');
 const NodeRtmpSession = require('./node_rtmp_session');
 const NodeCoreUtils = require('./node_core_utils');
+const RTMP_PORT = 1935;
 
 class NodeRtmpServer {
   constructor(config, sessions, publishers, idlePlayers) {
-    this.port = config.rtmp.port;
+    this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
 
     this.tcpServer = Net.createServer((socket) => {
       let id = NodeCoreUtils.generateNewSessionID(sessions);
