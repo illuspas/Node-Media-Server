@@ -24,6 +24,10 @@ const STREAM_DRY = 0x02;
 const STREAM_EMPTY = 0x1f;
 const STREAM_READY = 0x20;
 
+const RTMP_CHUNK_SIZE = 128;
+const RTMP_PING_TIME = 60000;
+const RTMP_PING_TIMEOUT = 30000;
+
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
@@ -33,12 +37,12 @@ class NodeRtmpSession extends EventEmitter {
     this.socket = socket;
     this.players = null;
 
-    this.inChunkSize = 128;
-    this.outChunkSize = config.rtmp.chunk_size;
+    this.inChunkSize = RTMP_CHUNK_SIZE;
+    this.outChunkSize = config.rtmp.chunk_size ? config.rtmp.chunk_size : RTMP_CHUNK_SIZE;
     this.previousChunkMessage = {};
 
-    this.ping = config.rtmp.ping === undefined ? 60000 : config.rtmp.ping * 1000;
-    this.pingTimeout = config.rtmp.ping_timeout;
+    this.ping = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
+    this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
 
     this.isStarting = false;
