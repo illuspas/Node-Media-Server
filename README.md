@@ -284,7 +284,11 @@ Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 p
 https://github.com/delian/node-amfutils
 
 # Publisher and Player SDK
-## Android
+
+## Android Livestream tool
+https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
+
+## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
 
 ## iOS
