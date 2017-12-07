@@ -79,7 +79,8 @@ function getChannel(req, res, next) {
         isLive: false,
         viewers: 0,
         duration: 0,
-        bitrate: 0
+        bitrate: 0,
+        startTime: null
     };
 
     let publishStreamPath = `/${req.params.app}/${req.params.channel}`;
@@ -92,6 +93,7 @@ function getChannel(req, res, next) {
     }).length;
     channelStats.duration = channelStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
     channelStats.bitrate = channelStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / channelStats.duration / 1024) : 0;
+    channelStats.startTime = channelStats.isLive ? publisherSession.connectTime : null;
 
     res.json(channelStats);
 }
