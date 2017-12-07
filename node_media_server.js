@@ -8,6 +8,8 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeCoreUtils = require('./node_core_utils');
 
+const channels = require('./api/routes/channels');
+
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
@@ -26,6 +28,8 @@ class NodeMediaServer {
     if (this.config.http) {
       this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
       this.nhs.run();
+
+      this.nhs.expressApp.use('/api/channels', channels(this));
     }
 
   }
