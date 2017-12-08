@@ -299,10 +299,10 @@ class NodeRtmpSession extends EventEmitter {
       this.pingInterval = null;
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
+    this.socket.end();
     this.socket.removeAllListeners('data');
     this.socket.removeAllListeners('close');
     this.socket.removeAllListeners('error');
-    this.socket.end();
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
