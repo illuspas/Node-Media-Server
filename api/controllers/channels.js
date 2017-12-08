@@ -25,7 +25,7 @@ function getChannels(req, res, next) {
           _.set(stats, [app, channel, 'publisher'], {
             app: app,
             channel: channel,
-            serverId: session.id,
+            clientId: session.id,
             connectCreated: session.connectTime,
             bytes: session.socket.bytesRead,
             ip: session.socket.remoteAddress
@@ -39,7 +39,7 @@ function getChannels(req, res, next) {
               stats[app][channel]['subscribers'].push({
                 app: app,
                 channel: channel,
-                serverId: session.id,
+                clientId: session.id,
                 connectCreated: session.connectTime,
                 bytes: session.socket.bytesWritten,
                 ip: session.socket.remoteAddress,
@@ -52,7 +52,7 @@ function getChannels(req, res, next) {
               stats[app][channel]['subscribers'].push({
                 app: app,
                 channel: channel,
-                serverId: session.id,
+                clientId: session.id,
                 connectCreated: session.connectTime,
                 bytes: session.req.connection.bytesWritten,
                 ip: session.req.connection.remoteAddress,
