@@ -8,7 +8,7 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeCoreUtils = require('./node_core_utils');
 
-const channels = require('./api/routes/channels');
+const channels = require('./api/routes/streams');
 
 class NodeMediaServer {
   constructor(config) {
