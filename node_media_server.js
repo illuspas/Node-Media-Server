@@ -29,7 +29,7 @@ class NodeMediaServer {
       this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
       this.nhs.run();
 
-      this.nhs.expressApp.use('/api/channels', channels(this));
+      this.nhs.expressApp.use('/api/streams', channels(this));
     }
 
   }
