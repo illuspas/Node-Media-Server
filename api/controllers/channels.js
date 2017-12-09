@@ -83,7 +83,7 @@ function getChannel(req, res, next) {
     startTime: null
   };
 
-  let publishStreamPath = `/${req.params.app}/${req.params.channel}`;
+  let publishStreamPath = `/${req.params.app}/${req.params.stream}`;
 
   let publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
 
