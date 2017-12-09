@@ -283,15 +283,17 @@ https://github.com/iizukanao/node-rtsp-rtmp-server
 Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols  
 https://github.com/delian/node-amfutils
 
-# Publisher and Player SDK
+# Publisher and Player App/SDK
 
-## Android Livestream tool
+## Android Livestream App
 https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
+
+http://www.nodemedia.cn/uploads/qlive-release.apk
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
 
-## iOS
+## iOS SDK
 https://github.com/NodeMedia/NodeMediaClient-iOS
 
 ## Flash Publisher
