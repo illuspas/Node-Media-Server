@@ -1,6 +1,6 @@
 const _ = require('lodash');
 
-function getChannels(req, res, next) {
+function getStreams(req, res, next) {
   const nms = this;
 
   let stats = {};
@@ -11,10 +11,10 @@ function getChannels(req, res, next) {
 
       if (regRes === null) return;
 
-      let [app, channel] = _.slice(regRes, 1);
+      let [app, stream] = _.slice(regRes, 1);
 
-      if (!_.get(stats, [app, channel])) {
-        _.set(stats, [app, channel], {
+      if (!_.get(stats, [app, stream])) {
+        _.set(stats, [app, stream], {
           publisher: null,
           subscribers: []
         });
@@ -22,9 +22,9 @@ function getChannels(req, res, next) {
 
       switch (true) {
         case session.isPublishing: {
-          _.set(stats, [app, channel, 'publisher'], {
+          _.set(stats, [app, stream, 'publisher'], {
             app: app,
-            channel: channel,
+            stream: stream,
             clientId: session.id,
             connectCreated: session.connectTime,
             bytes: session.socket.bytesRead,
@@ -36,9 +36,9 @@ function getChannels(req, res, next) {
         case !!session.playStreamPath: {
           switch (session.constructor.name) {
             case 'NodeRtmpSession': {
-              stats[app][channel]['subscribers'].push({
+              stats[app][stream]['subscribers'].push({
                 app: app,
-                channel: channel,
+                stream: stream,
                 clientId: session.id,
                 connectCreated: session.connectTime,
                 bytes: session.socket.bytesWritten,
@@ -49,9 +49,9 @@ function getChannels(req, res, next) {
               break;
             }
             case 'NodeFlvSession': {
-              stats[app][channel]['subscribers'].push({
+              stats[app][stream]['subscribers'].push({
                 app: app,
-                channel: channel,
+                stream: stream,
                 clientId: session.id,
                 connectCreated: session.connectTime,
                 bytes: session.req.connection.bytesWritten,
@@ -72,10 +72,10 @@ function getChannels(req, res, next) {
   res.json(stats);
 }
 
-function getChannel(req, res, next) {
+function getStream(req, res, next) {
   const nms = this;
 
-  let channelStats = {
+  let streamStats = {
     isLive: false,
     viewers: 0,
     duration: 0,
@@ -87,16 +87,16 @@ function getChannel(req, res, next) {
 
   let publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
 
-  channelStats.isLive = !!publisherSession;
-  channelStats.viewers = _.filter(Array.from(nms.sessions.values()), (session) => {
+  streamStats.isLive = !!publisherSession;
+  streamStats.viewers = _.filter(Array.from(nms.sessions.values()), (session) => {
     return session.playStreamPath === publishStreamPath;
   }).length;
-  channelStats.duration = channelStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
-  channelStats.bitrate = channelStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / channelStats.duration / 1024) : 0;
-  channelStats.startTime = channelStats.isLive ? publisherSession.connectTime : null;
+  streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
+  streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
+  streamStats.startTime = streamStats.isLive ? publisherSession.connectTime : null;
 
-  res.json(channelStats);
+  res.json(streamStats);
 }
 
-exports.getChannels = getChannels;
-exports.getChannel = getChannel;
+exports.getStreams = getStreams;
+exports.getStream = getStream;
