@@ -91,9 +91,13 @@ class NodeRtmpSession extends EventEmitter {
     this.avcSequenceHeader = null;
     this.audioCodec = 0;
     this.audioCodecName = '';
+    this.audioSamplerate = 0;
+    this.audioChannels = 1;
     this.videoCodec = 0;
     this.videoCodecName = '';
-    
+    this.videoSize = 0+'x'+0;
+    this.videoFps = 0;
+
     this.gopCacheEnable = config.rtmp.gop_cache;
     this.rtmpGopCacheQueue = null;
     this.flvGopCacheQueue = null;
@@ -489,6 +493,10 @@ class NodeRtmpSession extends EventEmitter {
             cmdObj: dataMessage.dataObj
           };
           this.metaData = AMF.encodeAmf0Data(opt);
+          this.audioSamplerate = dataMessage.dataObj.audiosamplerate;
+          this.audioChannels = dataMessage.dataObj.stereo ? 2:1;
+          this.videoSize = dataMessage.dataObj.width+'x'+dataMessage.dataObj.height;
+          this.videoFps = dataMessage.dataObj.framerate;
         }
         break;
       default:

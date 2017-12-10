@@ -30,10 +30,14 @@ function getStreams(req, res, next) {
             bytes: session.socket.bytesRead,
             ip: session.socket.remoteAddress,
             audio: session.audioCodec > 0 ? {
-              codec: session.audioCodecName
+              codec: session.audioCodecName,
+              samplerate:session.audioSamplerate,
+              channels:session.audioChannels
             } : null,
             video: session.videoCodec > 0 ? {
-              codec: session.videoCodecName
+              codec: session.videoCodecName,
+              size: session.videoSize,
+              fps: session.videoFps
             } : null,
           });
 
