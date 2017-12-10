@@ -5,6 +5,7 @@
 //
 const EventEmitter = require('events');
 const QueryString = require('querystring');
+const AAC = require('./node_core_aac');
 
 const AMF = require('./node_core_amf');
 const Handshake = require('./node_rtmp_handshake');
@@ -91,11 +92,12 @@ class NodeRtmpSession extends EventEmitter {
     this.avcSequenceHeader = null;
     this.audioCodec = 0;
     this.audioCodecName = '';
+    this.audioProfileName = '';
     this.audioSamplerate = 0;
     this.audioChannels = 1;
     this.videoCodec = 0;
     this.videoCodecName = '';
-    this.videoSize = 0+'x'+0;
+    this.videoSize = 0 + 'x' + 0;
     this.videoFps = 0;
 
     this.gopCacheEnable = config.rtmp.gop_cache;
@@ -494,8 +496,8 @@ class NodeRtmpSession extends EventEmitter {
           };
           this.metaData = AMF.encodeAmf0Data(opt);
           this.audioSamplerate = dataMessage.dataObj.audiosamplerate;
-          this.audioChannels = dataMessage.dataObj.stereo ? 2:1;
-          this.videoSize = dataMessage.dataObj.width+'x'+dataMessage.dataObj.height;
+          this.audioChannels = dataMessage.dataObj.stereo ? 2 : 1;
+          this.videoSize = dataMessage.dataObj.width + 'x' + dataMessage.dataObj.height;
           this.videoFps = dataMessage.dataObj.framerate;
         }
         break;
@@ -564,12 +566,16 @@ class NodeRtmpSession extends EventEmitter {
       this.audioCodec = sound_format;
       this.audioCodecName = AUDIO_CODEC_NAME[sound_format];
       console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName}`);
-      
+
       if (sound_format == 10) {
         //cache aac sequence header
         if (rtmpBody[1] == 0) {
           this.aacSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstAudioReceived = true;
+          let info = AAC.readAudioSpecificConfig(this.aacSequenceHeader);
+          this.audioProfileName = AAC.getProfileName(info);
+          this.audioSamplerate = info.sample_rate;
+          this.audioChannels = info.channels;
         }
       } else {
         this.isFirstAudioReceived = true;

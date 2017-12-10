@@ -31,8 +31,9 @@ function getStreams(req, res, next) {
             ip: session.socket.remoteAddress,
             audio: session.audioCodec > 0 ? {
               codec: session.audioCodecName,
-              samplerate:session.audioSamplerate,
-              channels:session.audioChannels
+              profile: session.audioProfileName,
+              samplerate: session.audioSamplerate,
+              channels: session.audioChannels
             } : null,
             video: session.videoCodec > 0 ? {
               codec: session.videoCodecName,
