@@ -28,6 +28,41 @@ const RTMP_CHUNK_SIZE = 128;
 const RTMP_PING_TIME = 60000;
 const RTMP_PING_TIMEOUT = 30000;
 
+const AUDIO_CODEC_NAME = [
+  '',
+  'ADPCM',
+  "MP3",
+  "LinearLE",
+  "Nellymoser16",
+  "Nellymoser8",
+  "Nellymoser",
+  "G711A",
+  "G711U",
+  "",
+  "AAC",
+  "Speex",
+  "",
+  "",
+  "MP3-8K",
+  "DeviceSpecific",
+  "Uncompressed"
+];
+const VIDEO_CODEC_NAME = [
+  "",
+  "Jpeg",
+  "Sorenson-H263",
+  "ScreenVideo",
+  "On2-VP6",
+  "On2-VP6-Alpha",
+  "ScreenVideo2",
+  "H264",
+  "",
+  "",
+  "",
+  "",
+  "H265"
+];
+
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
@@ -55,8 +90,10 @@ class NodeRtmpSession extends EventEmitter {
     this.aacSequenceHeader = null;
     this.avcSequenceHeader = null;
     this.audioCodec = 0;
+    this.audioCodecName = '';
     this.videoCodec = 0;
-
+    this.videoCodecName = '';
+    
     this.gopCacheEnable = config.rtmp.gop_cache;
     this.rtmpGopCacheQueue = null;
     this.flvGopCacheQueue = null;
@@ -516,8 +553,10 @@ class NodeRtmpSession extends EventEmitter {
       let sound_size = (sound_format >> 1) & 0x01;
       let sound_rate = (sound_format >> 2) & 0x03;
       sound_format = (sound_format >> 4) & 0x0f;
-      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate}`);
       this.audioCodec = sound_format;
+      this.audioCodecName = AUDIO_CODEC_NAME[sound_format];
+      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName}`);
+      
       if (sound_format == 10) {
         //cache aac sequence header
         if (rtmpBody[1] == 0) {
@@ -566,7 +605,8 @@ class NodeRtmpSession extends EventEmitter {
 
     if (!this.isFirstVideoReceived) {
       this.videoCodec = codec_id;
-      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id}`);
+      this.videoCodecName = VIDEO_CODEC_NAME[codec_id];
+      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName}`);
 
       if (codec_id == 7 || codec_id == 12) {
         //cache avc sequence header

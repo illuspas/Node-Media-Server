@@ -28,7 +28,13 @@ function getStreams(req, res, next) {
             clientId: session.id,
             connectCreated: session.connectTime,
             bytes: session.socket.bytesRead,
-            ip: session.socket.remoteAddress
+            ip: session.socket.remoteAddress,
+            audio: session.audioCodec > 0 ? {
+              codec: session.audioCodecName
+            } : null,
+            video: session.videoCodec > 0 ? {
+              codec: session.videoCodecName
+            } : null,
           });
 
           break;
