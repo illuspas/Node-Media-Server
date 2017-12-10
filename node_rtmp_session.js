@@ -770,6 +770,7 @@ class NodeRtmpSession extends EventEmitter {
     this.setChunkSize(this.outChunkSize);
     this.respondConnect();
     this.startTimestamp = Date.now();
+    this.connectTime = new Date();
     this.pingInterval = setInterval(() => {
       this.pingRequest();
     }, this.ping);

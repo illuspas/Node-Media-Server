@@ -55,7 +55,9 @@ class NodeFlvSession extends EventEmitter {
     this.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
 
     this.isStarting = true;
-    this.bp.init(this.handleData())
+    this.bp.init(this.handleData());
+
+    this.connectTime = new Date();
 
     if (format != 'flv') {
       console.log(`[${this.TAG}] Unsupported format=${format}`);
