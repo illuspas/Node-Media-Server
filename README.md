@@ -287,8 +287,10 @@ https://github.com/delian/node-amfutils
 
 ## Android Livestream App
 https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
-
 http://www.nodemedia.cn/uploads/qlive-release.apk
+
+## iOS livestream App
+https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1321792616&mt=8
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
