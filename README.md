@@ -37,6 +37,8 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
+  socket: true,  // enable socket connection
+  filesystem: true,  // enable serving /public directory
   auth: {
     play: false,
     publish: false,

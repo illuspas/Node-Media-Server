@@ -25,9 +25,13 @@ class NodeMediaServer {
       this.nrs.run();
     }
 
-    if (this.config.http) {
+    if (this.config.http || this.config.https) {
       this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
       this.nhs.run();
+
+      if (this.config.socket) {
+        this.nhs.runSocket();
+      }
 
       this.nhs.expressApp.use('/api/streams', channels(this));
     }

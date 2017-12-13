@@ -40,8 +40,11 @@ class NodeHttpServer {
         }
       }
     });
-    this.expressApp.use(Express.static(__dirname + '/public'));
-    
+
+    if (this.config.filesystem) {
+      this.expressApp.use(Express.static(__dirname + '/public'));
+    }
+
     this.httpServer = Http.createServer(this.expressApp);
 
     /**
@@ -68,6 +71,18 @@ class NodeHttpServer {
       console.error(`Node Media Http Server ${e}`);
     });
 
+    if (this.httpsServer) {
+      this.httpsServer.listen(this.sport, () => {
+        console.log(`Node Media Https Server started on port: ${this.sport}`);
+      });
+
+      this.httpsServer.on('error', (e) => {
+        console.error(`Node Media Https Server ${e}`);
+      });
+    }
+  }
+
+  runSocket() {
     this.wsServer = new WebSocket.Server({ server: this.httpServer });
 
     this.wsServer.on('connection', (ws, req) => {
@@ -78,19 +93,8 @@ class NodeHttpServer {
     this.wsServer.on('listening', () => {
       console.log(`Node Media WebSocket Server started on port: ${this.port}`);
     });
-    this.wsServer.on('error', (e) => {
-      console.error(`Node Media WebSocket Server ${e}`);
-    });
 
     if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, () => {
-        console.log(`Node Media Https Server started on port: ${this.sport}`);
-      });
-
-      this.httpsServer.on('error', (e) => {
-        console.error(`Node Media Https Server ${e}`);
-      });
-
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
 
       this.wssServer.on('connection', (ws, req) => {
@@ -101,10 +105,11 @@ class NodeHttpServer {
       this.wssServer.on('listening', () => {
         console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
       });
-      this.wssServer.on('error', (e) => {
-        console.error(`Node Media WebSocketSecure Server ${e}`);
-      });
     }
+
+    this.wsServer.on('error', (e) => {
+      console.error(`Node Media WebSocket Server ${e}`);
+    });
   }
 
   onConnect(req, res) {
