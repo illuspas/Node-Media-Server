@@ -16,23 +16,26 @@ const HTTPS_PORT = 443;
 
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
-    this.port = config.http.port ? config.http.port : HTTP_PORT;
     this.config = config;
     this.sessions = sessions;
     this.publishers = publishers;
     this.idlePlayers = idlePlayers;
 
+    if (config.http) {
+      this.port = config.http.port ? config.http.port : HTTP_PORT;
+    }
+
     this.expressApp = Express();
     this.expressApp.all('*.flv', (req, res, next) => {
       if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+        res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin || this.config.https.allow_origin);
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'range');
         res.end();
       } else {
         if (Fs.existsSync(__dirname + '/public' + req.url)) {
           res.setHeader('Content-Type', 'video/x-flv');
-          res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+          res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin || this.config.https.allow_origin);
           next();
         } else {
           req.nmsConnectionType = 'http';
@@ -45,7 +48,9 @@ class NodeHttpServer {
       this.expressApp.use(Express.static(__dirname + '/public'));
     }
 
-    this.httpServer = Http.createServer(this.expressApp);
+    if (this.config.http) {
+      this.httpServer = Http.createServer(this.expressApp);
+    }
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
@@ -63,13 +68,15 @@ class NodeHttpServer {
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
-      console.log(`Node Media Http Server started on port: ${this.port}`);
-    });
+    if (this.httpServer) {
+      this.httpServer.listen(this.port, () => {
+        console.log(`Node Media Http Server started on port: ${this.port}`);
+      });
 
-    this.httpServer.on('error', (e) => {
-      console.error(`Node Media Http Server ${e}`);
-    });
+      this.httpServer.on('error', (e) => {
+        console.error(`Node Media Http Server ${e}`);
+      });
+    }
 
     if (this.httpsServer) {
       this.httpsServer.listen(this.sport, () => {
