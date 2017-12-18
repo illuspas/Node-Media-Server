@@ -17,6 +17,8 @@ const config = {
     key:'./privatekey.pem',
     cert:'./certificate.pem',
   },
+  socket: true,
+  filesystem: true,
   auth: {
     play: false,
     publish: false,
