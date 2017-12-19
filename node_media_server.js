@@ -38,6 +38,15 @@ class NodeMediaServer {
     this.nodeEvent.on(eventName, listener);
   }
 
+  stop() {
+    if (this.nrs) {
+      this.nrs.stop();
+    }
+    if (this.nhs) {
+      this.nhs.stop();
+    }
+  }
+
   getSession(id) {
     return this.sessions.get(id);
   }

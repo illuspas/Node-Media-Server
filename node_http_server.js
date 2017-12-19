@@ -68,6 +68,10 @@ class NodeHttpServer {
       console.error(`Node Media Http Server ${e}`);
     });
 
+    this.httpServer.on('close', () => {
+      console.log('Node Media Http Server Close.');
+    });
+
     this.wsServer = new WebSocket.Server({ server: this.httpServer });
 
     this.wsServer.on('connection', (ws, req) => {
@@ -91,6 +95,10 @@ class NodeHttpServer {
         console.error(`Node Media Https Server ${e}`);
       });
 
+      this.httpsServer.on('close', () => {
+        console.log('Node Media Https Server Close.');
+      });
+
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
 
       this.wssServer.on('connection', (ws, req) => {
@@ -105,6 +113,19 @@ class NodeHttpServer {
         console.error(`Node Media WebSocketSecure Server ${e}`);
       });
     }
+  }
+
+  stop() {
+    this.httpServer.close();
+    if (this.httpsServer) {
+      this.httpsServer.close();
+    }
+    this.sessions.forEach((session, id) => {
+      if (session instanceof NodeFlvSession) {
+        session.req.destroy();
+        this.sessions.delete(id);
+      }
+    });
   }
 
   onConnect(req, res) {
