@@ -135,7 +135,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 >1503458721
 
 3.Config set auth->secret: 'nodemedia2017privatekey'
-```
+```js
 const config = {
   rtmp: {
     port: 1935,
@@ -218,14 +218,14 @@ nms.on('donePlay', (id, StreamPath, args) => {
 # Https/Wss
 
 ## Generate certificate
-```
+```bash
 openssl genrsa -out privatekey.pem 1024
 openssl req -new -key privatekey.pem -out certrequest.csr 
 openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
 ```
 
 ## Config https
-```
+```js
 const NodeMediaServer = require('./node_media_server');
 
 const config = {
@@ -272,7 +272,7 @@ https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
 
 http://www.nodemedia.cn/uploads/qlive-release.apk
 
-## iOS livestream App
+## iOS Livestream App
 https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1321792616&mt=8
 
 ## Android SDK
