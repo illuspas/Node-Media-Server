@@ -46,52 +46,8 @@ const config = {
   }
 };
 
-
 var nms = new NodeMediaServer(config)
 nms.run();
-
-nms.on('preConnect', (id, args) => {
-  console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
-  // session.reject();
-});
-
-nms.on('postConnect', (id, args) => {
-  console.log('[NodeEvent on postConnect]', `id=${id} args=${JSON.stringify(args)}`);
-});
-
-nms.on('doneConnect', (id, args) => {
-  console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
-});
-
-nms.on('prePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
-  // session.reject();
-});
-
-nms.on('postPublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-});
-
-nms.on('donePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-});
-
-nms.on('prePlay', (id, StreamPath, args) => {
-  console.log('[NodeEvent on prePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
-  // session.reject();
-});
-
-nms.on('postPlay', (id, StreamPath, args) => {
-  console.log('[NodeEvent on postPlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-});
-
-nms.on('donePlay', (id, StreamPath, args) => {
-  console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-});
-
 
 ```
 
@@ -186,7 +142,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 >1503458721
 
 3.Config set auth->secret: 'nodemedia2017privatekey'
-```
+```js
 const config = {
   rtmp: {
     port: 1935,
@@ -221,26 +177,62 @@ Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)
 Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios) 
 
 # Event callback
-- preConnect
-- postConnect
-- prePublish 
-- postPublish
-- donePublish
-- prePlay
-- postPlay
-- donePlay
+```js
+......
+nms.run();
+nms.on('preConnect', (id, args) => {
+  console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
+  // let session = nms.getSession(id);
+  // session.reject();
+});
 
+nms.on('postConnect', (id, args) => {
+  console.log('[NodeEvent on postConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('doneConnect', (id, args) => {
+  console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('prePublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  // let session = nms.getSession(id);
+  // session.reject();
+});
+
+nms.on('postPublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('donePublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('prePlay', (id, StreamPath, args) => {
+  console.log('[NodeEvent on prePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  // let session = nms.getSession(id);
+  // session.reject();
+});
+
+nms.on('postPlay', (id, StreamPath, args) => {
+  console.log('[NodeEvent on postPlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('donePlay', (id, StreamPath, args) => {
+  console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+```
 # Https/Wss
 
 ## Generate certificate
-```
+```bash
 openssl genrsa -out privatekey.pem 1024
 openssl req -new -key privatekey.pem -out certrequest.csr 
 openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
 ```
 
 ## Config https
-```
+```js
 const NodeMediaServer = require('./node_media_server');
 
 const config = {
@@ -259,11 +251,6 @@ const config = {
     port: 8443,
     key:'./privatekey.pem',
     cert:'./certificate.pem',
-  },
-  auth: {
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
   }
 };
 
@@ -292,7 +279,7 @@ https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
 
 http://www.nodemedia.cn/uploads/qlive-release.apk
 
-## iOS livestream App
+## iOS Livestream App
 https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1321792616&mt=8
 
 ## Android SDK
@@ -300,6 +287,9 @@ https://github.com/NodeMedia/NodeMediaClient-Android
 
 ## iOS SDK
 https://github.com/NodeMedia/NodeMediaClient-iOS
+
+## React-Native SDK
+https://github.com/NodeMedia/react-native-nodemediaclient
 
 ## Flash Publisher
 https://github.com/NodeMedia/NodeMediaClient-Web

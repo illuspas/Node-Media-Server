@@ -16,7 +16,7 @@ class NodeFlvSession extends EventEmitter {
     this.config = config;
     this.req = req;
     this.res = res;
-    this.bp = new BufferPool();
+    this.bp = new BufferPool(this.handleData());
     this.bp.on('error', (e) => {
 
     });
@@ -55,7 +55,7 @@ class NodeFlvSession extends EventEmitter {
     this.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
 
     this.isStarting = true;
-    this.bp.init(this.handleData());
+    this.bp.init();
 
     this.connectTime = new Date();
 
@@ -131,15 +131,12 @@ class NodeFlvSession extends EventEmitter {
       }
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
-    this.res.end();
+    this.res.destroy();
     this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
     this.sessions = null;
-    this.bp = null;
-    this.req = null;
-    this.res = null;
   }
 
   respondUnpublish() {

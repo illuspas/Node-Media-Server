@@ -76,6 +76,10 @@ class NodeHttpServer {
       this.httpServer.on('error', (e) => {
         console.error(`Node Media Http Server ${e}`);
       });
+
+      this.httpServer.on('close', () => {
+        console.log('Node Media Http Server Close.');
+      });
     }
 
     if (this.httpsServer) {
@@ -86,36 +90,61 @@ class NodeHttpServer {
       this.httpsServer.on('error', (e) => {
         console.error(`Node Media Https Server ${e}`);
       });
+
+      this.httpsServer.on('close', () => {
+        console.log('Node Media Https Server Close.');
+      });
     }
   }
 
   runSocket() {
-    this.wsServer = new WebSocket.Server({ server: this.httpServer });
+    if (this.httpServer) {
+      this.wsServer = new WebSocket.Server({ server: this.httpServer });
 
-    this.wsServer.on('connection', (ws, req) => {
-      req.nmsConnectionType = 'ws';
-      this.onConnect(req, ws);
-    });
+      this.wsServer.on('listening', () => {
+        console.log(`Node Media WebSocket Server started on port: ${this.port}`);
+      });
 
-    this.wsServer.on('listening', () => {
-      console.log(`Node Media WebSocket Server started on port: ${this.port}`);
-    });
+      this.wsServer.on('connection', (ws, req) => {
+        req.nmsConnectionType = 'ws';
+        this.onConnect(req, ws);
+      });
+  
+      this.wsServer.on('error', (e) => {
+        console.error(`Node Media WebSocket Server ${e}`);
+      });
+    }
 
     if (this.httpsServer) {
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
+
+      this.wssServer.on('listening', () => {
+        console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+      });
 
       this.wssServer.on('connection', (ws, req) => {
         req.nmsConnectionType = 'ws';
         this.onConnect(req, ws);
       });
-
-      this.wssServer.on('listening', () => {
-        console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+  
+      this.wssServer.on('error', (e) => {
+        console.error(`Node Media WebSocket Server ${e}`);
       });
     }
+  }
 
-    this.wsServer.on('error', (e) => {
-      console.error(`Node Media WebSocket Server ${e}`);
+  stop() {
+    if (this.httpServer) {
+      this.httpServer.close();
+    }
+    if (this.httpsServer) {
+      this.httpsServer.close();
+    }
+    this.sessions.forEach((session, id) => {
+      if (session instanceof NodeFlvSession) {
+        session.req.destroy();
+        this.sessions.delete(id);
+      }
     });
   }
 
