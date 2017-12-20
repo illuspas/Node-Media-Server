@@ -299,6 +299,9 @@ https://github.com/NodeMedia/NodeMediaClient-Android
 ## iOS SDK
 https://github.com/NodeMedia/NodeMediaClient-iOS
 
+## React-Native SDK
+https://github.com/NodeMedia/react-native-nodemediaclient
+
 ## Flash Publisher
 https://github.com/NodeMedia/NodeMediaClient-Web
 
