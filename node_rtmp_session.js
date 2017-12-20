@@ -68,7 +68,7 @@ class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
     this.config = config;
-    this.bp = new BufferPool();
+    this.bp = new BufferPool(this.handleData());
     this.nodeEvent = NodeCoreUtils.nodeEvent;
     this.socket = socket;
     this.players = null;
@@ -80,6 +80,7 @@ class NodeRtmpSession extends EventEmitter {
     this.ping = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
     this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
+    this.socket.setTimeout(this.pingTimeout); //Use nodejs network timeout mechanism 
 
     this.isStarting = false;
     this.isPublishing = false;
@@ -128,11 +129,12 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
+    this.socket.on('timeout', this.onSocketTimeout.bind(this));
   }
 
   run() {
     this.isStarting = true;
-    this.bp.init(this.handleData())
+    this.bp.init();
   }
 
   stop() {
@@ -151,10 +153,17 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   onSocketError(e) {
+    // console.log(`[rtmp socket error] id:${this.id}`,e);
     this.stop();
   }
 
   onSocketClose() {
+    // console.log(`[rtmp socket close] id:${this.id}`);
+    this.stop();
+  }
+
+  onSocketTimeout() {
+    // console.log(`[rtmp socket timeout] id:${this.id}`);
     this.stop();
   }
 
@@ -172,7 +181,7 @@ class NodeRtmpSession extends EventEmitter {
     }
     let c2 = this.bp.read(1536);
     console.log('[rtmp handshake] done');
-    console.log('[rtmp message parser]  start');
+    console.log('[rtmp message parser] start');
     this.bp.readBytes = 0;
     while (this.isStarting) {
       let message = {};
@@ -342,16 +351,11 @@ class NodeRtmpSession extends EventEmitter {
       this.pingInterval = null;
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
-    this.socket.end();
-    this.socket.removeAllListeners('data');
-    this.socket.removeAllListeners('close');
-    this.socket.removeAllListeners('error');
+    this.socket.destroy();
     this.sessions.delete(this.id);
     this.idlePlayers = null;
     this.publishers = null;
     this.sessions = null;
-    this.bp = null;
-    this.socket = null;
   }
 
   createChunkBasicHeader(fmt, id) {
