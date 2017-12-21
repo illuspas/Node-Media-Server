@@ -37,7 +37,10 @@ function getStreams(req, res, next) {
             } : null,
             video: session.videoCodec > 0 ? {
               codec: session.videoCodecName,
-              size: session.videoSize,
+              width: session.videoWidth,
+              height: session.videoHeight,
+              profile: session.videoProfileName,
+              level: session.videoLevel,
               fps: session.videoFps
             } : null,
           });

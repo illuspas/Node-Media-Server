@@ -65,8 +65,11 @@ class NodeRtmpSession extends EventEmitter {
     this.audioChannels = 1;
     this.videoCodec = 0;
     this.videoCodecName = '';
-    this.videoSize = 0 + 'x' + 0;
+    this.videoProfileName = '';
+    this.videoWidth = 0;
+    this.videoHeight = 0;
     this.videoFps = 0;
+    this.videoLevel = 0;
 
     this.gopCacheEnable = config.rtmp.gop_cache;
     this.rtmpGopCacheQueue = null;
@@ -466,9 +469,11 @@ class NodeRtmpSession extends EventEmitter {
             cmdObj: dataMessage.dataObj
           };
           this.metaData = AMF.encodeAmf0Data(opt);
+          // console.log(dataMessage.dataObj);
           this.audioSamplerate = dataMessage.dataObj.audiosamplerate;
           this.audioChannels = dataMessage.dataObj.stereo ? 2 : 1;
-          this.videoSize = dataMessage.dataObj.width + 'x' + dataMessage.dataObj.height;
+          this.videoWidth = dataMessage.dataObj.width;
+          this.videoHeight = dataMessage.dataObj.height;
           this.videoFps = dataMessage.dataObj.framerate;
         }
         break;
@@ -556,7 +561,7 @@ class NodeRtmpSession extends EventEmitter {
         if (rtmpBody[1] == 0) {
           this.aacSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstAudioReceived = true;
-          let info = AV.readAudioSpecificConfig(this.aacSequenceHeader);
+          let info = AV.readAACSpecificConfig(this.aacSequenceHeader);
           this.audioProfileName = AV.getAACProfileName(info);
           this.audioSamplerate = info.sample_rate;
           this.audioChannels = info.channels;
@@ -611,6 +616,14 @@ class NodeRtmpSession extends EventEmitter {
         if (frame_type == 1 && rtmpBody[1] == 0) {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstVideoReceived = true;
+          let info = codec_id == 7 ? AV.readAVCSpecificConfig(this.avcSequenceHeader) : AV.readHEVCSpecificConfig(this.avcSequenceHeader);
+          console.log(info);
+          if (this.videoWidth == 0 || this.videoHeight == 0) {
+            this.videoWidth = info.width;
+            this.videoHeight = info.height;
+          }
+          this.videoProfileName = AV.getAVCProfileName(info);
+          this.videoLevel = info.level / 10.0;
           this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
           this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
         }
