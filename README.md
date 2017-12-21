@@ -258,6 +258,84 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >hostname must be the same as the browser address 
 
+## streams state
+http://localhost:8000/api/streams
+
+```json
+{
+    "live": {
+        "s": {
+            "publisher": {
+                "app": "live",
+                "stream": "s",
+                "clientId": "U3UYQ02P",
+                "connectCreated": "2017-12-21T02:29:13.594Z",
+                "bytes": 190279524,
+                "ip": "::1",
+                "audio": {
+                    "codec": "AAC",
+                    "profile": "LC",
+                    "samplerate": 48000,
+                    "channels": 6
+                },
+                "video": {
+                    "codec": "H264",
+                    "width": 1920,
+                    "height": 1080,
+                    "profile": "Main",
+                    "level": 4.1,
+                    "fps": 24
+                }
+            },
+            "subscribers": [
+                {
+                    "app": "live",
+                    "stream": "s",
+                    "clientId": "H227P4IR",
+                    "connectCreated": "2017-12-21T02:31:35.278Z",
+                    "bytes": 18591846,
+                    "ip": "::ffff:127.0.0.1",
+                    "protocol": "http"
+                },
+                {
+                    "app": "live",
+                    "stream": "s",
+                    "clientId": "ZNULPE9K",
+                    "connectCreated": "2017-12-21T02:31:45.394Z",
+                    "bytes": 8744478,
+                    "ip": "::ffff:127.0.0.1",
+                    "protocol": "ws"
+                },
+                {
+                    "app": "live",
+                    "stream": "s",
+                    "clientId": "C5G8NJ30",
+                    "connectCreated": "2017-12-21T02:31:51.736Z",
+                    "bytes": 2046073,
+                    "ip": "::ffff:192.168.0.91",
+                    "protocol": "rtmp"
+                }
+            ]
+        },
+        "stream": {
+            "publisher": null,
+            "subscribers": [
+                {
+                    "app": "live",
+                    "stream": "stream",
+                    "clientId": "KBH4PCWB",
+                    "connectCreated": "2017-12-21T02:31:30.245Z",
+                    "bytes": 0,
+                    "ip": "::ffff:127.0.0.1",
+                    "protocol": "http"
+                }
+            ]
+        }
+    }
+}
+```
+
+
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
 https://github.com/iizukanao/node-rtsp-rtmp-server
