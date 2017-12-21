@@ -5,7 +5,8 @@
 //
 const EventEmitter = require('events');
 const QueryString = require('querystring');
-const AAC = require('./node_core_aac');
+const AV = require('./node_core_av');
+const { AUDIO_SOUND_RATE, AUDIO_CODEC_NAME, VIDEO_CODEC_NAME } = require('./node_core_av');
 
 const AMF = require('./node_core_amf');
 const Handshake = require('./node_rtmp_handshake');
@@ -29,40 +30,6 @@ const RTMP_CHUNK_SIZE = 128;
 const RTMP_PING_TIME = 60000;
 const RTMP_PING_TIMEOUT = 30000;
 
-const AUDIO_CODEC_NAME = [
-  '',
-  'ADPCM',
-  "MP3",
-  "LinearLE",
-  "Nellymoser16",
-  "Nellymoser8",
-  "Nellymoser",
-  "G711A",
-  "G711U",
-  "",
-  "AAC",
-  "Speex",
-  "",
-  "",
-  "MP3-8K",
-  "DeviceSpecific",
-  "Uncompressed"
-];
-const VIDEO_CODEC_NAME = [
-  "",
-  "Jpeg",
-  "Sorenson-H263",
-  "ScreenVideo",
-  "On2-VP6",
-  "On2-VP6-Alpha",
-  "ScreenVideo2",
-  "H264",
-  "",
-  "",
-  "",
-  "",
-  "H265"
-];
 
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
@@ -571,13 +538,26 @@ class NodeRtmpSession extends EventEmitter {
       this.audioCodecName = AUDIO_CODEC_NAME[sound_format];
       console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName}`);
 
+      this.audioSamplerate = AUDIO_SOUND_RATE[sound_rate];
+      this.audioChannels = ++sound_type;
+
+      if (sound_format == 4) {
+        this.audioSamplerate = 16000;
+      } else if (sound_format == 5) {
+        this.audioSamplerate = 8000;
+      } else if (sound_format == 11) {
+        this.audioSamplerate = 16000;
+      } else if (sound_format == 14) {
+        this.audioSamplerate = 8000;
+      }
+
       if (sound_format == 10) {
         //cache aac sequence header
         if (rtmpBody[1] == 0) {
           this.aacSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstAudioReceived = true;
-          let info = AAC.readAudioSpecificConfig(this.aacSequenceHeader);
-          this.audioProfileName = AAC.getProfileName(info);
+          let info = AV.readAudioSpecificConfig(this.aacSequenceHeader);
+          this.audioProfileName = AV.getAACProfileName(info);
           this.audioSamplerate = info.sample_rate;
           this.audioChannels = info.channels;
         }

@@ -5,8 +5,49 @@ const AAC_SAMPLE_RATE = [
     16000, 12000, 11025, 8000,
     7350, 0, 0, 0
 ];
+
 const AAC_CHANNELS = [
     0, 1, 2, 3, 4, 5, 6, 8
+];
+
+const AUDIO_CODEC_NAME = [
+    '',
+    'ADPCM',
+    "MP3",
+    "LinearLE",
+    "Nellymoser16",
+    "Nellymoser8",
+    "Nellymoser",
+    "G711A",
+    "G711U",
+    "",
+    "AAC",
+    "Speex",
+    "",
+    "",
+    "MP3-8K",
+    "DeviceSpecific",
+    "Uncompressed"
+];
+
+const AUDIO_SOUND_RATE = [
+    5512, 11025, 22050, 44100
+];
+
+const VIDEO_CODEC_NAME = [
+    "",
+    "Jpeg",
+    "Sorenson-H263",
+    "ScreenVideo",
+    "On2-VP6",
+    "On2-VP6-Alpha",
+    "ScreenVideo2",
+    "H264",
+    "",
+    "",
+    "",
+    "",
+    "H265"
 ];
 
 function getObjectType(bitop) {
@@ -47,7 +88,7 @@ function readAudioSpecificConfig(aacSequenceHeader) {
     return info;
 }
 
-function getProfileName(info) {
+function getAACProfileName(info) {
     switch (info.object_type) {
         case 1:
             return "Main";
@@ -70,4 +111,10 @@ function getProfileName(info) {
     }
 }
 
-module.exports = { readAudioSpecificConfig, getProfileName };
+module.exports = {
+    AUDIO_SOUND_RATE,
+    AUDIO_CODEC_NAME,
+    VIDEO_CODEC_NAME,
+    readAudioSpecificConfig,
+    getAACProfileName
+};
