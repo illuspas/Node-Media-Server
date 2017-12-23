@@ -562,6 +562,7 @@ class NodeRtmpSession extends EventEmitter {
           this.aacSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstAudioReceived = true;
           let info = AV.readAACSpecificConfig(this.aacSequenceHeader);
+          // console.log('[rtmp handleAudioMessage ]',info);
           this.audioProfileName = AV.getAACProfileName(info);
           this.audioSamplerate = info.sample_rate;
           this.audioChannels = info.channels;
@@ -617,13 +618,13 @@ class NodeRtmpSession extends EventEmitter {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstVideoReceived = true;
           let info = codec_id == 7 ? AV.readAVCSpecificConfig(this.avcSequenceHeader) : AV.readHEVCSpecificConfig(this.avcSequenceHeader);
-          console.log(info);
+          // console.log('[rtmp handleVideoMessage ]',info);
           if (this.videoWidth == 0 || this.videoHeight == 0) {
             this.videoWidth = info.width;
             this.videoHeight = info.height;
           }
-          this.videoProfileName = AV.getAVCProfileName(info);
-          this.videoLevel = info.level / 10.0;
+          this.videoProfileName = codec_id == 7 ? AV.getAVCProfileName(info) : AV.getHVCProfileName(info);
+          this.videoLevel = info.level;
           this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
           this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
         }
