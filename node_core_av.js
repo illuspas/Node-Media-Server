@@ -117,7 +117,7 @@ function getAACProfileName(info) {
   }
 }
 
-function readAVCSpecificConfig(avcSequenceHeader) {
+function readH264SpecificConfig(avcSequenceHeader) {
   let info = {};
   let profile_idc, width, height, crop_left, crop_right,
     crop_top, crop_bottom, frame_mbs_only, n, cf_idc,
@@ -273,32 +273,6 @@ function readAVCSpecificConfig(avcSequenceHeader) {
   return info;
 }
 
-function getAVCProfileName(info) {
-  switch (info.profile) {
-    case 66:
-      return "Baseline";
-    case 77:
-      return "Main";
-    case 100:
-      return "High";
-    default:
-      return "";
-  }
-}
-
-function getHVCProfileName(info) {
-  switch (info.profile) {
-    case 1:
-      return "Main";
-    case 2:
-      return "Main 10";
-    case 3:
-      return "Main Still Picture";
-    default:
-      return "";
-  }
-}
-
 function HEVCParsePtl(bitop, hevc, sps_max_sub_layers_minus1) {
   let general_ptl = {};
   let sub_layer_profile_present_flag = [];
@@ -445,9 +419,34 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
   return info;
 }
 
-let sps = Buffer.from('42010101600000030090000003000003003fa0050201696592a4932bc040400000fa4000177042', 'hex');
-let hevc = {};
-HEVCParseSPS(sps, hevc);
+function readAVCSpecificConfig(avcSequenceHeader) {
+  let codec_id = avcSequenceHeader[0] & 0x0f;
+  if (codec_id == 7) {
+    return readH264SpecificConfig(avcSequenceHeader);
+  } else if (codec_id == 12) {
+    return readHEVCSpecificConfig(avcSequenceHeader);
+  }
+}
+
+
+function getAVCProfileName(info) {
+  switch (info.profile) {
+    case 1:
+      return "Main";
+    case 2:
+      return "Main 10";
+    case 3:
+      return "Main Still Picture";
+    case 66:
+      return "Baseline";
+    case 77:
+      return "Main";
+    case 100:
+      return "High";
+    default:
+      return "";
+  }
+}
 
 module.exports = {
   AUDIO_SOUND_RATE,
@@ -457,6 +456,4 @@ module.exports = {
   getAACProfileName,
   readAVCSpecificConfig,
   getAVCProfileName,
-  readHEVCSpecificConfig,
-  getHVCProfileName
 };

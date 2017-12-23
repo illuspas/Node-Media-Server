@@ -617,13 +617,13 @@ class NodeRtmpSession extends EventEmitter {
         if (frame_type == 1 && rtmpBody[1] == 0) {
           this.avcSequenceHeader = Buffer.from(rtmpBody);
           this.isFirstVideoReceived = true;
-          let info = codec_id == 7 ? AV.readAVCSpecificConfig(this.avcSequenceHeader) : AV.readHEVCSpecificConfig(this.avcSequenceHeader);
+          let info = AV.readAVCSpecificConfig(this.avcSequenceHeader);
           // console.log('[rtmp handleVideoMessage ]',info);
           if (this.videoWidth == 0 || this.videoHeight == 0) {
             this.videoWidth = info.width;
             this.videoHeight = info.height;
           }
-          this.videoProfileName = codec_id == 7 ? AV.getAVCProfileName(info) : AV.getHVCProfileName(info);
+          this.videoProfileName = AV.getAVCProfileName(info);
           this.videoLevel = info.level;
           this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
           this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
