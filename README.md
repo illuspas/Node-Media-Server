@@ -13,10 +13,10 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support xycdn style authentication
- - Support NetStream.Play and NetStream.Publish in one NetConnection
  - Support event callback
  - Support https/wss
-
+ - Support Server Monitor
+ 
 # Usage 
 ```bash
 npm install node-media-server
@@ -49,7 +49,8 @@ nms.run();
 - [ ] support transcode
 - [ ] support cluster
 - [ ] support low latency hls
-- [ ] server and streams status
+- [x] server and streams status
+- [ ] server monitor frontend
 - [x] on_connect/on_publish/on_play/on_done event callback
 
 # Publishing live streams
@@ -258,7 +259,40 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >hostname must be the same as the browser address 
 
-# Streams state
+# Server stats
+http://localhost:8000/api/server
+
+```json
+{
+  "uptime": 140449,
+  "os": {
+    "arch": "x64",
+    "platform": "darwin",
+    "release": "16.7.0"
+  },
+  "cpu": {
+    "num": 8,
+    "load": 10,
+    "model": "Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz",
+    "speed": 3592
+  },
+  "mem": {
+    "totle": 8589934592,
+    "free": 65753088
+  },
+  "net": {
+    "inbytes": 6137233,
+    "outbytes": 812629863
+  },
+  "clients": {
+    "accepted": 403,
+    "active": 201,
+    "idle": 0
+  }
+}
+```
+
+# Streams stats
 http://localhost:8000/api/streams
 
 ```json
