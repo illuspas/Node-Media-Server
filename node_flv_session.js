@@ -131,7 +131,7 @@ class NodeFlvSession extends EventEmitter {
       }
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
-    this.res.destroy();
+    this.res.end();
     this.idlePlayers.delete(this.id);
     this.sessions.delete(this.id);
     this.idlePlayers = null;
