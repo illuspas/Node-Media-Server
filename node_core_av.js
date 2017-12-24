@@ -273,18 +273,12 @@ function readH264SpecificConfig(avcSequenceHeader) {
   return info;
 }
 
-function HEVCParsePtl(bitop, hevc, sps_max_sub_layers_minus1) {
+function HEVCParsePtl(bitop, hevc, max_sub_layers_minus1) {
   let general_ptl = {};
-  let sub_layer_profile_present_flag = [];
-  let sub_layer_level_present_flag = [];
 
   general_ptl.profile_space = bitop.read(2);
   general_ptl.tier_flag = bitop.read(1);
   general_ptl.profile_idc = bitop.read(5);
-  // general_ptl.profile_compatibility_flags = [];
-  // for (let i = 0; i < 32; i++) {
-  //   general_ptl.profile_compatibility_flags[i] = bitop.read(1);
-  // }
   general_ptl.profile_compatibility_flags = bitop.read(32);
   general_ptl.general_progressive_source_flag = bitop.read(1);
   general_ptl.general_interlaced_source_flag = bitop.read(1);
@@ -293,6 +287,51 @@ function HEVCParsePtl(bitop, hevc, sps_max_sub_layers_minus1) {
   bitop.read(32);
   bitop.read(12);
   general_ptl.level_idc = bitop.read(8);
+
+  general_ptl.sub_layer_profile_present_flag = [];
+  general_ptl.sub_layer_level_present_flag = [];
+
+  for (let i = 0; i < max_sub_layers_minus1; i++) {
+    general_ptl.sub_layer_profile_present_flag[i] = bitop.read(1);
+    general_ptl.sub_layer_level_present_flag[i] = bitop.read(1);
+  }
+
+  if (max_sub_layers_minus1 > 0) {
+    for (let i = max_sub_layers_minus1; i < 8; i++) {
+      bitop.read(2)
+    }
+  }
+
+  general_ptl.sub_layer_profile_space = [];
+  general_ptl.sub_layer_tier_flag = [];
+  general_ptl.sub_layer_profile_idc = [];
+  general_ptl.sub_layer_profile_compatibility_flag = [];
+  general_ptl.sub_layer_progressive_source_flag = [];
+  general_ptl.sub_layer_interlaced_source_flag = [];
+  general_ptl.sub_layer_non_packed_constraint_flag = [];
+  general_ptl.sub_layer_frame_only_constraint_flag = [];
+  general_ptl.sub_layer_level_idc = [];
+
+  for (let i = 0; i < max_sub_layers_minus1; i++) {
+    if (general_ptl.sub_layer_profile_present_flag[i]) {
+      general_ptl.sub_layer_profile_space[i] = bitop.read(2);
+      general_ptl.sub_layer_tier_flag[i] = bitop.read(1);
+      general_ptl.sub_layer_profile_idc[i] = bitop.read(5);
+      general_ptl.sub_layer_profile_compatibility_flag[i] = bitop.read(32);
+      general_ptl.sub_layer_progressive_source_flag[i] = bitop.read(1);
+      general_ptl.sub_layer_interlaced_source_flag[i] = bitop.read(1);
+      general_ptl.sub_layer_non_packed_constraint_flag[i] = bitop.read(1);
+      general_ptl.sub_layer_frame_only_constraint_flag[i] = bitop.read(1);
+      bitop.read(32);
+      bitop.read(12);
+    }
+    if (general_ptl.sub_layer_level_present_flag[i]) {
+      general_ptl.sub_layer_level_idc[i] = bitop.read(8);
+    }
+    else {
+      general_ptl.sub_layer_level_idc[i] = 1;
+    }
+  }
   return general_ptl;
 }
 
