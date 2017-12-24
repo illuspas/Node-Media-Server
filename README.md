@@ -264,7 +264,6 @@ http://localhost:8000/api/server
 
 ```json
 {
-  "uptime": 140449,
   "os": {
     "arch": "x64",
     "platform": "darwin",
@@ -272,22 +271,35 @@ http://localhost:8000/api/server
   },
   "cpu": {
     "num": 8,
-    "load": 10,
+    "load": 12,
     "model": "Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz",
     "speed": 3592
   },
   "mem": {
     "totle": 8589934592,
-    "free": 65753088
+    "free": 754126848
   },
   "net": {
-    "inbytes": 6137233,
-    "outbytes": 812629863
+    "inbytes": 6402345,
+    "outbytes": 6901489
+  },
+  "nodejs": {
+    "uptime": 109,
+    "version": "v8.9.0",
+    "mem": {
+      "rss": 59998208,
+      "heapTotal": 23478272,
+      "heapUsed": 15818096,
+      "external": 3556366
+    }
   },
   "clients": {
-    "accepted": 403,
-    "active": 201,
-    "idle": 0
+    "accepted": 207,
+    "active": 204,
+    "idle": 0,
+    "rtmp": 203,
+    "http": 1,
+    "ws": 0
   }
 }
 ```
