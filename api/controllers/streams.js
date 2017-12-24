@@ -1,11 +1,9 @@
 const _ = require('lodash');
 
 function getStreams(req, res, next) {
-  const nms = this;
-
   let stats = {};
 
-  nms.sessions.forEach(function (session, id) {
+  this.sessions.forEach(function (session, id) {
     if (session.isStarting) {
       let regRes = /\/(.*)\/(.*)/gi.exec(session.publishStreamPath || session.playStreamPath);
 
@@ -87,7 +85,6 @@ function getStreams(req, res, next) {
 }
 
 function getStream(req, res, next) {
-  const nms = this;
 
   let streamStats = {
     isLive: false,
@@ -99,10 +96,10 @@ function getStream(req, res, next) {
 
   let publishStreamPath = `/${req.params.app}/${req.params.stream}`;
 
-  let publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
+  let publisherSession = this.sessions.get(this.publishers.get(publishStreamPath));
 
   streamStats.isLive = !!publisherSession;
-  streamStats.viewers = _.filter(Array.from(nms.sessions.values()), (session) => {
+  streamStats.viewers = _.filter(Array.from(this.sessions.values()), (session) => {
     return session.playStreamPath === publishStreamPath;
   }).length;
   streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;

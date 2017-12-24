@@ -14,6 +14,9 @@ const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
 
+const streamsRoute = require('./api/routes/streams');
+const serverRoute = require('./api/routes/server');
+
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
     this.port = config.http.port ? config.http.port : HTTP_PORT;
@@ -21,6 +24,11 @@ class NodeHttpServer {
     this.sessions = sessions;
     this.publishers = publishers;
     this.idlePlayers = idlePlayers;
+    this.startTime = Date.now();
+    this.inbytes = 0;
+    this.outbytes = 0;
+    this.accepted = 0;
+    this.nodeEvent = NodeCoreUtils.nodeEvent;
 
     this.expressApp = Express();
     this.expressApp.all('*.flv', (req, res, next) => {
@@ -41,7 +49,10 @@ class NodeHttpServer {
       }
     });
     this.expressApp.use(Express.static(__dirname + '/public'));
-    
+
+    this.expressApp.use('/api/streams', streamsRoute(this));
+    this.expressApp.use('/api/server', serverRoute(this));
+
     this.httpServer = Http.createServer(this.expressApp);
 
     /**
@@ -113,6 +124,21 @@ class NodeHttpServer {
         console.error(`Node Media WebSocketSecure Server ${e}`);
       });
     }
+
+    this.nodeEvent.on('postPlay', (id, args) => {
+      this.accepted++;
+    });
+
+    this.nodeEvent.on('postPublish', (id, args) => {
+      this.accepted++;
+    });
+
+    this.nodeEvent.on('doneConnect', (id, args) => {
+      let session = this.sessions.get(id);
+      let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
+      this.inbytes += socket.bytesRead;
+      this.outbytes += socket.bytesWritten;
+    });
   }
 
   stop() {
