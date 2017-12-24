@@ -335,11 +335,14 @@ function HEVCParseSPS(SPS, hevc) {
   psps.pic_height_in_luma_samples = rbspBitop.read_golomb();
   psps.conformance_window_flag = rbspBitop.read(1);
   if (psps.conformance_window_flag) {
-    psps.conf_win_left_offset = rbspBitop.read_golomb();
-    psps.conf_win_right_offset = rbspBitop.read_golomb();
-    psps.conf_win_top_offset = rbspBitop.read_golomb();
-    psps.conf_win_bottom_offset = rbspBitop.read_golomb();
+    let vert_mult = 1 + (psps.chroma_format_idc < 2);
+    let horiz_mult = 1 + (psps.chroma_format_idc < 3);
+    psps.conf_win_left_offset = rbspBitop.read_golomb() * horiz_mult;
+    psps.conf_win_right_offset = rbspBitop.read_golomb() * horiz_mult;
+    psps.conf_win_top_offset = rbspBitop.read_golomb() * vert_mult;
+    psps.conf_win_bottom_offset = rbspBitop.read_golomb() * vert_mult;
   }
+  // console.log(psps);
   return psps;
 }
 
@@ -408,8 +411,8 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
           hevc.psps = HEVCParseSPS(sps, hevc);
           info.profile = hevc.general_profile_idc;
           info.level = hevc.general_level_idc / 30.0;
-          info.width = hevc.psps.pic_width_in_luma_samples;
-          info.height = hevc.psps.pic_height_in_luma_samples;
+          info.width = hevc.psps.pic_width_in_luma_samples - (hevc.psps.conf_win_left_offset + hevc.psps.conf_win_right_offset);
+          info.height = hevc.psps.pic_height_in_luma_samples - (hevc.psps.conf_win_top_offset + hevc.psps.conf_win_bottom_offset);
         }
         p = p.slice(k);
       }
