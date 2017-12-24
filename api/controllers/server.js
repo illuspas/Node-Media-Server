@@ -1,5 +1,5 @@
 //
-//  Created by Mingliang Chen on 17/12/24.
+//  Created by Mingliang Chen on 17/12/24.  Merry Christmas
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
@@ -47,25 +47,31 @@ function percentageCPU() {
   });
 }
 
-function getRTBytes(sessions) {
+function getSessionsInfo(sessions) {
   return new Promise(function (resolve, reject) {
-    let bytes = {
+    let info = {
       inbytes: 0,
       outbytes: 0,
+      rtmp: 0,
+      http: 0,
+      ws: 0,
     };
     sessions.forEach((session, id) => {
-      let socket = session.constructor.name === 'NodeFlvSession' ? session.req.socket : session.socket;
-      bytes.inbytes += socket.bytesRead;
-      bytes.outbytes += socket.bytesWritten;
+      let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
+      info.inbytes += socket.bytesRead;
+      info.outbytes += socket.bytesWritten;
+      info.rtmp += session.TAG === 'rtmp' ? 1 : 0;
+      info.http += session.TAG === 'http-flv' ? 1 : 0;
+      info.ws += session.TAG === 'websocket-flv' ? 1 : 0;
     });
-    resolve(bytes);
+    resolve(info);
   });
 }
 
+
 async function getInfo(req, res, next) {
-  let rtBytes = await getRTBytes(this.sessions);
+  let sinfo = await getSessionsInfo(this.sessions);
   let info = {
-    uptime: Date.now() - this.startTime,
     os: {
       arch: OS.arch(),
       platform: OS.platform(),
@@ -82,14 +88,22 @@ async function getInfo(req, res, next) {
       free: OS.freemem()
     },
     net: {
-      inbytes: this.inbytes + rtBytes.inbytes,
-      outbytes: this.outbytes + rtBytes.outbytes,
+      inbytes: this.inbytes + sinfo.inbytes,
+      outbytes: this.outbytes + sinfo.outbytes,
+    },
+    nodejs: {
+      uptime: Math.floor(process.uptime()),
+      version: process.version,
+      mem: process.memoryUsage()
     },
     clients: {
       accepted: this.accepted,
       active: this.sessions.size - this.idlePlayers.size,
       idle: this.idlePlayers.size,
-    }
+      rtmp: sinfo.rtmp,
+      http: sinfo.http,
+      ws: sinfo.ws
+    },
   };
   res.json(info);
 }

@@ -34,6 +34,7 @@ const RTMP_PING_TIMEOUT = 30000;
 class NodeRtmpSession extends EventEmitter {
   constructor(config, socket) {
     super();
+    this.TAG = 'rtmp';
     this.config = config;
     this.bp = new BufferPool(this.handleData());
     this.nodeEvent = NodeCoreUtils.nodeEvent;

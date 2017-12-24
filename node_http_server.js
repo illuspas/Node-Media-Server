@@ -24,7 +24,6 @@ class NodeHttpServer {
     this.sessions = sessions;
     this.publishers = publishers;
     this.idlePlayers = idlePlayers;
-    this.startTime = Date.now();
     this.inbytes = 0;
     this.outbytes = 0;
     this.accepted = 0;
