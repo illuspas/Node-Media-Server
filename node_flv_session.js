@@ -213,7 +213,7 @@ class NodeFlvSession extends EventEmitter {
       this.res.write(flvMessage);
     }
     //send avcSequenceHeader
-    if (publisher.videoCodec == 7) {
+    if (publisher.videoCodec == 7 || publisher.videoCodec == 12) {
       let rtmpHeader = {
         chunkStreamID: 6,
         timestamp: 0,
