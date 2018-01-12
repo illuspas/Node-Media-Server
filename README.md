@@ -168,7 +168,8 @@ const config = {
 # H.265 over RTMP
 H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
 Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
-Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios) 
+Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
+Pure JavaScrip live stream player: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
 
 # Event callback
 ```js
