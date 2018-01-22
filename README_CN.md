@@ -161,9 +161,9 @@ const config = {
 >HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
 >HashValue = 80c1d1ad2e0c2ab63eebb50eed64201a
 
-5.F最终请求地址为
+5.最终请求地址为
 > rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a  
-> 注意： 'sign' 关键字不能修改为其他的
+> 注意：'sign' 关键字不能修改为其他的
 
 
 # RTMP协议传输H.265视频
