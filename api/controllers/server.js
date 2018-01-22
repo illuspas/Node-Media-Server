@@ -48,64 +48,65 @@ function percentageCPU() {
 }
 
 function getSessionsInfo(sessions) {
-  return new Promise(function (resolve, reject) {
-    let info = {
-      inbytes: 0,
-      outbytes: 0,
-      rtmp: 0,
-      http: 0,
-      ws: 0,
-    };
-    sessions.forEach((session, id) => {
-      let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
-      info.inbytes += socket.bytesRead;
-      info.outbytes += socket.bytesWritten;
-      info.rtmp += session.TAG === 'rtmp' ? 1 : 0;
-      info.http += session.TAG === 'http-flv' ? 1 : 0;
-      info.ws += session.TAG === 'websocket-flv' ? 1 : 0;
-    });
-    resolve(info);
+  let info = {
+    inbytes: 0,
+    outbytes: 0,
+    rtmp: 0,
+    http: 0,
+    ws: 0,
+  };
+  sessions.forEach((session, id) => {
+    let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
+    info.inbytes += socket.bytesRead;
+    info.outbytes += socket.bytesWritten;
+    info.rtmp += session.TAG === 'rtmp' ? 1 : 0;
+    info.http += session.TAG === 'http-flv' ? 1 : 0;
+    info.ws += session.TAG === 'websocket-flv' ? 1 : 0;
   });
+  return info;
 }
 
 
-async function getInfo(req, res, next) {
-  let sinfo = await getSessionsInfo(this.sessions);
-  let info = {
-    os: {
-      arch: OS.arch(),
-      platform: OS.platform(),
-      release: OS.release(),
-    },
-    cpu: {
-      num: OS.cpus().length,
-      load: await percentageCPU(),
-      model: OS.cpus()[0].model,
-      speed: OS.cpus()[0].speed,
-    },
-    mem: {
-      totle: OS.totalmem(),
-      free: OS.freemem()
-    },
-    net: {
-      inbytes: this.inbytes + sinfo.inbytes,
-      outbytes: this.outbytes + sinfo.outbytes,
-    },
-    nodejs: {
-      uptime: Math.floor(process.uptime()),
-      version: process.version,
-      mem: process.memoryUsage()
-    },
-    clients: {
-      accepted: this.accepted,
-      active: this.sessions.size - this.idlePlayers.size,
-      idle: this.idlePlayers.size,
-      rtmp: sinfo.rtmp,
-      http: sinfo.http,
-      ws: sinfo.ws
-    },
-  };
-  res.json(info);
+function getInfo(req, res, next) {
+  let s = this.sessions;
+  percentageCPU().then((cpuload) => {
+    let sinfo = getSessionsInfo(s);
+    let info = {
+      os: {
+        arch: OS.arch(),
+        platform: OS.platform(),
+        release: OS.release(),
+      },
+      cpu: {
+        num: OS.cpus().length,
+        load: cpuload,
+        model: OS.cpus()[0].model,
+        speed: OS.cpus()[0].speed,
+      },
+      mem: {
+        totle: OS.totalmem(),
+        free: OS.freemem()
+      },
+      net: {
+        inbytes: this.inbytes + sinfo.inbytes,
+        outbytes: this.outbytes + sinfo.outbytes,
+      },
+      nodejs: {
+        uptime: Math.floor(process.uptime()),
+        version: process.version,
+        mem: process.memoryUsage()
+      },
+      clients: {
+        accepted: this.accepted,
+        active: this.sessions.size - this.idlePlayers.size,
+        idle: this.idlePlayers.size,
+        rtmp: sinfo.rtmp,
+        http: sinfo.http,
+        ws: sinfo.ws
+      },
+    };
+    res.json(info);
+  });
 }
 
 exports.getInfo = getInfo;
