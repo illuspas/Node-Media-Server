@@ -3,7 +3,8 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 
-A Node.js implementation of RTMP/HTTP/WebSocket Media Server 
+A Node.js implementation of RTMP/HTTP/WebSocket Media Server  
+[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
 
 # Features
  - High performance RTMP parser based on ES6 Generator implementation
@@ -132,10 +133,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 1.Publish or play address:
 >rtmp://192.168.0.10/live/stream
 
-2.expiration time: 2017/8/23 11:25:21 ,The calculated expiration timestamp is
->1503458721
-
-3.Config set auth->secret: 'nodemedia2017privatekey'
+2.Config set auth->secret: 'nodemedia2017privatekey'
 ```js
 const config = {
   rtmp: {
@@ -156,6 +154,8 @@ const config = {
   }
 }
 ```
+3.expiration time: 2017/8/23 11:25:21 ,The calculated expiration timestamp is
+>1503458721
 
 4.The combination HashValue is:
 >HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
@@ -258,7 +258,7 @@ nms.run();
 https://localhost:8443/live/STREAM_NAME.flv
 wss://localhost:8443/live/STREAM_NAME.flv
 ```
->hostname must be the same as the browser address 
+>Self-signed certificates need to be added with trust before they can be accessed.
 
 # Server stats
 http://localhost:8000/api/server
