@@ -11,7 +11,7 @@
  - 支持的音视频编码 H.264/H.265/AAC/SPEEX/NELLYMOSER
  - 支持缓存最近一个关键帧间隔数据，实现RTMP协议秒开
  - 支持RTMP直播流转LIVE-HTTP-FLV流,支持 [flv.js](https://github.com/Bilibili/flv.js) 播放
- - 支持RTMP直播流转LLIVE-WebSocket-FLV,支持 [flv.js](https://github.com/Bilibili/flv.js) 播放
+ - 支持RTMP直播流转LIVE-WebSocket-FLV,支持 [flv.js](https://github.com/Bilibili/flv.js) 播放
  - 支持星域CDN风格的鉴权
  - 支持事件回调
  - 支持https/wss加密传输
