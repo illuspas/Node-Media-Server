@@ -154,7 +154,7 @@ const config = {
 }
 ```
 
-3.请求过期时间为: 2017/8/23 11:25:21 ,则请求过期时间为:
+3.请求过期时间为: 2017/8/23 11:25:21 ,则请求过期时间戳为:
 >1503458721
 
 4.md5计算结合“完整流地址-失效时间-密钥”的字符串:
@@ -167,7 +167,7 @@ const config = {
 
 
 # RTMP协议传输H.265视频
-H.265并没有在Adobe的官方规范里实现，这里使用id 12作为标识，也是国内绝大多数云服务商使用的id号
+H.265并没有在Adobe的官方规范里实现，这里使用id 12作为标识，也是国内绝大多数云服务商使用的id号  
 PC转码推流: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
 手机播放:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
 纯JavaScrip 直播播放器: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
@@ -260,7 +260,7 @@ nms.run();
 https://localhost:8443/live/STREAM_NAME.flv
 wss://localhost:8443/live/STREAM_NAME.flv
 ```
->自签名的证书需先添加信任才能访问
+>Web浏览器播放自签名的证书需先添加信任才能访问
 
 # 服务器信息统计
 http://localhost:8000/api/server
