@@ -9,7 +9,7 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
 # Features
  - High performance RTMP parser based on ES6 Generator implementation
  - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265/AAC/SPEEX/NELLYMOSER
+ - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
@@ -89,7 +89,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## via flv.js over http
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.3.3/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -108,7 +108,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## via flv.js over websocket
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.3.3/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -258,7 +258,7 @@ nms.run();
 https://localhost:8443/live/STREAM_NAME.flv
 wss://localhost:8443/live/STREAM_NAME.flv
 ```
->Self-signed certificates need to be added with trust before they can be accessed.
+>In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
 
 # Server stats
 http://localhost:8000/api/server
