@@ -179,7 +179,7 @@ function readH264SpecificConfig(avcSequenceHeader) {
       /* seq scaling matrix present */
       if (bitop.read(1)) {
 
-        for (n = 0; n < (cf_idc != 3 ? u8 : u12); n++) {
+        for (n = 0; n < (cf_idc != 3 ? 8 : 12); n++) {
 
           /* seq scaling list present */
           if (bitop.read(1)) {
