@@ -14,16 +14,15 @@ const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
 
+const context = require('./node_core_ctx');
+
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
 
 class NodeHttpServer {
-  constructor(config, sessions, publishers, idlePlayers) {
+  constructor(config) {
     this.port = config.http.port ? config.http.port : HTTP_PORT;
     this.config = config;
-    this.sessions = sessions;
-    this.publishers = publishers;
-    this.idlePlayers = idlePlayers;
     this.inbytes = 0;
     this.outbytes = 0;
     this.accepted = 0;
@@ -49,8 +48,8 @@ class NodeHttpServer {
     });
     this.expressApp.use(Express.static(__dirname + '/public'));
 
-    this.expressApp.use('/api/streams', streamsRoute(this));
-    this.expressApp.use('/api/server', serverRoute(this));
+    this.expressApp.use('/api/streams', streamsRoute(context));
+    this.expressApp.use('/api/server', serverRoute(context));
 
     this.httpServer = Http.createServer(this.expressApp);
 
@@ -133,7 +132,7 @@ class NodeHttpServer {
     });
 
     this.nodeEvent.on('doneConnect', (id, args) => {
-      let session = this.sessions.get(id);
+      let session = context.sessions.get(id);
       let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
       this.inbytes += socket.bytesRead;
       this.outbytes += socket.bytesWritten;
@@ -145,23 +144,18 @@ class NodeHttpServer {
     if (this.httpsServer) {
       this.httpsServer.close();
     }
-    this.sessions.forEach((session, id) => {
+    context.sessions.forEach((session, id) => {
       if (session instanceof NodeFlvSession) {
         session.req.destroy();
-        this.sessions.delete(id);
+        context.sessions.delete(id);
       }
     });
   }
 
   onConnect(req, res) {
-    let id = NodeCoreUtils.generateNewSessionID(this.sessions);
     let session = new NodeFlvSession(this.config, req, res);
-    this.sessions.set(id, session);
-    session.id = id;
-    session.sessions = this.sessions;
-    session.publishers = this.publishers;
-    session.idlePlayers = this.idlePlayers;
     session.run();
+    
   }
 }
 

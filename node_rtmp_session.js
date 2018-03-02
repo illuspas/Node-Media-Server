@@ -13,7 +13,7 @@ const Handshake = require('./node_rtmp_handshake');
 const BufferPool = require('./node_core_bufferpool');
 const NodeFlvSession = require('./node_flv_session');
 const NodeCoreUtils = require('./node_core_utils');
-
+const context = require('./node_core_ctx');
 
 const EXTENDED_TIMESTAMP_TYPE_NOT_USED = 'not-used';
 const EXTENDED_TIMESTAMP_TYPE_ABSOLUTE = 'absolute';
@@ -36,6 +36,7 @@ class NodeRtmpSession extends EventEmitter {
     super();
     this.TAG = 'rtmp';
     this.config = config;
+    this.id = NodeCoreUtils.generateNewSessionID();
     this.bp = new BufferPool(this.handleData());
     this.nodeEvent = NodeCoreUtils.nodeEvent;
     this.socket = socket;
@@ -101,6 +102,8 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
     this.socket.on('timeout', this.onSocketTimeout.bind(this));
+
+    context.sessions.set(this.id, this);
   }
 
   run() {
@@ -323,10 +326,7 @@ class NodeRtmpSession extends EventEmitter {
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.socket.destroy();
-    this.sessions.delete(this.id);
-    this.idlePlayers = null;
-    this.publishers = null;
-    this.sessions = null;
+    context.sessions.delete(this.id);
   }
 
   createChunkBasicHeader(fmt, id) {
@@ -588,7 +588,7 @@ class NodeRtmpSession extends EventEmitter {
     }
 
     for (let playerId of this.players) {
-      let session = this.sessions.get(playerId);
+      let session = context.sessions.get(playerId);
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
@@ -653,7 +653,7 @@ class NodeRtmpSession extends EventEmitter {
     }
 
     for (let playerId of this.players) {
-      let session = this.sessions.get(playerId);
+      let session = context.sessions.get(playerId);
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
@@ -845,7 +845,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
 
-    if (this.publishers.has(this.publishStreamPath)) {
+    if (context.publishers.has(this.publishStreamPath)) {
       console.warn("[rtmp publish] Already has a stream path " + this.publishStreamPath);
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadName', 'Stream already publishing');
     } else if (this.isPublishing) {
@@ -853,15 +853,15 @@ class NodeRtmpSession extends EventEmitter {
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
       console.log("[rtmp publish] new stream path " + this.publishStreamPath + ' streamId:' + this.publishStreamId);
-      this.publishers.set(this.publishStreamPath, this.id);
+      context.publishers.set(this.publishStreamPath, this.id);
       this.isPublishing = true;
       this.players = new Set();
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
-      for (let idlePlayerId of this.idlePlayers) {
-        let idlePlayer = this.sessions.get(idlePlayerId);
+      for (let idlePlayerId of context.idlePlayers) {
+        let idlePlayer = context.sessions.get(idlePlayerId);
         if (idlePlayer.playStreamPath === this.publishStreamPath) {
           idlePlayer.emit('play');
-          this.idlePlayers.delete(idlePlayerId);
+          context.idlePlayers.delete(idlePlayerId);
         }
       }
       this.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
@@ -885,20 +885,20 @@ class NodeRtmpSession extends EventEmitter {
     if (this.isPlaying) {
       console.warn("[rtmp play] NetConnection is playing");
       this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.Play.BadConnection', 'Connection already playing');
-    } else if (!this.publishers.has(this.playStreamPath)) {
+    } else if (!context.publishers.has(this.playStreamPath)) {
       console.log("[rtmp play] stream not found " + this.playStreamPath + ' streamId:' + this.playStreamId);
       this.respondPlay();
       // this.sendStreamEmpty();
       this.isIdling = true;
-      this.idlePlayers.add(this.id);
+      context.idlePlayers.add(this.id);
     } else {
       if (this.isIdling) {
         this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.PublishNotify', `${this.publishStreamPath} is now published.`);
       } else {
         this.respondPlay();
       }
-      let publisherPath = this.publishers.get(this.playStreamPath);
-      let publisher = this.sessions.get(publisherPath);
+      let publisherPath = context.publishers.get(this.playStreamPath);
+      let publisher = context.sessions.get(publisherPath);
       let players = publisher.players;
 
       this.isPlaying = true;
@@ -959,16 +959,16 @@ class NodeRtmpSession extends EventEmitter {
 
     if (this.isIdling && this.playStreamId == streamID) {
       this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
-      this.idlePlayers.delete(this.id);
+      context.idlePlayers.delete(this.id);
       this.isIdling = false;
       this.playStreamId = del ? 0 : this.playStreamId;
     }
 
     if (this.isPlaying && this.playStreamId == streamID) {
       this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
-      let publisherPath = this.publishers.get(this.playStreamPath);
+      let publisherPath = context.publishers.get(this.playStreamPath);
       if (publisherPath != null) {
-        this.sessions.get(publisherPath).players.delete(this.id);
+        context.sessions.get(publisherPath).players.delete(this.id);
       }
       this.isPlaying = false;
       this.playStreamId = del ? 0 : this.playStreamId;
@@ -978,7 +978,7 @@ class NodeRtmpSession extends EventEmitter {
     if (this.isPublishing && this.publishStreamId == streamID) {
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Unpublish.Success', `${this.publishStreamPath} is now unpublished.`);
       for (let playerId of this.players) {
-        let player = this.sessions.get(playerId);
+        let player = context.sessions.get(playerId);
         if (player instanceof NodeRtmpSession) {
           player.sendStatusMessage(player.playStreamId, 'status', 'NetStream.Play.UnpublishNotify', 'stream is now unpublished.');
         } else {
@@ -988,8 +988,8 @@ class NodeRtmpSession extends EventEmitter {
 
       //let the players to idlePlayers
       for (let playerId of this.players) {
-        let player = this.sessions.get(playerId);
-        this.idlePlayers.add(playerId);
+        let player = context.sessions.get(playerId);
+        context.idlePlayers.add(playerId);
         player.isPlaying = false;
         player.isIdling = true;
         if (player instanceof NodeRtmpSession) {
@@ -999,7 +999,7 @@ class NodeRtmpSession extends EventEmitter {
 
       this.players.clear();
       this.players = null;
-      this.publishers.delete(this.publishStreamPath);
+      context.publishers.delete(this.publishStreamPath);
       this.isPublishing = false;
       this.publishStreamId = del ? 0 : this.publishStreamId;
       this.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);

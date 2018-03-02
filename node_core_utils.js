@@ -5,8 +5,9 @@
 //
 const Crypto = require('crypto');
 const EventEmitter = require('events');
+const context = require('./node_core_ctx');
 
-function generateNewSessionID(sessions) {
+function generateNewSessionID() {
     let SessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
@@ -14,7 +15,7 @@ function generateNewSessionID(sessions) {
         for (var i = 0; i < 8; i++) {
             SessionID += possible.charAt((Math.random() * numPossible) | 0);
         }
-    } while (sessions.has(SessionID))
+    } while (context.sessions.has(SessionID))
     return SessionID;
 }
 

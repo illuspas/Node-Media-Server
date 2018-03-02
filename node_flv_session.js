@@ -10,16 +10,16 @@ const AMF = require('./node_core_amf');
 const BufferPool = require('./node_core_bufferpool');
 const NodeCoreUtils = require('./node_core_utils');
 
+const context = require('./node_core_ctx');
+
 class NodeFlvSession extends EventEmitter {
   constructor(config, req, res) {
     super();
     this.config = config;
+    this.id = NodeCoreUtils.generateNewSessionID();
     this.req = req;
     this.res = res;
     this.bp = new BufferPool(this.handleData());
-    this.bp.on('error', (e) => {
-
-    });
     this.allow_origin = config.http.allow_origin == undefined ? '*' : config.http.allow_origin;
     this.isPublisher = false;
     this.playStreamPath = '';
@@ -44,6 +44,7 @@ class NodeFlvSession extends EventEmitter {
       this.TAG = 'http-flv'
     }
 
+    context.sessions.set(this.id, this);
   }
 
   run() {
@@ -124,19 +125,16 @@ class NodeFlvSession extends EventEmitter {
     if (this.isPublisher) {
 
     } else {
-      let publisherId = this.publishers.get(this.playStreamPath);
+      let publisherId = context.publishers.get(this.playStreamPath);
       if (publisherId != null) {
-        this.sessions.get(publisherId).players.delete(this.id);
+        context.sessions.get(publisherId).players.delete(this.id);
         this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.res.end();
-    this.idlePlayers.delete(this.id);
-    this.sessions.delete(this.id);
-    this.idlePlayers = null;
-    this.publishers = null;
-    this.sessions = null;
+    context.idlePlayers.delete(this.id);
+    context.sessions.delete(this.id);
   }
 
   respondUnpublish() {
@@ -163,14 +161,14 @@ class NodeFlvSession extends EventEmitter {
       }
     }
 
-    if (!this.publishers.has(this.playStreamPath)) {
+    if (!context.publishers.has(this.playStreamPath)) {
       console.log(`[${this.TAG} play] stream not found ` + this.playStreamPath);
-      this.idlePlayers.add(this.id);
+      context.idlePlayers.add(this.id);
       return;
     }
 
-    let publisherId = this.publishers.get(this.playStreamPath);
-    let publisher = this.sessions.get(publisherId);
+    let publisherId = context.publishers.get(this.playStreamPath);
+    let publisher = context.sessions.get(publisherId);
     let players = publisher.players;
     players.add(this.id);
 

@@ -7,24 +7,22 @@
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeCoreUtils = require('./node_core_utils');
+const context = require('./node_core_ctx');
 
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
-    this.sessions = new Map();
-    this.publishers = new Map();
-    this.idlePlayers = new Set();
     this.nodeEvent = NodeCoreUtils.nodeEvent;
   }
 
   run() {
     if (this.config.rtmp) {
-      this.nrs = new NodeRtmpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nrs = new NodeRtmpServer(this.config);
       this.nrs.run();
     }
 
     if (this.config.http) {
-      this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nhs = new NodeHttpServer(this.config, context.sessions, context.publishers, context.idlePlayers);
       this.nhs.run();
     }
 
@@ -44,7 +42,7 @@ class NodeMediaServer {
   }
 
   getSession(id) {
-    return this.sessions.get(id);
+    return context.sessions.get(id);
   }
 }
 

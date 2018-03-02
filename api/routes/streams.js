@@ -1,13 +1,9 @@
 const express = require('express');
-
 const streamController = require('../controllers/streams');
-const auth = require('../middleware/auth');
 
-let router = express.Router();
-
-module.exports = function (nhs) {
-  router.get('/', auth.bind(nhs), streamController.getStreams.bind(nhs));
-  router.get('/:app/:stream', streamController.getStream.bind(nhs));
-
+module.exports = (context) => {
+  let router = express.Router();
+  router.get('/', streamController.getStreams.bind(context));
+  router.get('/:app/:stream', streamController.getStream.bind(context));
   return router;
 };

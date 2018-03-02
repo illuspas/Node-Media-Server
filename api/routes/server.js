@@ -1,11 +1,8 @@
 const express = require('express');
-
 const serverController = require('../controllers/server');
 
-let router = express.Router();
-
-module.exports = function (nhs) {
-  router.get('/',  serverController.getInfo.bind(nhs));
-
+module.exports = (context) => {
+  let router = express.Router();
+  router.get('/', serverController.getInfo.bind(context));
   return router;
 };

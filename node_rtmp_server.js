@@ -6,20 +6,16 @@
 const Net = require('net');
 const NodeRtmpSession = require('./node_rtmp_session');
 const NodeCoreUtils = require('./node_core_utils');
+
+const context = require('./node_core_ctx');
+
 const RTMP_PORT = 1935;
 
 class NodeRtmpServer {
-  constructor(config, sessions, publishers, idlePlayers) {
+  constructor(config) {
     this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
-    this.sessions = sessions;
     this.tcpServer = Net.createServer((socket) => {
-      let id = NodeCoreUtils.generateNewSessionID(sessions);
       let session = new NodeRtmpSession(config, socket);
-      sessions.set(id, session);
-      session.id = id;
-      session.sessions = sessions;
-      session.publishers = publishers;
-      session.idlePlayers = idlePlayers;
       session.run();
     })
   }
@@ -40,10 +36,10 @@ class NodeRtmpServer {
 
   stop() {
     this.tcpServer.close();
-    this.sessions.forEach((session, id) => {
+    context.sessions.forEach((session, id) => {
       if (session instanceof NodeRtmpSession) {
         session.socket.destroy();
-        this.sessions.delete(id);
+        context.sessions.delete(id);
       }
     });
   }
