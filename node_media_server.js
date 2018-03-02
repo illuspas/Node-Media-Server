@@ -12,7 +12,6 @@ const context = require('./node_core_ctx');
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
   }
 
   run() {
@@ -22,14 +21,14 @@ class NodeMediaServer {
     }
 
     if (this.config.http) {
-      this.nhs = new NodeHttpServer(this.config, context.sessions, context.publishers, context.idlePlayers);
+      this.nhs = new NodeHttpServer(this.config);
       this.nhs.run();
     }
 
   }
 
   on(eventName, listener) {
-    this.nodeEvent.on(eventName, listener);
+    context.nodeEvent.on(eventName, listener);
   }
 
   stop() {

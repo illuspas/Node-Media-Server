@@ -24,7 +24,6 @@ class NodeFlvSession extends EventEmitter {
     this.isPublisher = false;
     this.playStreamPath = '';
     this.playArgs = null;
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
 
     this.on('connect', this.onConnect);
     this.on('play', this.onPlay);
@@ -53,7 +52,7 @@ class NodeFlvSession extends EventEmitter {
     let streamPath = urlInfo.pathname.split('.')[0];
     let format = urlInfo.pathname.split('.')[1];
     this.connectCmdObj = { method, streamPath, query: urlInfo.query };
-    this.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
 
     this.isStarting = true;
     this.bp.init();
@@ -66,7 +65,7 @@ class NodeFlvSession extends EventEmitter {
       this.res.end();
       return;
     }
-    this.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
     if (method == 'GET') {
       //Play 
       this.playStreamPath = streamPath;
@@ -128,10 +127,10 @@ class NodeFlvSession extends EventEmitter {
       let publisherId = context.publishers.get(this.playStreamPath);
       if (publisherId != null) {
         context.sessions.get(publisherId).players.delete(this.id);
-        this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+        context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
     }
-    this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.res.end();
     context.idlePlayers.delete(this.id);
     context.sessions.delete(this.id);
@@ -147,7 +146,7 @@ class NodeFlvSession extends EventEmitter {
 
   onPlay() {
 
-    this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
     if (!this.isStarting) {
       return;
     }
@@ -228,7 +227,7 @@ class NodeFlvSession extends EventEmitter {
       }
     }
     console.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
-    this.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
   }
 
   onPublish() {

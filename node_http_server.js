@@ -26,7 +26,6 @@ class NodeHttpServer {
     this.inbytes = 0;
     this.outbytes = 0;
     this.accepted = 0;
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
 
     this.expressApp = Express();
     this.expressApp.all('*.flv', (req, res, next) => {
@@ -123,15 +122,15 @@ class NodeHttpServer {
       });
     }
 
-    this.nodeEvent.on('postPlay', (id, args) => {
+    context.nodeEvent.on('postPlay', (id, args) => {
       this.accepted++;
     });
 
-    this.nodeEvent.on('postPublish', (id, args) => {
+    context.nodeEvent.on('postPublish', (id, args) => {
       this.accepted++;
     });
 
-    this.nodeEvent.on('doneConnect', (id, args) => {
+    context.nodeEvent.on('doneConnect', (id, args) => {
       let session = context.sessions.get(id);
       let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
       this.inbytes += socket.bytesRead;

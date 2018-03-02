@@ -8,6 +8,6 @@ const EventEmitter = require('events');
 let sessions = new Map();
 let publishers = new Map();
 let idlePlayers = new Set();
+let nodeEvent = new EventEmitter();
 
-
-module.exports = { sessions, publishers, idlePlayers };
+module.exports = { sessions, publishers, idlePlayers, nodeEvent };

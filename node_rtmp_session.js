@@ -38,7 +38,6 @@ class NodeRtmpSession extends EventEmitter {
     this.config = config;
     this.id = NodeCoreUtils.generateNewSessionID();
     this.bp = new BufferPool(this.handleData());
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
     this.socket = socket;
     this.players = null;
 
@@ -324,7 +323,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
-    this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.socket.destroy();
     context.sessions.delete(this.id);
   }
@@ -811,7 +810,7 @@ class NodeRtmpSession extends EventEmitter {
 
   onConnect(cmdObj) {
     cmdObj.app = cmdObj.app.replace('/', '');
-    this.nodeEvent.emit('preConnect', this.id, cmdObj);
+    context.nodeEvent.emit('preConnect', this.id, cmdObj);
     if (!this.isStarting) {
       return;
     }
@@ -828,11 +827,11 @@ class NodeRtmpSession extends EventEmitter {
       this.pingRequest();
     }, this.ping);
     console.log('[rtmp connect]  app: ' + cmdObj.app);
-    this.nodeEvent.emit('postConnect', this.id, cmdObj);
+    context.nodeEvent.emit('postConnect', this.id, cmdObj);
   }
 
   onPublish() {
-    this.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
+    context.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
     if (!this.isStarting) {
       return;
     }
@@ -864,12 +863,12 @@ class NodeRtmpSession extends EventEmitter {
           context.idlePlayers.delete(idlePlayerId);
         }
       }
-      this.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
+      context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
     }
   }
 
   onPlay() {
-    this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
     if (!this.isStarting) {
       return;
     }
@@ -951,7 +950,7 @@ class NodeRtmpSession extends EventEmitter {
 
       console.log("[rtmp play] join stream " + this.playStreamPath + ' streamId:' + this.playStreamId);
       players.add(this.id);
-      this.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
+      context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
     }
   }
 
@@ -972,7 +971,7 @@ class NodeRtmpSession extends EventEmitter {
       }
       this.isPlaying = false;
       this.playStreamId = del ? 0 : this.playStreamId;
-      this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+      context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
     }
 
     if (this.isPublishing && this.publishStreamId == streamID) {
@@ -1002,7 +1001,7 @@ class NodeRtmpSession extends EventEmitter {
       context.publishers.delete(this.publishStreamPath);
       this.isPublishing = false;
       this.publishStreamId = del ? 0 : this.publishStreamId;
-      this.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);
+      context.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);
     }
   }
 

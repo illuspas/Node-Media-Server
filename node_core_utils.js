@@ -8,15 +8,15 @@ const EventEmitter = require('events');
 const context = require('./node_core_ctx');
 
 function generateNewSessionID() {
-    let SessionID = '';
+    let sessionID = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
     const numPossible = possible.length;
     do {
         for (var i = 0; i < 8; i++) {
-            SessionID += possible.charAt((Math.random() * numPossible) | 0);
+            sessionID += possible.charAt((Math.random() * numPossible) | 0);
         }
-    } while (context.sessions.has(SessionID))
-    return SessionID;
+    } while (context.sessions.has(sessionID))
+    return sessionID;
 }
 
 function verifyAuth(signStr, streamId, secretKey) {
@@ -37,4 +37,3 @@ function verifyAuth(signStr, streamId, secretKey) {
 
 module.exports.generateNewSessionID = generateNewSessionID;
 module.exports.verifyAuth = verifyAuth;
-module.exports.nodeEvent = new EventEmitter();
