@@ -16,7 +16,7 @@
     "server"
   ],
   "author": "Mingliang Chen",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/illuspas/Node-Media-Server/issues"
   },
