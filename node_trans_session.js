@@ -26,32 +26,30 @@ class NodeTransSession extends EventEmitter {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
       let now = new Date();
       let mp4FullPath = this.conf.mp4Path + '/' + this.conf.stream;
-      let mapMp4 = `${this.conf.mp4Flags}${mp4FullPath}/${dateFormat('yyyy-mm-dd-HH-MM')}.mp4`;
+      let mp4FileName = dateFormat('yyyy-mm-dd-HH-MM') + '.mp4';
+      let mapMp4 = `${this.conf.mp4Flags}${mp4FullPath}/${mp4FileName}|`;
       mkdirp(mp4FullPath);
-      // console.log(mapMp4);
-      mapStr += mapMp4 + '|';
-
+      mapStr += mapMp4;
+      console.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + mp4FullPath + '/' + mp4FileName);
     }
     if (this.conf.hlsPath) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
       let hlsFullPath = this.conf.hlsPath + '/' + this.conf.stream;
-      let mapHls = `${this.conf.hlsFlags}${hlsFullPath}/index.m3u8`;
+      let hlsFileName = 'index.m3u8';
+      let mapHls = `${this.conf.hlsFlags}${hlsFullPath}/${hlsFileName}|`;
       mkdirp(hlsFullPath);
-      // console.log(mapHls);
-      mapStr += mapHls + '|';
-
+      mapStr += mapHls;
+      console.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + hlsFullPath + '/' + hlsFileName);
     }
     if (this.conf.dashPath) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
       let dashFullPath = this.conf.dashPath + '/' + this.conf.stream;
-      let mapDash = `${this.conf.dashFlags}${dashFullPath}/index.mpd`;
+      let dashFileName = 'index.mpd';
+      let mapDash = `${this.conf.dashFlags}${dashFullPath}/${dashFileName}`;
       mkdirp(dashFullPath);
-      // console.log(mapDash);
       mapStr += mapDash;
-
+      console.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + dashFullPath + '/' + dashFileName);
     }
-    mapStr += '';
-    // console.log(mapStr);
     let argv = ['-y', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
@@ -73,7 +71,8 @@ class NodeTransSession extends EventEmitter {
 
   end() {
     // console.log('[TransTask end]', this.conf);
-    this.ffmpeg_exec.kill('SIGINT');
+    // this.ffmpeg_exec.kill('SIGINT');
+    this.ffmpeg_exec.stdin.write('q');
   }
 }
 
