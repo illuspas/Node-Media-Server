@@ -42,7 +42,7 @@ class NodeTransServer {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
         session.on('end', () => {
-          this.transSessions.delete(streamPath);
+          this.transSessions.delete(id);
         });
         session.run();
       }
