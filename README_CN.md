@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 
-一个 Node.js 实现的RTMP/HTTP/WebSocket流媒体服务器
+一个 Node.js 实现的RTMP/HTTP/WebSocket/HLS/DASH流媒体服务器
 
 # 特性
  - 基于 ES6 Generator 实现的高性能RTMP协议解析器
@@ -16,6 +16,8 @@
  - 支持事件回调
  - 支持https/wss加密传输
  - 支持服务器和流媒体信息统计
+ - 支持RTMP直播流转HLS,DASH直播流
+ - 支持RTMP直播流录制为MP4文件并开启faststart
  
 # 用法 
 ```bash
@@ -45,10 +47,10 @@ nms.run();
 ```
 
 # Todo 
-- [ ] 支持录制为MP4回放
-- [ ] 支持实时转码
+- [x] 支持录制为MP4回放
+- [x] 支持实时转码
 - [ ] 支持多核模式
-- [ ] 支持低延迟HLS/DASH
+- [x] 支持低延迟HLS/DASH
 - [x] 支持服务器和流媒体信息统计
 - [ ] 服务器和流媒体信息统计的前端样式
 - [x] on_connect/on_publish/on_play/on_done 事件回调
