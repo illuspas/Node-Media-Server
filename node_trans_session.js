@@ -16,7 +16,6 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
-    // console.log('[TransTask run]', this.conf);
     let vc = 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
     let inPath = 'rtmp://localhost:' + this.conf.port + this.conf.streamPath;
@@ -65,12 +64,12 @@ class NodeTransSession extends EventEmitter {
     });
 
     this.ffmpeg_exec.on('close', (code) => {
+      console.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
     });
   }
 
   end() {
-    // console.log('[TransTask end]', this.conf);
     // this.ffmpeg_exec.kill('SIGINT');
     this.ffmpeg_exec.stdin.write('q');
   }
