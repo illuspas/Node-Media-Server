@@ -45,6 +45,14 @@ class NodeHttpServer {
         }
       }
     });
+
+    this.expressApp.all(['*.m3u8','*.ts','*.mpd','*.m4s'], (req, res, next) => {
+      if (Fs.existsSync(__dirname + '/public' + req.url)) {
+        res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+        next();
+      } 
+    });
+
     this.expressApp.use(Express.static(__dirname + '/public'));
 
     this.expressApp.use('/api/streams', streamsRoute(context));

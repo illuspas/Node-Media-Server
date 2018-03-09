@@ -6,6 +6,7 @@
 
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
+const NodeTransServer = require('./node_trans_server');
 const NodeCoreUtils = require('./node_core_utils');
 const context = require('./node_core_ctx');
 
@@ -23,6 +24,11 @@ class NodeMediaServer {
     if (this.config.http) {
       this.nhs = new NodeHttpServer(this.config);
       this.nhs.run();
+    }
+
+    if (this.config.trans) {
+      this.nts = new NodeTransServer(this.config);
+      this.nts.run();
     }
 
   }

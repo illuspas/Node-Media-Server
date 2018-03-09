@@ -863,7 +863,12 @@ class NodeRtmpSession extends EventEmitter {
           context.idlePlayers.delete(idlePlayerId);
         }
       }
-      context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
+      setTimeout(() => {
+        this.publishArgs.ac = this.audioCodec;
+        this.publishArgs.vc = this.videoCodec;
+        context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
+      }, 200);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
+
     }
   }
 

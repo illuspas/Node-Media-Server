@@ -13,7 +13,7 @@ const RTMP_PORT = 1935;
 
 class NodeRtmpServer {
   constructor(config) {
-    this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
+    config.rtmp.port = this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
     this.tcpServer = Net.createServer((socket) => {
       let session = new NodeRtmpSession(config, socket);
       session.run();

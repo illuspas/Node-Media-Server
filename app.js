@@ -14,17 +14,28 @@ const config = {
   },
   https: {
     port: 8443,
-    key:'./privatekey.pem',
-    cert:'./certificate.pem',
+    key: './privatekey.pem',
+    cert: './certificate.pem',
   },
   auth: {
     play: false,
     publish: false,
     secret: 'nodemedia2017privatekey'
   },
-  apiAuth: {
-    access: false,
-    secret: 'nodemedia2017apikey'
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'live',
+        ac:'aac',//当音频流不是aac编码时，自动按此配置转码
+        mp4Path: './public/vod',
+        mp4Flags: '[movflags=faststart]',
+        hlsPath: './public/live',
+        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        dashPath: './public/live',
+        dashFlags: '[f=dash:remove_at_exit=1:window_size=3:extra_window_size=5]'
+      }
+    ],
   }
 };
 

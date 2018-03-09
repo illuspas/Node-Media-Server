@@ -26,3 +26,7 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+*.m4s
+*.m3u8
+*.ts
+*.mp4
