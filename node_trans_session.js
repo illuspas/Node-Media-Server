@@ -54,7 +54,7 @@ class NodeTransSession extends EventEmitter {
     }
     mapStr += '';
     // console.log(mapStr);
-    let argv = ['-y', '-analyzeduration', '100000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    let argv = ['-y', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       // console.log(e);
