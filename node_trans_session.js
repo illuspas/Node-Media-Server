@@ -34,7 +34,6 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hlsPath) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let now = new Date();
       let hlsFullPath = this.conf.hlsPath + '/' + this.conf.stream;
       let mapHls = `${this.conf.hlsFlags}${hlsFullPath}/index.m3u8`;
       mkdirp(hlsFullPath);
@@ -44,7 +43,6 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.dashPath) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
-      let now = new Date();
       let dashFullPath = this.conf.dashPath + '/' + this.conf.stream;
       let mapDash = `${this.conf.dashFlags}${dashFullPath}/index.mpd`;
       mkdirp(dashFullPath);
