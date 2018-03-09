@@ -17,6 +17,8 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - Support event callback
  - Support https/wss
  - Support Server Monitor
+ - Support remux to HLS/DASH
+ - Support record to MP4
  
 # Usage 
 ```bash
@@ -46,10 +48,10 @@ nms.run();
 ```
 
 # Todo 
-- [ ] support record stream 
-- [ ] support transcode
+- [x] support record stream 
+- [x] support transcode
 - [ ] support cluster
-- [ ] support low latency hls
+- [x] support low latency hls
 - [x] server and streams status
 - [ ] server monitor frontend
 - [x] on_connect/on_publish/on_play/on_done event callback
