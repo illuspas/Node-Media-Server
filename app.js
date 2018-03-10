@@ -10,6 +10,8 @@ const config = {
   },
   http: {
     port: 8000,
+    webroot: './public',
+    mediaroot: './media',
     allow_origin: '*'
   },
   https: {
@@ -27,13 +29,18 @@ const config = {
     tasks: [
       {
         app: 'live',
-        ac:'aac',//当音频流不是aac编码时，自动按此配置转码
-        mp4Path: './public/vod',
+        ac: 'aac',
+        mp4: true,
         mp4Flags: '[movflags=faststart]',
-        hlsPath: './public/live',
+        hls: true,
         hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
-        dashPath: './public/live',
-        dashFlags: '[f=dash:remove_at_exit=1:window_size=3:extra_window_size=5]'
+        dash: true,
+        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
+      }, {
+        app: 'vod',
+        ac: 'aac',
+        mp4: true,
+        mp4Flags: '[movflags=faststart]',
       }
     ],
   }
