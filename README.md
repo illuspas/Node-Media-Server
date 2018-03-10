@@ -61,6 +61,7 @@ nms.run();
 - [x] on_connect/on_publish/on_play/on_done event callback
 - [ ] multi resolution transcoding 
 - [ ] hardware acceleration transcoding. 
+- [ ] rtmp relay
 
 # Publishing live streams
 ## From FFmpeg
