@@ -62,6 +62,7 @@ nms.run();
 - [ ] multi resolution transcoding 
 - [ ] hardware acceleration transcoding. 
 - [ ] rtmp relay
+- [ ] admin panel
 
 # Publishing live streams
 ## From FFmpeg
