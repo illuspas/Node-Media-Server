@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 
-A Node.js implementation of RTMP/HTTP/WebSocket Media Server  
+A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
 [中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
 
 # Features
@@ -13,12 +13,13 @@ A Node.js implementation of RTMP/HTTP/WebSocket Media Server
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
+ - Support remux to HLS/DASH/MP4
+ - Support remux to HLS/DASH/MP4 automatic transcoding to aac
  - Support xycdn style authentication
  - Support event callback
  - Support https/wss
  - Support Server Monitor
- - Support remux to HLS/DASH
- - Support record to MP4
+
  
 # Usage 
 ```bash
@@ -55,6 +56,8 @@ nms.run();
 - [x] server and streams status
 - [ ] server monitor frontend
 - [x] on_connect/on_publish/on_play/on_done event callback
+- [ ] multi resolution transcoding 
+- [ ] hardware acceleration transcoding. 
 
 # Publishing live streams
 ## From FFmpeg
@@ -78,17 +81,32 @@ URL : rtmp://localhost/live
 Stream key : STREAM_NAME
 
 # Accessing the live stream
-## via RTMP 
-```bash
-ffplay rtmp://localhost/live/STREAM_NAME
+## RTMP 
+```
+rtmp://localhost/live/STREAM_NAME
 ```
 
-## via http-flv
-```bash
-ffplay http://localhost:8000/live/STREAM_NAME.flv
+## http-flv
+```
+http://localhost:8000/live/STREAM_NAME.flv
 ```
 
-## via flv.js over http
+## websocket-flv
+```
+ws://localhost:8000/live/STREAM_NAME.flv
+```
+
+## HLS
+```
+http://localhost:8000/live/STREAM_NAME/index.m3u8
+```
+
+## DASH
+```
+http://localhost:8000/live/STREAM_NAME/index.mpd
+```
+
+## via flv.js over http-flv
 
 ```html
 <script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
@@ -107,7 +125,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 </script>
 ```
 
-## via flv.js over websocket
+## via flv.js over websocket-flv
 
 ```html
 <script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
@@ -384,6 +402,75 @@ http://localhost:8000/api/streams
 }
 ```
 
+## Remux to HLS/DASH live stream
+```js
+const NodeMediaServer = require('node_media_server');
+
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    mediaroot: './media',
+    allow_origin: '*'
+  },
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'live',
+        ac: 'aac',
+        hls: true,
+        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        dash: true,
+        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
+      }
+    ]
+  }
+};
+
+var nms = new NodeMediaServer(config)
+nms.run();
+```
+
+## Record to MP4
+```JS
+const NodeMediaServer = require('node_media_server');
+
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    mediaroot: './media',
+    allow_origin: '*'
+  },
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'vod',
+        ac: 'aac',
+        mp4: true,
+        mp4Flags: '[movflags=faststart]',
+      }
+    ]
+  }
+};
+
+var nms = new NodeMediaServer(config)
+nms.run();
+```
 
 # Thanks
 RTSP, RTMP, and HTTP server implementation in Node.js  
