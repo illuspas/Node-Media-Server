@@ -30,3 +30,4 @@ node_modules
 *.m3u8
 *.ts
 *.mp4
+*.mpd
