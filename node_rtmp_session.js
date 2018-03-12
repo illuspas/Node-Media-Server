@@ -50,6 +50,7 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = null;
     this.socket.setTimeout(this.pingTimeout); //Use nodejs network timeout mechanism 
 
+    this.isLocal = socket.remoteAddress === '::1'
     this.isStarting = false;
     this.isPublishing = false;
     this.isPlaying = false;
@@ -835,7 +836,7 @@ class NodeRtmpSession extends EventEmitter {
     if (!this.isStarting) {
       return;
     }
-    if (this.config.auth !== undefined && this.config.auth.publish) {
+    if (this.config.auth && this.config.auth.publish && !this.isLocal) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
         console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamPath=${this.publishStreamPath} sign=${this.publishArgs.sign}`);
@@ -877,7 +878,7 @@ class NodeRtmpSession extends EventEmitter {
     if (!this.isStarting) {
       return;
     }
-    if (this.config.auth !== undefined && this.config.auth.play) {
+    if (this.config.auth && this.config.auth.play && !this.isLocal) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
         console.log(`[rtmp play] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
