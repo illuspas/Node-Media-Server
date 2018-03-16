@@ -55,14 +55,16 @@ function getSessionsInfo(sessions) {
     http: 0,
     ws: 0,
   };
-  sessions.forEach((session, id) => {
+
+  for(let session of sessions.values()) {
     let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
     info.inbytes += socket.bytesRead;
     info.outbytes += socket.bytesWritten;
     info.rtmp += session.TAG === 'rtmp' ? 1 : 0;
     info.http += session.TAG === 'http-flv' ? 1 : 0;
     info.ws += session.TAG === 'websocket-flv' ? 1 : 0;
-  });
+  }
+
   return info;
 }
 
@@ -88,8 +90,8 @@ function getInfo(req, res, next) {
         free: OS.freemem()
       },
       net: {
-        inbytes: this.inbytes + sinfo.inbytes,
-        outbytes: this.outbytes + sinfo.outbytes,
+        inbytes: this.stat.inbytes + sinfo.inbytes,
+        outbytes: this.stat.outbytes + sinfo.outbytes,
       },
       nodejs: {
         uptime: Math.floor(process.uptime()),
@@ -97,7 +99,7 @@ function getInfo(req, res, next) {
         mem: process.memoryUsage()
       },
       clients: {
-        accepted: this.accepted,
+        accepted: this.stat.accepted,
         active: this.sessions.size - this.idlePlayers.size,
         idle: this.idlePlayers.size,
         rtmp: sinfo.rtmp,

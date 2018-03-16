@@ -27,9 +27,6 @@ class NodeHttpServer {
     this.webroot = config.http.webroot = config.http.webroot ? config.http.webroot : HTTP_WEBROOT;
     this.mediaroot = config.http.mediaroot = config.http.mediaroot ? config.http.mediaroot : HTTP_MEDIAROOT;
     this.config = config;
-    this.inbytes = 0;
-    this.outbytes = 0;
-    this.accepted = 0;
 
     let app = Express();
     
@@ -135,18 +132,18 @@ class NodeHttpServer {
     }
 
     context.nodeEvent.on('postPlay', (id, args) => {
-      this.accepted++;
+      context.stat.accepted++;
     });
 
     context.nodeEvent.on('postPublish', (id, args) => {
-      this.accepted++;
+      context.stat.accepted++;
     });
 
     context.nodeEvent.on('doneConnect', (id, args) => {
       let session = context.sessions.get(id);
       let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
-      this.inbytes += socket.bytesRead;
-      this.outbytes += socket.bytesWritten;
+      context.stat.inbytes += socket.bytesRead;
+      context.stat.outbytes += socket.bytesWritten;
     });
   }
 
