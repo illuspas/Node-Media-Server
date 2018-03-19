@@ -7,6 +7,7 @@
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
+const NodeRelayServer = require('./node_relay_server');
 const NodeCoreUtils = require('./node_core_utils');
 const context = require('./node_core_ctx');
 
@@ -31,6 +32,11 @@ class NodeMediaServer {
       this.nts.run();
     }
 
+    if (this.config.relay) {
+      this.nls = new NodeRelayServer(this.config);
+      this.nls.run();
+    }
+
   }
 
   on(eventName, listener) {
@@ -43,6 +49,9 @@ class NodeMediaServer {
     }
     if (this.nhs) {
       this.nhs.stop();
+    }
+    if (this.nls) {
+      this.nls.stop();
     }
   }
 

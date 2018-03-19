@@ -19,6 +19,17 @@ function generateNewSessionID() {
     return sessionID;
 }
 
+function genRandomName() {
+    let name = '';
+    const possible = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const numPossible = possible.length;
+    for (var i = 0; i < 4; i++) {
+        name += possible.charAt((Math.random() * numPossible) | 0);
+    }
+
+    return name;
+}
+
 function verifyAuth(signStr, streamId, secretKey) {
     if (signStr === undefined) {
         return false;
@@ -37,3 +48,4 @@ function verifyAuth(signStr, streamId, secretKey) {
 
 module.exports.generateNewSessionID = generateNewSessionID;
 module.exports.verifyAuth = verifyAuth;
+module.exports.genRandomName = genRandomName;

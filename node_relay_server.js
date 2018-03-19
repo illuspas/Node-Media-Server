@@ -1,0 +1,124 @@
+//
+//  Created by Mingliang Chen on 18/3/16.
+//  illuspas[a]gmail.com
+//  Copyright (c) 2018 Nodemedia. All rights reserved.
+//
+
+const NodeCoreUtils = require('./node_core_utils');
+const NodeRelaySession = require('./node_relay_session');
+const context = require('./node_core_ctx');
+const fs = require('fs');
+const _ = require('lodash');
+
+class NodeRelayServer {
+  constructor(config) {
+    this.config = config;
+    this.staticCycle = null;
+    this.staticSessions = new Map();
+    this.dynamicSessions = new Map();
+
+  }
+
+  run() {
+    context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
+    context.nodeEvent.on('donePlay', this.onDonePlay.bind(this));
+    context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
+    context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
+    this.staticCycle = setInterval(this.onStatic.bind(this), 1000);
+    console.log(`Node Media Relay Server started`);
+  }
+
+  onStatic() {
+    let i = this.config.relay.tasks.length;
+    while (i--) {
+      if (this.staticSessions.has(i)) {
+        continue;
+      }
+
+      let conf = this.config.relay.tasks[i];
+      let isStatic = conf.mode === 'static';
+      if (isStatic) {
+        conf.name = conf.name ? conf.name : NodeCoreUtils.genRandomName();
+        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.inPath = conf.edge;
+        conf.ouPath = `rtmp://localhost:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
+        let session = new NodeRelaySession(conf);
+        session.id = i;
+        session.on('end', (id) => {
+          this.staticSessions.delete(id);
+        });
+        this.staticSessions.set(i, session);
+        session.run();
+        console.log(i, '[Relay static pull] start', conf.inPath, ' to ', conf.ouPath);
+      }
+    }
+  }
+
+  onPrePlay(id, streamPath, args) {
+    let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
+    let [app, stream] = _.slice(regRes, 1);
+    let i = this.config.relay.tasks.length;
+    while (i--) {
+      let conf = this.config.relay.tasks[i];
+      let isPull = conf.mode === 'pull';
+      if (isPull && app === conf.app && !context.publishers.has(streamPath)) {
+        let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
+        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}/${streamPath}`;
+        conf.ouPath = `rtmp://localhost:${this.config.rtmp.port}/${streamPath}`;
+        let session = new NodeRelaySession(conf);
+        session.id = id;
+        session.on('end', (id) => {
+          this.dynamicSessions.delete(id);
+        });
+        this.dynamicSessions.set(id, session);
+        session.run();
+        console.log(id, '[Relay dynamic pull] start', conf.inPath, ' to ', conf.ouPath);
+      }
+    }
+  }
+
+  onDonePlay(id, streamPath, args) {
+    let session = this.dynamicSessions.get(id);
+    let publisher = context.sessions.get(context.publishers.get(streamPath));
+    if (session && publisher.players.size == 0) {
+      session.end();
+    }
+  }
+
+  onPostPublish(id, streamPath, args) {
+    let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
+    let [app, stream] = _.slice(regRes, 1);
+    let i = this.config.relay.tasks.length;
+    while (i--) {
+      let conf = this.config.relay.tasks[i];
+      let isPush = conf.mode === 'push';
+      if (isPush && app === conf.app) {
+        let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
+        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.inPath = `rtmp://localhost:${this.config.rtmp.port}/${streamPath}`;
+        conf.ouPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}/${streamPath}`;
+        let session = new NodeRelaySession(conf);
+        session.id = id;
+        session.on('end', (id) => {
+          this.dynamicSessions.delete(id);
+        });
+        this.dynamicSessions.set(id, session);
+        session.run();
+        console.log(id, '[Relay dynamic push] start', conf.inPath, ' to ', conf.ouPath);
+      }
+    }
+
+  }
+
+  onDonePublish(id, streamPath, args) {
+    let session = this.dynamicSessions.get(id);
+    session.end();
+  }
+
+  stop() {
+    clearInterval(this.staticCycle);
+  }
+}
+
+module.exports = NodeRelayServer;

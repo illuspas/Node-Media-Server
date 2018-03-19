@@ -43,6 +43,35 @@ const config = {
         mp4Flags: '[movflags=faststart]',
       }
     ],
+  },
+  relay: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'live',
+        mode: 'push',
+        edge: 'rtmp://192.168.0.10'
+      }, {
+        app: 'game',
+        mode: 'pull',
+        edge: 'rtmp://192.168.0.10'
+      }, {
+        app: 'cctv',
+        mode: 'static',
+        edge: 'rtsp://admin:admin888@192.168.0.149:554/ISAPI/streaming/channels/101',
+        name: '0_149_101'
+      }, {
+        app: 'iptv',
+        mode: 'static',
+        edge: 'rtmp://live.hkstv.hk.lxdns.com/live/hks',
+        name: 'hks'
+      }, {
+        app: 'mv',
+        mode: 'static',
+        edge: '/Volumes/ExtData/Movies/Dancing.Queen-SD.mp4',
+        name: 'dq'
+      }
+    ]
   }
 };
 
