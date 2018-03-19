@@ -48,13 +48,13 @@ const config = {
     ffmpeg: '/usr/local/bin/ffmpeg',
     tasks: [
       {
-        app: 'cctv',
+        app: 'live',
         mode: 'push',
-        edge: 'rtmp://192.168.0.10/live'
+        edge: 'rtmp://192.168.0.10'
       }, {
         app: 'game',
         mode: 'pull',
-        edge: 'rtmp://192.168.0.11/game'
+        edge: 'rtmp://192.168.0.10'
       }, {
         app: 'cctv',
         mode: 'static',
