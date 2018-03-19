@@ -407,7 +407,7 @@ http://localhost:8000/api/streams
 }
 ```
 
-## Remux to HLS/DASH live stream
+# Remux to HLS/DASH live stream
 ```js
 const NodeMediaServer = require('node_media_server');
 
@@ -443,7 +443,7 @@ var nms = new NodeMediaServer(config)
 nms.run();
 ```
 
-## Record to MP4
+# Record to MP4
 ```JS
 const NodeMediaServer = require('node_media_server');
 
@@ -477,10 +477,10 @@ var nms = new NodeMediaServer(config)
 nms.run();
 ```
 
-## Rtsp/Rtmp Relay
+# Rtsp/Rtmp Relay
 NodeMediaServer implement RTSP and RTMP relay with ffmpeg.
 
-### Static pull
+## Static pull
 The static pull mode is executed at service startup and reconnect after failure.
 It could be a live stream or a file. In theory, it is not limited to RTSP or RTMP protocol.
 
@@ -508,7 +508,7 @@ relay: {
 }
 ```
 
-### Dynamic pull 
+## Dynamic pull 
 When the local server receives a play request.
 If the stream does not exist, pull the stream from the configured edge server to local.
 When the stream is not played by the client, it automatically disconnects.
@@ -526,7 +526,7 @@ relay: {
 }
 ```
 
-### Dynamic push
+## Dynamic push
 When the local server receives a publish request.
 Automatically push the stream to the edge server.
 
