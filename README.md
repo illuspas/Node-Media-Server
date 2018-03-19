@@ -22,7 +22,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support event callback
  - Support https/wss
  - Support Server Monitor
-
+ - Support Rtsp/Rtmp relay
  
 # Usage 
 ```bash
@@ -475,6 +475,67 @@ const config = {
 
 var nms = new NodeMediaServer(config)
 nms.run();
+```
+
+## Rtsp/Rtmp Relay
+NodeMediaServer implement RTSP and RTMP relay with ffmpeg.
+
+### Static pull
+The static pull mode is executed at service startup and reconnects after failure.
+It could be a live stream or a file. In theory, it is not limited to RTSP or RTMP protocol.
+
+```
+relay: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'cctv',
+      mode: 'static',
+      edge: 'rtsp://admin:admin888@192.168.0.149:554/ISAPI/streaming/channels/101',
+      name: '0_149_101'
+    }, {
+        app: 'iptv',
+        mode: 'static',
+        edge: 'rtmp://live.hkstv.hk.lxdns.com/live/hks',
+        name: 'hks'
+      }, {
+        app: 'mv',
+        mode: 'static',
+        edge: '/Volumes/ExtData/Movies/Dancing.Queen-SD.mp4',
+        name: 'dq'
+      }
+  ]
+}
+```
+
+### Dynamic pull 
+
+```
+relay: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'live',
+      mode: 'pull',
+      edge: 'rtmp://192.168.0.20',
+    }
+  ]
+}
+```
+
+### Dynamic push
+
+```
+relay: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'live',
+      mode: 'push',
+      edge: 'rtmp://192.168.0.10',
+    }
+  ]
+}
 ```
 
 # Thanks
