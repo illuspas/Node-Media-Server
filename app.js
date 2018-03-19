@@ -48,7 +48,7 @@ const config = {
     ffmpeg: '/usr/local/bin/ffmpeg',
     tasks: [
       {
-        app: 'live',
+        app: 'cctv',
         mode: 'push',
         edge: 'rtmp://192.168.0.10/live'
       }, {
@@ -66,7 +66,7 @@ const config = {
         edge: 'rtmp://live.hkstv.hk.lxdns.com/live/hks',
         name: 'hks'
       }, {
-        app: 'tv',
+        app: 'mv',
         mode: 'static',
         edge: '/Volumes/ExtData/Movies/Dancing.Queen-SD.mp4',
         name: 'dq'

@@ -33,11 +33,11 @@ class NodeRelayServer {
       if (this.staticSessions.has(i)) {
         continue;
       }
-      
+
       let conf = this.config.relay.tasks[i];
       let isStatic = conf.mode === 'static';
       if (isStatic) {
-        console.log('staticCycle',i);
+        console.log('staticCycle', i);
         conf.name = conf.name ? conf.name : NodeCoreUtils.genRandomName();
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = conf.edge;
@@ -49,7 +49,7 @@ class NodeRelayServer {
         });
         this.staticSessions.set(i, session);
         session.run();
-        // console.log(i,'static pull start', conf.inPath, ' to ', conf.ouPath);
+        console.log(i,'[Relay static pull] start', conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -59,6 +59,28 @@ class NodeRelayServer {
   }
 
   onPostPublish(id, streamPath, args) {
+    let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
+    let [app, stream] = _.slice(regRes, 1);
+    let i = this.config.relay.tasks.length;
+    while (i--) {
+      let conf = this.config.relay.tasks[i];
+      let isPush = conf.mode === 'push';
+      if (isPush && app === conf.app) {
+        let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
+        conf.ffmpeg = this.config.relay.ffmpeg;
+        conf.inPath = `rtmp://localhost:${this.config.rtmp.port}/${streamPath}`;
+        conf.ouPath = hasApp? `${conf.edge}/${stream}`:`${conf.edge}/${streamPath}`;
+        let session = new NodeRelaySession(conf);
+        session.id = id;
+        session.on('end', (id) => {
+          this.dynamicSessions.delete(id);
+        });
+        this.dynamicSessions.set(id, session);
+        session.run();
+        console.log(id,'[Relay dynamic push] start', conf.inPath, ' to ', conf.ouPath);
+      }
+    }
+
 
   }
 
