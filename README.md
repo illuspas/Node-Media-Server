@@ -61,7 +61,7 @@ nms.run();
 - [x] on_connect/on_publish/on_play/on_done event callback
 - [ ] multi resolution transcoding 
 - [ ] hardware acceleration transcoding. 
-- [ ] rtmp relay
+- [x] rtmp relay
 - [ ] admin panel
 
 # Publishing live streams
@@ -481,7 +481,7 @@ nms.run();
 NodeMediaServer implement RTSP and RTMP relay with ffmpeg.
 
 ### Static pull
-The static pull mode is executed at service startup and reconnects after failure.
+The static pull mode is executed at service startup and reconnect after failure.
 It could be a live stream or a file. In theory, it is not limited to RTSP or RTMP protocol.
 
 ```
