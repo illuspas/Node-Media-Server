@@ -142,7 +142,7 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   * handleData() {
-    console.log('[rtmp handshake] start');
+    // console.log('[rtmp handshake] start');
     if (this.bp.need(1537)) {
       if (yield) return;
     }
@@ -154,8 +154,8 @@ class NodeRtmpSession extends EventEmitter {
       if (yield) return;
     }
     let c2 = this.bp.read(1536);
-    console.log('[rtmp handshake] done');
-    console.log('[rtmp message parser] start');
+    // console.log('[rtmp handshake] done');
+    // console.log('[rtmp message parser] start');
     this.bp.readBytes = 0;
     while (this.isStarting) {
       let message = {};
@@ -315,7 +315,7 @@ class NodeRtmpSession extends EventEmitter {
       }
     }
 
-    console.log('[rtmp message parser] done');
+    // console.log('[rtmp message parser] done');
 
     this.onCloseStream(this.playStreamId);
     this.onCloseStream(this.publishStreamId);
@@ -400,7 +400,7 @@ class NodeRtmpSession extends EventEmitter {
     switch (rtmpHeader.messageTypeID) {
       case 1:
         this.inChunkSize = rtmpBody.readUInt32BE();
-        console.log('[rtmp handleRtmpMessage] Set In chunkSize:' + this.inChunkSize);
+        // console.log('[rtmp handleRtmpMessage] Set In chunkSize:' + this.inChunkSize);
         break;
       case 3:
         // console.log('[rtmp handleRtmpMessage] Ack:' + rtmpBody.readUInt32BE());
@@ -827,7 +827,7 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = setInterval(() => {
       this.pingRequest();
     }, this.ping);
-    console.log('[rtmp connect]  app: ' + cmdObj.app);
+    // console.log('[rtmp connect]  app: ' + cmdObj.app);
     context.nodeEvent.emit('postConnect', this.id, cmdObj);
   }
 
