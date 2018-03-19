@@ -49,7 +49,7 @@ class NodeRelayServer {
         });
         this.staticSessions.set(i, session);
         session.run();
-        console.log(i, '[Relay static pull] start', conf.inPath, ' to ', conf.ouPath);
+        console.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -73,7 +73,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        console.log(id, '[Relay dynamic pull] start', conf.inPath, ' to ', conf.ouPath);
+        console.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -105,7 +105,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        console.log(id, '[Relay dynamic push] start', conf.inPath, ' to ', conf.ouPath);
+        console.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
 
