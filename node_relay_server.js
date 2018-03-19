@@ -13,34 +13,43 @@ const _ = require('lodash');
 class NodeRelayServer {
   constructor(config) {
     this.config = config;
-    this.relaySessions = new Map();
+    this.staticCycle = null;
+    this.staticSessions = new Map();
+    this.dynamicSessions = new Map();
+
   }
 
   run() {
     context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
-    setTimeout(this.onStatic.bind(this), 100);
+    this.staticCycle = setInterval(this.onStatic.bind(this), 1000);
     console.log(`Node Media Relay Server started`);
   }
 
   onStatic() {
     let i = this.config.relay.tasks.length;
     while (i--) {
+      if (this.staticSessions.has(i)) {
+        continue;
+      }
+      
       let conf = this.config.relay.tasks[i];
       let isStatic = conf.mode === 'static';
       if (isStatic) {
+        console.log('staticCycle',i);
         conf.name = conf.name ? conf.name : NodeCoreUtils.genRandomName();
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = conf.edge;
         conf.ouPath = `rtmp://localhost:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
-        // this.relaySessions.set();
-        session.on('end', () => {
-
+        session.id = i;
+        session.on('end', (id) => {
+          this.staticSessions.delete(id);
         });
+        this.staticSessions.set(i, session);
         session.run();
-        console.log('static pull', conf);
+        // console.log(i,'static pull start', conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -58,7 +67,7 @@ class NodeRelayServer {
   }
 
   stop() {
-
+    clearInterval(this.staticCycle);
   }
 }
 
