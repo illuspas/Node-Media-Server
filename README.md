@@ -509,6 +509,9 @@ relay: {
 ```
 
 ### Dynamic pull 
+When the local server receives a play request.
+If the stream does not exist, pull the stream from the configured edge server to local.
+When the stream is not played by the client, it automatically disconnects.
 
 ```
 relay: {
@@ -524,6 +527,8 @@ relay: {
 ```
 
 ### Dynamic push
+When the local server receives a publish request.
+Automatically push the stream to the edge server.
 
 ```
 relay: {
