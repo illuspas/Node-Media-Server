@@ -237,7 +237,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## 配置 https支持
 ```js
-const NodeMediaServer = require('./node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -395,7 +395,7 @@ http://localhost:8000/api/streams
 # 转 HLS/DASH 直播流
 
 ```js
-const NodeMediaServer = require('node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -432,7 +432,7 @@ nms.run();
 # 直播录制为MP4文件
 
 ```JS
-const NodeMediaServer = require('node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
