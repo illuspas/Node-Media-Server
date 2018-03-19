@@ -253,7 +253,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## Config https
 ```js
-const NodeMediaServer = require('./node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -409,7 +409,7 @@ http://localhost:8000/api/streams
 
 # Remux to HLS/DASH live stream
 ```js
-const NodeMediaServer = require('node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -445,7 +445,7 @@ nms.run();
 
 # Record to MP4
 ```JS
-const NodeMediaServer = require('node_media_server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
