@@ -542,8 +542,6 @@ class NodeRtmpSession extends EventEmitter {
       sound_format = (sound_format >> 4) & 0x0f;
       this.audioCodec = sound_format;
       this.audioCodecName = AUDIO_CODEC_NAME[sound_format];
-      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName}`);
-
       this.audioSamplerate = AUDIO_SOUND_RATE[sound_rate];
       this.audioChannels = ++sound_type;
 
@@ -571,6 +569,7 @@ class NodeRtmpSession extends EventEmitter {
       } else {
         this.isFirstAudioReceived = true;
       }
+      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName} ${this.audioSamplerate} ${this.audioChannels}ch`);
 
     }
     // console.log('Audio chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
@@ -611,7 +610,6 @@ class NodeRtmpSession extends EventEmitter {
     if (!this.isFirstVideoReceived) {
       this.videoCodec = codec_id;
       this.videoCodecName = VIDEO_CODEC_NAME[codec_id];
-      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName}`);
 
       if (codec_id == 7 || codec_id == 12) {
         //cache avc sequence header
@@ -632,6 +630,7 @@ class NodeRtmpSession extends EventEmitter {
       } else {
         this.isFirstVideoReceived = true;
       }
+      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName} ${this.videoWidth}x${this.videoHeight}`);
     }
     // console.log('Video chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
     // console.log(`Send Video message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} `);
