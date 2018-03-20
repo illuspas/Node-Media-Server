@@ -55,6 +55,7 @@ class NodeRtmpSession extends EventEmitter {
     this.isPublishing = false;
     this.isPlaying = false;
     this.isIdling = false;
+    this.isPause = false;
     this.isFirstAudioReceived = false;
     this.isFirstVideoReceived = false;
     this.metaData = null;
@@ -516,7 +517,8 @@ class NodeRtmpSession extends EventEmitter {
         this.emit('deleteStream', streamID);
         break;
       case 'pause':
-        // this.pauseOrUnpauseStream();
+        this.isPause = commandMessage.pause;
+        this.pauseOrUnpauseStream();
         break;
       case 'releaseStream':
         // this.respondReleaseStream();
@@ -588,6 +590,9 @@ class NodeRtmpSession extends EventEmitter {
 
     for (let playerId of this.players) {
       let session = context.sessions.get(playerId);
+      if (session.isPause) {
+        continue;
+      }
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
@@ -653,6 +658,9 @@ class NodeRtmpSession extends EventEmitter {
 
     for (let playerId of this.players) {
       let session = context.sessions.get(playerId);
+      if (session.isPause) {
+        continue;
+      }
       if (session instanceof NodeRtmpSession) {
         rtmpMessage.writeUInt32LE(session.playStreamId, 8);
         session.socket.write(rtmpMessage);
@@ -806,6 +814,15 @@ class NodeRtmpSession extends EventEmitter {
     this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Reset', 'Playing and resetting stream.');
     this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Start', 'Started playing stream.');
     this.sendRtmpSampleAccess();
+  }
+
+  pauseOrUnpauseStream() {
+    let c = this.isPause ? 'NetStream.Pause.Notify' : 'NetStream.Unpause.Notify';
+    let d = this.isPause ? 'Paused live' : 'Unpaused live';
+    if (!this.isPause) {
+      this.sendStreamStatus(STREAM_BEGIN, this.playStreamId);
+    }
+    this.sendStatusMessage(this.playStreamId, c, d);
   }
 
   onConnect(cmdObj) {
