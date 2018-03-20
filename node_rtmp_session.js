@@ -569,7 +569,7 @@ class NodeRtmpSession extends EventEmitter {
       } else {
         this.isFirstAudioReceived = true;
       }
-      console.log(`[rtmp handleAudioMessage] Parse AudioTagHeader sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName} ${this.audioSamplerate} ${this.audioChannels}ch`);
+      console.log(`[rtmp handleAudioMessage] id=${this.id} sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName} ${this.audioSamplerate} ${this.audioChannels}ch`);
 
     }
     // console.log('Audio chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
@@ -630,7 +630,7 @@ class NodeRtmpSession extends EventEmitter {
       } else {
         this.isFirstVideoReceived = true;
       }
-      console.log(`[rtmp handleVideoMessage] Parse VideoTagHeader frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName} ${this.videoWidth}x${this.videoHeight}`);
+      console.log(`[rtmp handleVideoMessage] id=${this.id} frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName} ${this.videoWidth}x${this.videoHeight}`);
     }
     // console.log('Video chunkStreamID='+rtmpHeader.chunkStreamID+' '+rtmpHeader.messageStreamID);
     // console.log(`Send Video message timestamp=${rtmpHeader.timestamp} timestampDelta=${rtmpHeader.timestampDelta} `);
@@ -838,20 +838,20 @@ class NodeRtmpSession extends EventEmitter {
     if (this.config.auth && this.config.auth.publish && !this.isLocal) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[rtmp publish] Unauthorized. ID=${this.id} streamPath=${this.publishStreamPath} sign=${this.publishArgs.sign}`);
+        console.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} sign=${this.publishArgs.sign}`);
         this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Authorization required.');
         return;
       }
     }
 
     if (context.publishers.has(this.publishStreamPath)) {
-      console.warn("[rtmp publish] Already has a stream path " + this.publishStreamPath);
+      console.warn(`[rtmp publish] id=${this.id} Already has a stream path " + ${this.publishStreamPath}`);
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadName', 'Stream already publishing');
     } else if (this.isPublishing) {
       console.warn("[rtmp publish] NetConnection is publishing ");
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      console.log("[rtmp publish] new stream path " + this.publishStreamPath + ' streamId:' + this.publishStreamId);
+      console.log(`[rtmp publish] id=${this.id} New stream path ${this.publishStreamPath} streamId=${this.publishStreamId}`);
       context.publishers.set(this.publishStreamPath, this.id);
       this.isPublishing = true;
       this.players = new Set();
@@ -880,7 +880,7 @@ class NodeRtmpSession extends EventEmitter {
     if (this.config.auth && this.config.auth.play && !this.isLocal) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[rtmp play] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+        console.log(`[rtmp play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
         this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.play.Unauthorized', 'Authorization required.');
         return;
       }
@@ -953,7 +953,7 @@ class NodeRtmpSession extends EventEmitter {
         this.isIdling = false;
       }
 
-      console.log("[rtmp play] join stream " + this.playStreamPath + ' streamId:' + this.playStreamId);
+      console.log(`[rtmp play] id=${this.id} Join stream path ${this.playStreamPath} streamId=${this.playStreamId}`);
       players.add(this.id);
       context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
     }

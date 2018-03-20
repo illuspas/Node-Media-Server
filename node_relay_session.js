@@ -37,7 +37,7 @@ class NodeRelaySession extends EventEmitter {
     });
 
     this.ffmpeg_exec.on('close', (code) => {
-      console.log('[Relay end]',this.id);
+      console.log('[Relay end] id=',this.id);
       this.emit('end', this.id);
     });
   }
