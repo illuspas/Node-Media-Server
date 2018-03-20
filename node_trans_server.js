@@ -62,7 +62,9 @@ class NodeTransServer {
 
   onDonePublish(id, streamPath, args) {
     let session = this.transSessions.get(id);
-    session.end();
+    if (session) {
+      session.end();
+    }
   }
 }
 

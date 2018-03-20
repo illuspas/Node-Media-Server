@@ -113,7 +113,9 @@ class NodeRelayServer {
 
   onDonePublish(id, streamPath, args) {
     let session = this.dynamicSessions.get(id);
-    session.end();
+    if (session) {
+      session.end();
+    }
   }
 
   stop() {
