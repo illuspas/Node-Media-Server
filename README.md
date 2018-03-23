@@ -3,6 +3,8 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 
+![logo](https://www.nodemedia.cn/uploads/site_logo.png)
+
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
 [中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
 
