@@ -822,7 +822,7 @@ class NodeRtmpSession extends EventEmitter {
     if (!this.isPause) {
       this.sendStreamStatus(STREAM_BEGIN, this.playStreamId);
     }
-    this.sendStatusMessage(this.playStreamId, c, d);
+    this.sendStatusMessage(this.playStreamId, 'status', c, d);
   }
 
   onConnect(cmdObj) {
