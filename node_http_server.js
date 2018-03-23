@@ -77,7 +77,7 @@ class NodeHttpServer {
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
+    this.httpServer.listen(this.port, '0.0.0.0', () => {
       console.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
@@ -104,7 +104,7 @@ class NodeHttpServer {
     });
 
     if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, () => {
+      this.httpsServer.listen(this.sport, '0.0.0.0', () => {
         console.log(`Node Media Https Server started on port: ${this.sport}`);
       });
 

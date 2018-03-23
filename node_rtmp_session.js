@@ -50,7 +50,7 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = null;
     this.socket.setTimeout(this.pingTimeout); //Use nodejs network timeout mechanism 
 
-    this.isLocal = socket.remoteAddress === '::1'
+    this.isLocal = socket.remoteAddress === '127.0.0.1'
     this.isStarting = false;
     this.isPublishing = false;
     this.isPlaying = false;
