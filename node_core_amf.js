@@ -2,7 +2,7 @@
  * Created by delian on 3/12/14.
  * This module provides encoding and decoding of the AMF0 and AMF3 format
  */
-
+const Logger = require('./logger');
 
 var amf3dRules = {
     0x00: amf3decUndefined,
@@ -543,20 +543,20 @@ function amf0decObject(buf) { // TODO: Implement references!
     var obj = {};
     var iBuf = buf.slice(1);
     var len = 1;
-    //    console.log('ODec',iBuf.readUInt8(0));
+    //    Logger.debug('ODec',iBuf.readUInt8(0));
     while (iBuf.readUInt8(0) != 0x09) {
-        // console.log('Field', iBuf.readUInt8(0), iBuf);
+        // Logger.debug('Field', iBuf.readUInt8(0), iBuf);
         var prop = amf0decUString(iBuf);
-        // console.log('Got field for property', prop);
+        // Logger.debug('Got field for property', prop);
         len += prop.len;
         if (iBuf.slice(prop.len).readUInt8(0) == 0x09) {
             len++;
-            // console.log('Found the end property');
+            // Logger.debug('Found the end property');
             break;
         } // END Object as value, we shall leave
         if (prop.value == '') break;
         var val = amf0DecodeOne(iBuf.slice(prop.len));
-        // console.log('Got field for value', val);
+        // Logger.debug('Got field for value', val);
         obj[prop.value] = val.value;
         len += val.len;
         iBuf = iBuf.slice(prop.len + val.len);
@@ -686,7 +686,7 @@ function amf0decArray(buf) {
 function amf0encArray(a) {
     var l = 0;
     if (a instanceof Array) l = a.length; else l = Object.keys(a).length;
-    console.log('Array encode', l, a);
+    Logger.debug('Array encode', l, a);
     var buf = new Buffer(5);
     buf.writeUInt8(8, 0);
     buf.writeUInt32BE(l, 1);
@@ -762,7 +762,7 @@ function amf0decSArray(buf) {
  * @param a Array
  */
 function amf0encSArray(a) {
-    console.log('Do strict array!');
+    Logger.debug('Do strict array!');
     var buf = new Buffer(5);
     buf.writeUInt8(0x0A, 0);
     buf.writeUInt32BE(a.length, 1);
@@ -815,7 +815,7 @@ function amf0encTypedObj() {
  */
 function amfXDecodeOne(rules, buffer) {
     if (!rules[buffer.readUInt8(0)]) {
-        console.error('Unknown field', buffer.readUInt8(0));
+        Logger.error('Unknown field', buffer.readUInt8(0));
         return null;
     }
     return rules[buffer.readUInt8(0)](buffer);
@@ -882,7 +882,7 @@ function amf0Decode(buffer) {
  * @returns {*}
  */
 function amfXEncodeOne(rules, o) {
-    //    console.log('amfXEncodeOne type',o,amfType(o),rules[amfType(o)]);
+    //    Logger.debug('amfXEncodeOne type',o,amfType(o),rules[amfType(o)]);
     var f = rules[amfType(o)];
     if (f) return f(o);
     throw new Error('Unsupported type for encoding!');
@@ -989,7 +989,7 @@ function decodeAmf0Data(dbuf) {
             }
         });
     } else {
-        console.log('Unknown command', resp);
+        Logger.error('Unknown command', resp);
     }
     return resp
 }
@@ -1016,7 +1016,7 @@ function decodeAMF0Cmd(dbuf) {
             }
         });
     } else {
-        console.log('Unknown command', resp);
+        Logger.error('Unknown command', resp);
     }
     return resp
 }
@@ -1035,9 +1035,9 @@ function encodeAMF0Cmd(opt) {
                 data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
         });
     } else {
-        console.log('Unknown command', opt);
+        Logger.error('Unknown command', opt);
     }
-    // console.log('Encoded as',data.toString('hex'));
+    // Logger.debug('Encoded as',data.toString('hex'));
     return data
 }
 
@@ -1050,9 +1050,9 @@ function encodeAMF0Data(opt) {
                 data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
         });
     } else {
-        console.log('Unknown data', opt);
+        Logger.error('Unknown data', opt);
     }
-    // console.log('Encoded as',data.toString('hex'));
+    // Logger.debug('Encoded as',data.toString('hex'));
     return data
 }
 
@@ -1078,7 +1078,7 @@ function decodeAMF3Cmd(dbuf) {
             }
         });
     } else {
-        console.log('Unknown command', resp);
+        Logger.error('Unknown command', resp);
     }
     return resp
 }
@@ -1097,7 +1097,7 @@ function encodeAMF3Cmd(opt) {
                 data = Buffer.concat([data, amf3EncodeOne(opt[n])]);
         });
     } else {
-        console.log('Unknown command', opt);
+        Logger.error('Unknown command', opt);
     }
     return data
 }

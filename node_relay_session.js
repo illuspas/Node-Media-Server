@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
@@ -22,22 +23,22 @@ class NodeRelaySession extends EventEmitter {
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
       argv.unshift('-re');
     }
-    // console.log(argv.toString());
+    // Logger.debug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
-      // console.log(e);
+      // Logger.debug(e);
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      // console.log(`输出：${data}`);
+      // Logger.debug(`输出：${data}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      // console.log(`错误：${data}`);
+      // Logger.debug(`错误：${data}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {
-      console.log('[Relay end] id=', this.id);
+      Logger.log('[Relay end] id=', this.id);
       this.emit('end', this.id);
     });
   }

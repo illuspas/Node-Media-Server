@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
+    "chalk": "^2.3.2",
     "dateformat": "^3.0.3",
     "express": "^4.15.4",
     "lodash": "^4.17.4",

@@ -4,6 +4,8 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 
+const Logger = require('./logger');
+
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
@@ -17,6 +19,8 @@ class NodeMediaServer {
   }
 
   run() {
+    Logger.setLogType(this.config.logType || Logger.LOG_TYPES.NORMAL);
+
     if (this.config.rtmp) {
       this.nrs = new NodeRtmpServer(this.config);
       this.nrs.run();

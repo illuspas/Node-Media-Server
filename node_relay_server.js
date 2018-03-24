@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
 
 const NodeCoreUtils = require('./node_core_utils');
 const NodeRelaySession = require('./node_relay_session');
@@ -25,7 +26,7 @@ class NodeRelayServer {
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
     this.staticCycle = setInterval(this.onStatic.bind(this), 1000);
-    console.log(`Node Media Relay Server started`);
+    Logger.log(`Node Media Relay Server started`);
   }
 
   onStatic() {
@@ -49,7 +50,7 @@ class NodeRelayServer {
         });
         this.staticSessions.set(i, session);
         session.run();
-        console.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -73,7 +74,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        console.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
@@ -105,7 +106,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        console.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
 
