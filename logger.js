@@ -15,22 +15,27 @@ const setLogType = (type) => {
     logType = type;
 };
 
+const logTime = () => {
+    let nowDate = new Date();
+    return nowDate.toLocaleDateString() + ' ' + nowDate.toLocaleTimeString([], { hour12: false });
+};
+
 const log = (...args) => {
     if (logType < LOG_TYPES.NORMAL) return;
 
-    console.log(chalk.bold.green('[INFO]'), ...args);  
+    console.log(logTime(), chalk.bold.green('[INFO]'), ...args);
 };
 
 const error = (...args) => {
     if (logType < LOG_TYPES.ERROR) return;
 
-    console.log(chalk.bold.red('[ERROR]'), ...args);  
+    console.log(logTime(), chalk.bold.red('[ERROR]'), ...args);
 };
 
 const debug = (...args) => {
     if (logType < LOG_TYPES.DEBUG) return;
 
-    console.log(chalk.bold.blue('[DEBUG]'), ...args);
+    console.log(logTime(), chalk.bold.blue('[DEBUG]'), ...args);
 };
 
 module.exports = {

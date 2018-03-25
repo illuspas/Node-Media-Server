@@ -327,6 +327,7 @@ class NodeRtmpSession extends EventEmitter {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
+    Logger.log(`[rtmp disconnect] id=${this.id}`);
     context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.socket.destroy();
     context.sessions.delete(this.id);
@@ -529,7 +530,7 @@ class NodeRtmpSession extends EventEmitter {
         // this.respondFCUnpublish();
         break;
       default:
-        Logger.error("[rtmp handleCommandMessage] unknown AMF command: " + commandMessage.cmd);
+        Logger.debug("[rtmp handleCommandMessage] unknown AMF command: " + commandMessage.cmd);
         break;
     }
   }
@@ -845,7 +846,7 @@ class NodeRtmpSession extends EventEmitter {
     this.pingInterval = setInterval(() => {
       this.pingRequest();
     }, this.ping);
-    // Logger.debug('[rtmp connect]  app: ' + cmdObj.app);
+    Logger.log(`[rtmp connect] id=${this.id} ip=${this.socket.remoteAddress} app=${cmdObj.app} args=${JSON.stringify(cmdObj)}`);
     context.nodeEvent.emit('postConnect', this.id, cmdObj);
   }
 
