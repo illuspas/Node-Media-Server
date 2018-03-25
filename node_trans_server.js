@@ -19,7 +19,7 @@ class NodeTransServer {
 
   run() {
     try {
-      mkdirp(this.config.http.mediaroot);
+      mkdirp.sync(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
     } catch (error) {
       Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
