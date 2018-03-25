@@ -381,7 +381,7 @@ function HEVCParseSPS(SPS, hevc) {
     psps.conf_win_top_offset = rbspBitop.read_golomb() * vert_mult;
     psps.conf_win_bottom_offset = rbspBitop.read_golomb() * vert_mult;
   }
-  // console.log(psps);
+  // Logger.debug(psps);
   return psps;
 }
 
@@ -430,14 +430,14 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
       }
       let nalutype = p[0];
       let n = (p[1]) << 8 | p[2];
-      // console.log(nalutype, n);
+      // Logger.debug(nalutype, n);
       p = p.slice(3);
       for (let j = 0; j < n; j++) {
         if (p.length < 2) {
           break;
         }
         k = (p[0] << 8) | p[1];
-        // console.log('k', k);
+        // Logger.debug('k', k);
         if (p.length < 2 + k) {
           break;
         }
@@ -446,7 +446,7 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
           //SPS
           let sps = Buffer.alloc(k);
           p.copy(sps, 0, 0, k);
-          // console.log(sps, sps.length);
+          // Logger.debug(sps, sps.length);
           hevc.psps = HEVCParseSPS(sps, hevc);
           info.profile = hevc.general_profile_idc;
           info.level = hevc.general_level_idc / 30.0;

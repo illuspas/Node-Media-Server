@@ -3,6 +3,8 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
+
 const EventEmitter = require('events');
 const URL = require('url');
 
@@ -60,7 +62,7 @@ class NodeFlvSession extends EventEmitter {
     this.connectTime = new Date();
 
     if (format != 'flv') {
-      console.log(`[${this.TAG}] Unsupported format=${format}`);
+      Logger.error(`[${this.TAG}] Unsupported format=${format}`);
       this.res.statusCode = 403;
       this.res.end();
       return;
@@ -70,18 +72,18 @@ class NodeFlvSession extends EventEmitter {
       //Play 
       this.playStreamPath = streamPath;
       this.playArgs = urlInfo.query;
-      console.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
+      Logger.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
       this.emit('play');
 
     } else if (method == 'POST') {
       //Publish
 
-      console.log(`[${this.TAG}] Unsupported method=` + method);
+      Logger.error(`[${this.TAG}] Unsupported method=` + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
     } else {
-      console.log(`[${this.TAG}] Unsupported method=` + method);
+      Logger.error(`[${this.TAG}] Unsupported method=` + method);
       this.res.statusCode = 405;
       this.res.end();
       return;
@@ -113,14 +115,14 @@ class NodeFlvSession extends EventEmitter {
 
   * handleData() {
 
-    console.log(`[${this.TAG} message parser] start`);
+    Logger.log(`[${this.TAG} message parser] start`);
     while (this.isStarting) {
       if (this.bp.need(9)) {
         if (yield) break;
       }
     }
 
-    console.log(`[${this.TAG} message parser] done`);
+    Logger.log(`[${this.TAG} message parser] done`);
     if (this.isPublisher) {
 
     } else {
@@ -153,7 +155,7 @@ class NodeFlvSession extends EventEmitter {
     if (this.config.auth !== undefined && this.config.auth.play) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
-        console.log(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+        Logger.error(`[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
         this.res.statusCode = 401;
         this.res.end();
         return;
@@ -161,7 +163,7 @@ class NodeFlvSession extends EventEmitter {
     }
 
     if (!context.publishers.has(this.playStreamPath)) {
-      console.log(`[${this.TAG} play] stream not found ` + this.playStreamPath);
+      Logger.error(`[${this.TAG} play] stream not found ` + this.playStreamPath);
       context.idlePlayers.add(this.id);
       return;
     }
@@ -226,7 +228,7 @@ class NodeFlvSession extends EventEmitter {
         this.res.write(flvMessage);
       }
     }
-    console.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
+    Logger.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
     context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
   }
 

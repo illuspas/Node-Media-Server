@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
 
 const Fs = require('fs');
 const Http = require('http');
@@ -78,15 +79,15 @@ class NodeHttpServer {
 
   run() {
     this.httpServer.listen(this.port, '0.0.0.0', () => {
-      console.log(`Node Media Http Server started on port: ${this.port}`);
+      Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
     this.httpServer.on('error', (e) => {
-      console.error(`Node Media Http Server ${e}`);
+      Logger.error(`Node Media Http Server ${e}`);
     });
 
     this.httpServer.on('close', () => {
-      console.log('Node Media Http Server Close.');
+      Logger.log('Node Media Http Server Close.');
     });
 
     this.wsServer = new WebSocket.Server({ server: this.httpServer });
@@ -97,23 +98,23 @@ class NodeHttpServer {
     });
 
     this.wsServer.on('listening', () => {
-      console.log(`Node Media WebSocket Server started on port: ${this.port}`);
+      Logger.log(`Node Media WebSocket Server started on port: ${this.port}`);
     });
     this.wsServer.on('error', (e) => {
-      console.error(`Node Media WebSocket Server ${e}`);
+      Logger.error(`Node Media WebSocket Server ${e}`);
     });
 
     if (this.httpsServer) {
       this.httpsServer.listen(this.sport, '0.0.0.0', () => {
-        console.log(`Node Media Https Server started on port: ${this.sport}`);
+        Logger.log(`Node Media Https Server started on port: ${this.sport}`);
       });
 
       this.httpsServer.on('error', (e) => {
-        console.error(`Node Media Https Server ${e}`);
+        Logger.error(`Node Media Https Server ${e}`);
       });
 
       this.httpsServer.on('close', () => {
-        console.log('Node Media Https Server Close.');
+        Logger.log('Node Media Https Server Close.');
       });
 
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
@@ -124,10 +125,10 @@ class NodeHttpServer {
       });
 
       this.wssServer.on('listening', () => {
-        console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+        Logger.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
       });
       this.wssServer.on('error', (e) => {
-        console.error(`Node Media WebSocketSecure Server ${e}`);
+        Logger.error(`Node Media WebSocketSecure Server ${e}`);
       });
     }
 

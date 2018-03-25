@@ -3,6 +3,8 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
+
 const Crypto = require('crypto');
 
 const MESSAGE_FORMAT_0 = 0;
@@ -96,16 +98,16 @@ function generateS2(messageFormat, clientsig, callback) {
 
 function generateS0S1S2(clientsig) {
   var clientType = clientsig.slice(0, 1);
-  // console.log("[rtmp handshake] client type: " + clientType);
+  // Logger.debug("[rtmp handshake] client type: " + clientType);
   var clientsig = clientsig.slice(1);
 
   var messageFormat = detectClientMessageFormat(clientsig);
   var allBytes;
   if (messageFormat === MESSAGE_FORMAT_0) {
-    //    console.log('[rtmp handshake] using simple handshake.');
+    //    Logger.debug('[rtmp handshake] using simple handshake.');
     allBytes = Buffer.concat([clientType, clientsig, clientsig]);
   } else {
-    //    console.log('[rtmp handshake] using complex handshake.');
+    //    Logger.debug('[rtmp handshake] using complex handshake.');
     allBytes = Buffer.concat([clientType, generateS1(messageFormat), generateS2(messageFormat, clientsig)]);
   }
   return allBytes;

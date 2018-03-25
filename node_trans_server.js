@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
+const Logger = require('./logger');
 
 const NodeTransSession = require('./node_trans_session');
 const context = require('./node_core_ctx');
@@ -21,7 +22,7 @@ class NodeTransServer {
       mkdirp(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
     } catch (error) {
-      console.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
+      Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
       return;
     }
 
@@ -31,7 +32,7 @@ class NodeTransServer {
       apps += this.config.trans.tasks[i].app;
       apps += ' ';
     }
-    console.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
+    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
 
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));

@@ -27,7 +27,7 @@ class BufferPool extends Readable {
     try {
       this.gFun.next(true);
     } catch (e) {
-      // console.log(e);
+      // Logger.debug(e);
     }
   }
 

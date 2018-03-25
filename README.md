@@ -151,6 +151,43 @@ http://localhost:8000/live/STREAM_NAME/index.mpd
 </script>
 ```
 
+# Logging
+## Modify the logging type
+It is now possible to modify the logging type which determines which console outputs are shown.
+
+There are a total of 4 possible options:
+- 0 - Don't log anything
+- 1 - Log errors
+- 2 - Log errors and generic info
+- 3 - Log everything (debug)
+
+Modifying the logging type is easy - just add a new value `logType` in the config and set it to a value between 0 and 4.
+By default, this is set to show errors and generic info internally (setting 2).
+
+```js
+const NodeMediaServer = require('node-media-server');
+
+const config = {
+  logType: 3,
+
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  }
+};
+
+var nms = new NodeMediaServer(config)
+nms.run();
+
+```
+
 # Authentication
 ## Encryption URL consists of:
 > rtmp://hostname:port/appname/stream?sign=expires-HashValue  
