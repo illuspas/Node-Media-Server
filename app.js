@@ -80,9 +80,8 @@ var nms = new NodeMediaServer(config)
 nms.run();
 
 nms.on('preConnect', (id, args) => {
+  console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
   let session = nms.getSession(id);
-  console.log('[NodeEvent on preConnect]', `id=${id} ip=${session.socket.remoteAddress} args=${JSON.stringify(args)}`);
-  
   // session.reject();
 });
 
