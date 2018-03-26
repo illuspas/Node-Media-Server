@@ -21,6 +21,13 @@ class NodeRelayServer {
   }
 
   run() {
+    try {
+      fs.accessSync(this.config.relay.ffmpeg, fs.constants.X_OK);
+    }catch(error) {
+      Logger.error(`Node Media Relay Server startup failed. ffmpeg:${this.config.trans.ffmpeg} cannot be executed.`);
+      return;
+    }
+    
     context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
     context.nodeEvent.on('donePlay', this.onDonePlay.bind(this));
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));

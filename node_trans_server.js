@@ -26,16 +26,22 @@ class NodeTransServer {
       return;
     }
 
+    try {
+      fs.accessSync(this.config.trans.ffmpeg, fs.constants.X_OK);
+    }catch(error) {
+      Logger.error(`Node Media Trans Server startup failed. ffmpeg:${this.config.trans.ffmpeg} cannot be executed.`);
+      return;
+    }
+
     let i = this.config.trans.tasks.length;
     let apps = '';
     while (i--) {
       apps += this.config.trans.tasks[i].app;
       apps += ' ';
     }
-    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
-
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
+    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
   }
 
   onPostPublish(id, streamPath, args) {
