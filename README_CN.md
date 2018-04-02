@@ -6,7 +6,6 @@
 一个 Node.js 实现的RTMP/HTTP/WebSocket/HLS/DASH流媒体服务器
 
 # 特性
- - 基于 ES6 Generator 实现的高性能RTMP协议解析器
  - 跨平台支持 Windows/Linux/Unix
  - 支持的音视频编码 H.264/H.265/AAC/SPEEX/NELLYMOSER
  - 支持缓存最近一个关键帧间隔数据，实现RTMP协议秒开
