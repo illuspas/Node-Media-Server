@@ -97,10 +97,7 @@ function generateS2(messageFormat, clientsig, callback) {
 }
 
 function generateS0S1S2(clientsig) {
-  var clientType = clientsig.slice(0, 1);
-  // Logger.debug("[rtmp handshake] client type: " + clientType);
-  var clientsig = clientsig.slice(1);
-
+  var clientType = Buffer.alloc(1, 3);
   var messageFormat = detectClientMessageFormat(clientsig);
   var allBytes;
   if (messageFormat === MESSAGE_FORMAT_0) {
