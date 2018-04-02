@@ -10,7 +10,7 @@ LOG_TYPES = {
 let logType = LOG_TYPES.NORMAL;
 
 const setLogType = (type) => {
-    if (!(type in Object.values(LOG_TYPES))) return;
+    if (typeof type !== 'number') return;
 
     logType = type;
 };
