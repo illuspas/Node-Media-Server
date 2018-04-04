@@ -106,7 +106,8 @@ class NodeRtmpSession {
     this.socket = socket;
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = socket.remoteAddress;
-
+    this.TAG = 'rtmp';
+    
     this.handshakePayload = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     this.handshakeState = RTMP_HANDSHAKE_UNINIT;
     this.handshakeBytes = 0;
