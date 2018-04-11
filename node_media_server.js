@@ -40,7 +40,10 @@ class NodeMediaServer {
       this.nls = new NodeRelayServer(this.config);
       this.nls.run();
     }
-
+    
+    process.on('uncaughtException', function (err) {
+      Logger.error('uncaughtException', err);
+    });
   }
 
   on(eventName, listener) {
