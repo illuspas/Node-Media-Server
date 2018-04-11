@@ -938,6 +938,16 @@ class NodeRtmpSession {
   }
 
   onPublish(invokeMessage) {
+    if (typeof invokeMessage.streamName !== 'string') {
+      //Wirecast fix #67
+      /**
+       * String 'publish'
+       * Number 0
+       * Null
+       * Boolean false ??? 这是要爪子?
+       */
+      return;
+    }
     this.publishStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
     this.publishArgs = QueryString.parse(invokeMessage.streamName.split('?')[1]);
     this.publishStreamId = this.parserPacket.header.stream_id;
