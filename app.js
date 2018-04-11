@@ -24,55 +24,6 @@ const config = {
     publish: false,
     secret: 'nodemedia2017privatekey'
   },
-  trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
-    tasks: [
-      {
-        app: 'live',
-        ac: 'aac',
-        mp4: true,
-        mp4Flags: '[movflags=faststart]',
-        hls: true,
-        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
-        dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
-      }, {
-        app: 'vod',
-        ac: 'aac',
-        mp4: true,
-        mp4Flags: '[movflags=faststart]',
-      }
-    ],
-  },
-  relay: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
-    tasks: [
-      {
-        app: 'live',
-        mode: 'push',
-        edge: 'rtmp://192.168.0.10'
-      }, {
-        app: 'game',
-        mode: 'pull',
-        edge: 'rtmp://192.168.0.10'
-      }, {
-        app: 'cctv',
-        mode: 'static',
-        edge: 'rtsp://admin:admin888@192.168.0.149:554/ISAPI/streaming/channels/101',
-        name: '0_149_101'
-      }, {
-        app: 'iptv',
-        mode: 'static',
-        edge: 'rtmp://live.hkstv.hk.lxdns.com/live/hks',
-        name: 'hks'
-      }, {
-        app: 'mv',
-        mode: 'static',
-        edge: '/Volumes/ExtData/Movies/Dancing.Queen-SD.mp4',
-        name: 'dq'
-      }
-    ]
-  }
 };
 
 
