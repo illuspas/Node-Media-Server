@@ -728,7 +728,7 @@ class NodeRtmpSession {
 
         let opt = {
           cmd: 'onMetaData',
-          dataObj: dataMessage.dataObj
+          cmdObj: dataMessage.dataObj
         };
         this.metaData = AMF.encodeAmf0Data(opt);
 
