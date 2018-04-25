@@ -960,7 +960,7 @@ const rtmpCmdDecode = {
 
 const rtmpDataDecode = {
   "@setDataFrame": ["method", "dataObj"],
-  "onMetaData": ["cmdObj"],
+  "onMetaData": ["dataObj"],
   "|RtmpSampleAccess": ["bool1", "bool2"],
 };
 

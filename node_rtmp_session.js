@@ -725,10 +725,9 @@ class NodeRtmpSession {
           this.videoFps = dataMessage.dataObj.framerate;
         }
 
-
         let opt = {
           cmd: 'onMetaData',
-          cmdObj: dataMessage.dataObj
+          dataObj: dataMessage.dataObj
         };
         this.metaData = AMF.encodeAmf0Data(opt);
 
