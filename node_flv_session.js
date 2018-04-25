@@ -109,6 +109,7 @@ class NodeFlvSession {
   }
 
   reject() {
+    Logger.log(`[${this.TAG} reject] id=${this.id}`);
     this.stop();
   }
 

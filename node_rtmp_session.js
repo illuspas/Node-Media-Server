@@ -197,6 +197,11 @@ class NodeRtmpSession {
     }
   }
 
+  reject() {
+    Logger.log(`[rtmp reject] id=${this.id}`);
+    this.stop();
+  }
+
   onSocketClose() {
     // Logger.log('onSocketClose');
     this.stop();

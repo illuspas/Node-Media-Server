@@ -32,7 +32,7 @@ nms.run();
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
-  let session = nms.getSession(id);
+  // let session = nms.getSession(id);
   // session.reject();
 });
 
