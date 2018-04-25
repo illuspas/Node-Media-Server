@@ -27,7 +27,7 @@ const config = {
 };
 
 
-var nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config)
 nms.run();
 
 nms.on('preConnect', (id, args) => {
