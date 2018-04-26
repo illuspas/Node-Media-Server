@@ -19,21 +19,21 @@ const AAC_CHANNELS = [
 const AUDIO_CODEC_NAME = [
   '',
   'ADPCM',
-  "MP3",
-  "LinearLE",
-  "Nellymoser16",
-  "Nellymoser8",
-  "Nellymoser",
-  "G711A",
-  "G711U",
-  "",
-  "AAC",
-  "Speex",
-  "",
-  "",
-  "MP3-8K",
-  "DeviceSpecific",
-  "Uncompressed"
+  'MP3',
+  'LinearLE',
+  'Nellymoser16',
+  'Nellymoser8',
+  'Nellymoser',
+  'G711A',
+  'G711U',
+  '',
+  'AAC',
+  'Speex',
+  '',
+  '',
+  'MP3-8K',
+  'DeviceSpecific',
+  'Uncompressed'
 ];
 
 const AUDIO_SOUND_RATE = [
@@ -41,19 +41,19 @@ const AUDIO_SOUND_RATE = [
 ];
 
 const VIDEO_CODEC_NAME = [
-  "",
-  "Jpeg",
-  "Sorenson-H263",
-  "ScreenVideo",
-  "On2-VP6",
-  "On2-VP6-Alpha",
-  "ScreenVideo2",
-  "H264",
-  "",
-  "",
-  "",
-  "",
-  "H265"
+  '',
+  'Jpeg',
+  'Sorenson-H263',
+  'ScreenVideo',
+  'On2-VP6',
+  'On2-VP6-Alpha',
+  'ScreenVideo2',
+  'H264',
+  '',
+  '',
+  '',
+  '',
+  'H265'
 ];
 
 function getObjectType(bitop) {
@@ -97,23 +97,23 @@ function readAACSpecificConfig(aacSequenceHeader) {
 function getAACProfileName(info) {
   switch (info.object_type) {
     case 1:
-      return "Main";
+      return 'Main';
     case 2:
       if (info.ps > 0) {
-        return "HEv2";
+        return 'HEv2';
       }
       if (info.sbr > 0) {
-        return "HE";
+        return 'HE';
       }
-      return "LC";
+      return 'LC';
     case 3:
-      return "SSR";
+      return 'SSR';
     case 4:
-      return "LTP";
+      return 'LTP';
     case 5:
-      return "SBR";
+      return 'SBR';
     default:
-      return "";
+      return '';
   }
 }
 
@@ -474,19 +474,19 @@ function readAVCSpecificConfig(avcSequenceHeader) {
 function getAVCProfileName(info) {
   switch (info.profile) {
     case 1:
-      return "Main";
+      return 'Main';
     case 2:
-      return "Main 10";
+      return 'Main 10';
     case 3:
-      return "Main Still Picture";
+      return 'Main Still Picture';
     case 66:
-      return "Baseline";
+      return 'Baseline';
     case 77:
-      return "Main";
+      return 'Main';
     case 100:
-      return "High";
+      return 'High';
     default:
-      return "";
+      return '';
   }
 }
 
