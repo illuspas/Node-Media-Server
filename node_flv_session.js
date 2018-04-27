@@ -115,6 +115,7 @@ class NodeFlvSession {
 
   onPlay() {
     context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    this.playStreamPath = decodeURI(this.playStreamPath);
     if (!this.isStarting) {
       return;
     }
