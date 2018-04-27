@@ -929,6 +929,7 @@ class NodeRtmpSession {
     this.appname = invokeMessage.cmdObj.app;
     this.objectEncoding = invokeMessage.cmdObj.objectEncoding != null ? invokeMessage.cmdObj.objectEncoding : 0;
     this.connectTime = new Date();
+    this.startTimestamp = Date.now();
     this.sendWindowACK(5000000);
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
