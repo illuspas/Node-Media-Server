@@ -20,7 +20,7 @@ const FlvPacket = {
         type: type,
       },
       payload: payload
-    }
+    };
   }
 };
 
@@ -30,7 +30,6 @@ class NodeFlvSession {
     this.req = req;
     this.res = res;
     this.id = NodeCoreUtils.generateNewSessionID();
-    this.ip = this.req.socket.remoteAddress;
 
     this.playStreamPath = '';
     this.playArgs = null;
@@ -39,18 +38,29 @@ class NodeFlvSession {
     this.isPlaying = false;
     this.isIdling = false;
 
-    if (this.req.nmsConnectionType === 'ws') {
+    if (this.req.socket) {
+      this.ip = this.req.socket.remoteAddress;
+      if (this.req.nmsConnectionType === 'ws') {
+        this.res.on('close', this.onReqClose.bind(this));
+        this.res.on('error', this.onReqError.bind(this));
+        this.res.write = this.res.send;
+        this.res.end = this.res.close;
+        this.TAG = 'websocket-flv';
+      } else {
+        this.req.socket.on('close', this.onReqClose.bind(this));
+        this.req.on('error', this.onReqError.bind(this));
+        this.TAG = 'http-flv';
+      }
+    } else {
+      this.req = {
+        method: 'GET',
+        url: req                // this is just the streamPath
+      };
+      this.ip = '::1';
       this.res.on('close', this.onReqClose.bind(this));
       this.res.on('error', this.onReqError.bind(this));
-      this.res.write = this.res.send;
-      this.res.end = this.res.close;
-      this.TAG = 'websocket-flv'
-    } else {
-      this.req.socket.on('close', this.onReqClose.bind(this));
-      this.req.on('error', this.onReqError.bind(this));
-      this.TAG = 'http-flv'
+      this.TAG = 'stream-flv';
     }
-
     context.sessions.set(this.id, this);
   }
 
@@ -144,11 +154,11 @@ class NodeFlvSession {
     let players = publisher.players;
     players.add(this.id);
 
-    //send FLV header 
+    //send FLV header
     let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     this.res.write(FLVHeader);
 
-    //send Metadata 
+    //send Metadata
     if (publisher.metaData != null) {
       let packet = FlvPacket.create(publisher.metaData, 18);
       let tag = NodeFlvSession.createFlvTag(packet);
@@ -194,7 +204,7 @@ class NodeFlvSession {
     tagBuffer.writeUIntBE(0, 8, 3);
     tagBuffer.writeUInt32BE(PreviousTagSize, PreviousTagSize);
     packet.payload.copy(tagBuffer, 11, 0, packet.header.length);
-    return tagBuffer
+    return tagBuffer;
   }
 
 }
