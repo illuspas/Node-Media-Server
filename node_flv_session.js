@@ -4,12 +4,28 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 const URL = require('url');
+const stream = require('stream');
 const AMF = require('./node_core_amf');
 const Logger = require('./logger');
 const context = require('./node_core_ctx');
 const NodeCoreUtils = require('./node_core_utils');
 
 
+class Counter extends stream.Transform {
+    constructor(options) {
+        super(options);
+        this.bytesRead = 0;
+        this.bytesWritten = 0;
+    }
+
+    _transform(chunk, encoding, callback) {
+        const bytes = Buffer.byteLength(chunk, encoding);
+        this.bytesRead += bytes;
+        this.bytesWritten += bytes;
+        this.push(chunk);
+        return callback();
+    }
+}
 
 const FlvPacket = {
   create: (payload = null, type = 0, time = 0) => {
@@ -52,14 +68,19 @@ class NodeFlvSession {
         this.TAG = 'http-flv';
       }
     } else {
+      const counter = new Counter();
       this.req = {
         method: 'GET',
-        url: req                // this is just the streamPath
+        url: req,               // this is just the streamPath
+        socket: counter,
+        connection: counter,
       };
-      this.ip = '::1';
+      this.res = counter;
+      this.ip = counter.remoteAddress = '::1';
       this.res.on('close', this.onReqClose.bind(this));
       this.res.on('error', this.onReqError.bind(this));
       this.TAG = 'stream-flv';
+      counter.pipe(res);
     }
     context.sessions.set(this.id, this);
   }
