@@ -155,7 +155,14 @@ class NodeFlvSession {
     players.add(this.id);
 
     //send FLV header
-    let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    if (publisher.isFirstAudioReceived) {
+      FLVHeader[4] |= 0b00000100;
+    }
+
+    if (publisher.isFirstVideoReceived) {
+      FLVHeader[4] |= 0b00000001;
+    }
     this.res.write(FLVHeader);
 
     //send Metadata
