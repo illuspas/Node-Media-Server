@@ -1,6 +1,6 @@
 const fs = require('fs');
+const path = require('path');
 
-const NodeFlvSession = require('./node_flv_session');
 const NodeMediaServer = require('./node_media_server');
 
 const config = {
@@ -47,13 +47,12 @@ nms.on('doneConnect', (id, args) => {
   console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
 });
 
-nms.on('prePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+nms.on('prePublish', (id, streamPath, args) => {
+  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${streamPath} args=${JSON.stringify(args)}`);
   // let session = nms.getSession(id);
   // session.reject();
-  const file_stream = fs.createWriteStream('.' + StreamPath + '.flv');
-  const session = new NodeFlvSession(config, StreamPath, file_stream);
-  session.run();
+  const fileStream = fs.createWriteStream('./' + path.basename(streamPath) + '.flv');
+  nms.saveFlvStream(streamPath, fileStream);
 });
 
 nms.on('postPublish', (id, StreamPath, args) => {
