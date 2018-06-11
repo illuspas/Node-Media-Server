@@ -126,7 +126,7 @@ class NodeRtmpSession {
     this.pingTime = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
     this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
-    this.isLocal = this.ip === '127.0.0.1' || this.ip === '::1';
+    this.isLocal = this.ip === '127.0.0.1' || this.ip === '::1' || this.ip == '::ffff:127.0.0.1';
     this.isStarting = false;
     this.isPublishing = false;
     this.isPlaying = false;

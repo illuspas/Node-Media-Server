@@ -30,7 +30,7 @@ class NodeHttpServer {
     this.config = config;
 
     let app = Express();
-    
+
     app.all(['*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4'], (req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
       next();
@@ -78,7 +78,7 @@ class NodeHttpServer {
   }
 
   run() {
-    this.httpServer.listen(this.port, '0.0.0.0', () => {
+    this.httpServer.listen(this.port, () => {
       Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
@@ -105,7 +105,7 @@ class NodeHttpServer {
     });
 
     if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, '0.0.0.0', () => {
+      this.httpsServer.listen(this.sport, () => {
         Logger.log(`Node Media Https Server started on port: ${this.sport}`);
       });
 

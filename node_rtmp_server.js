@@ -23,7 +23,7 @@ class NodeRtmpServer {
   }
 
   run() {
-    this.tcpServer.listen(this.port, '0.0.0.0', () => {
+    this.tcpServer.listen(this.port, () => {
       Logger.log(`Node Media Rtmp Server started on port: ${this.port}`);
     });
 
