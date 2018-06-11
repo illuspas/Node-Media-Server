@@ -73,6 +73,8 @@ const RTMP_TYPE_INVOKE = 20; // AMF0
 const RTMP_TYPE_METADATA = 22;
 
 const RTMP_CHUNK_SIZE = 128;
+const RTMP_PING_TIME = 60000;
+const RTMP_PING_TIMEOUT = 30000;
 
 const STREAM_BEGIN = 0x00;
 const STREAM_EOF = 0x01;
@@ -107,7 +109,7 @@ class NodeRtmpSession {
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = socket.remoteAddress;
     this.TAG = 'rtmp';
-    
+
     this.handshakePayload = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     this.handshakeState = RTMP_HANDSHAKE_UNINIT;
     this.handshakeBytes = 0;
@@ -121,6 +123,9 @@ class NodeRtmpSession {
 
     this.inChunkSize = RTMP_CHUNK_SIZE;
     this.outChunkSize = config.rtmp.chunk_size ? config.rtmp.chunk_size : RTMP_CHUNK_SIZE;
+    this.pingTime = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
+    this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
+    this.pingInterval = null;
     this.isLocal = this.ip === '127.0.0.1' || this.ip === '::1';
     this.isStarting = false;
     this.isPublishing = false;
@@ -176,6 +181,7 @@ class NodeRtmpSession {
     this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
     this.socket.on('timeout', this.onSocketTimeout.bind(this));
+    this.socket.setTimeout(this.pingTimeout);
     this.isStarting = true;
   }
 
@@ -190,6 +196,12 @@ class NodeRtmpSession {
       if (this.publishStreamId > 0) {
         this.onDeleteStream({ streamId: this.publishStreamId });
       }
+
+      if (this.pingInterval != null) {
+        clearImmediate(this.pingInterval);
+        this.pingInterval = null;
+      }
+
       Logger.log(`[rtmp disconnect] id=${this.id}`);
       context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
       context.sessions.delete(this.id);
@@ -883,6 +895,19 @@ class NodeRtmpSession {
     this.sendDataMessage(opt, sid);
   }
 
+  sendPingRequest() {
+    let currentTimestamp = Date.now() - this.startTimestamp;
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_PROTOCOL;
+    packet.header.type = RTMP_TYPE_EVENT;
+    packet.header.timestamp = currentTimestamp;
+    packet.payload = Buffer.from([0, 6, (currentTimestamp >> 24) & 0xff, (currentTimestamp >> 16) & 0xff, (currentTimestamp >> 8) & 0xff, currentTimestamp & 0xff]);
+    packet.header.length = packet.payload.length;
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
+  }
+
   respondConnect(tid) {
     let opt = {
       cmd: '_result',
@@ -930,6 +955,9 @@ class NodeRtmpSession {
     this.objectEncoding = invokeMessage.cmdObj.objectEncoding != null ? invokeMessage.cmdObj.objectEncoding : 0;
     this.connectTime = new Date();
     this.startTimestamp = Date.now();
+    this.pingInterval = setInterval(() => {
+      this.sendPingRequest();
+    }, this.pingTime);
     this.sendWindowACK(5000000);
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
