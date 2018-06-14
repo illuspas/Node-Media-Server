@@ -616,3 +616,6 @@ https://github.com/NodeMedia/NodeMediaDevice
 
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
+
+## Windows browser publiser plugin
+http://www.nodemedia.cn/products/node-media-publisher/
