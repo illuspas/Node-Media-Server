@@ -561,3 +561,6 @@ https://github.com/NodeMedia/NodeMediaDevice
 
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
+
+## Windows浏览器推流插件
+http://www.nodemedia.cn/products/node-media-publisher/
