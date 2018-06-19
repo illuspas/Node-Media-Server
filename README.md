@@ -324,7 +324,24 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
 
-# Server stats
+# API 
+## Protected API 
+```
+const config = {
+ .......
+   auth: {
+    api : true,
+    api_user: 'admin',
+    api_pass: 'nms2018',
+  },
+ 
+ ......
+}
+```
+>Based on the basic auth，Please change your password.
+>The default is not turned on
+
+## Server stats
 http://localhost:8000/api/server
 
 ```json
@@ -369,7 +386,7 @@ http://localhost:8000/api/server
 }
 ```
 
-# Streams stats
+## Streams stats
 http://localhost:8000/api/streams
 
 ```json
