@@ -7,40 +7,48 @@ LOG_TYPES = {
   DEBUG: 3
 };
 
+Logger = {LOG_TYPES};
+
 let logType = LOG_TYPES.NORMAL;
 
-const setLogType = (type) => {
+Logger.setLogType = (type) => {
   if (typeof type !== 'number') return;
 
   logType = type;
 };
 
-const logTime = () => {
+Logger.logTime = () => {
   let nowDate = new Date();
   return nowDate.toLocaleDateString() + ' ' + nowDate.toLocaleTimeString([], { hour12: false });
 };
 
-const log = (...args) => {
+Logger.log = (...args) => {
   if (logType < LOG_TYPES.NORMAL) return;
 
   console.log(logTime(), chalk.bold.green('[INFO]'), ...args);
 };
 
-const error = (...args) => {
+Logger.error = (...args) => {
   if (logType < LOG_TYPES.ERROR) return;
 
   console.log(logTime(), chalk.bold.red('[ERROR]'), ...args);
 };
 
-const debug = (...args) => {
+Logger.debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
 
   console.log(logTime(), chalk.bold.blue('[DEBUG]'), ...args);
 };
 
-module.exports = {
-  LOG_TYPES,
-  setLogType,
-
-  log, error, debug
-}
+const logger_methods = ['setLogType', 'logTime', 'log', 'error', 'debug'];
+logger_methods.forEach(func_name => {
+    Logger[func_name + '_default'] = Logger[func_name];
+});
+Logger.setConfig = (config) => {
+    logger_methods.forEach(func_name => {
+        if (config[func_name]) {
+            Logger[func_name] = config[func_name];
+        }
+    });
+};
+module.exports = Logger;

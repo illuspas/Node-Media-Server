@@ -185,8 +185,43 @@ const config = {
 
 var nms = new NodeMediaServer(config)
 nms.run();
-
 ```
+
+You can also specify your own functions for logging with `logger` object in config. The functions you can replace are:
+- `setLogType()` - this allows you to handle the `logType` config
+- `logTime()` - this allows you to change the time format at the beginning of each log line
+- `log()` - this is what is called for generic info
+- `error()` - this is what is called for errors
+- `debug()` - this is what is called for debug
+
+```js
+const NodeMediaServer = require('node-media-server');
+
+const config = {
+  logger: {
+    logTime: function () { return new Date().toISOString(); },
+    log: function (...args) { console.log(this.logTime(), ...args); },
+    error: function (...args) { console.error(this.logTime(), ...args); },
+    debug: function (...args) { console.debug(this.logTime(), ...args); }
+  },
+
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  }
+};
+
+var nms = new NodeMediaServer(config)
+nms.run();
+```
+
 
 # Authentication
 ## Encryption URL consists of:
