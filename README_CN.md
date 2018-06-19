@@ -269,7 +269,23 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >Web浏览器播放自签名的证书需先添加信任才能访问
 
-# 服务器信息统计
+# API
+## 保护API
+```
+const config = {
+ .......
+   auth: {
+    api : true,
+    api_user: 'admin',
+    api_pass: 'nms2018',
+  },
+ 
+ ......
+}
+```
+>基于Basic auth提供验证，请注意修改密码，默认并未开启。
+
+## 服务器信息统计
 http://localhost:8000/api/server
 
 ```json
@@ -314,7 +330,7 @@ http://localhost:8000/api/server
 }
 ```
 
-# 流信息统计
+## 流信息统计
 http://localhost:8000/api/streams
 
 ```json
