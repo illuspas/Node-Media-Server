@@ -23,7 +23,7 @@ class NodeRelaySession extends EventEmitter {
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
       argv.unshift('-re');
     }
-    // Logger.debug(argv.toString());
+    Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
