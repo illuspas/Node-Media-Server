@@ -20,6 +20,9 @@ const config = {
     cert: './certificate.pem',
   },
   auth: {
+    api : true,
+    api_user: 'admin',
+    api_pass: 'nms2018',
     play: false,
     publish: false,
     secret: 'nodemedia2017privatekey'

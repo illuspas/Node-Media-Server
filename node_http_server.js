@@ -10,7 +10,7 @@ const Http = require('http');
 const Https = require('https');
 const WebSocket = require('ws');
 const Express = require('express');
-const NodeCoreUtils = require('./node_core_utils');
+const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
@@ -57,6 +57,9 @@ class NodeHttpServer {
     app.use(Express.static(this.webroot));
     app.use(Express.static(this.mediaroot));
 
+    if (this.config.auth.api) {
+      app.use('/api/*', basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+    }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
 
