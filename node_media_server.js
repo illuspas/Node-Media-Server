@@ -16,6 +16,9 @@ const context = require('./node_core_ctx');
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
+    if (this.config.logger) {
+      Logger.setConfig(this.config.logger);
+    }
   }
 
   run() {
@@ -40,7 +43,7 @@ class NodeMediaServer {
       this.nls = new NodeRelayServer(this.config);
       this.nls.run();
     }
-    
+
     process.on('uncaughtException', function (err) {
       Logger.error('uncaughtException', err);
     });
@@ -67,4 +70,4 @@ class NodeMediaServer {
   }
 }
 
-module.exports = NodeMediaServer
+module.exports = NodeMediaServer;
