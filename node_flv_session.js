@@ -5,7 +5,7 @@
 //
 const URL = require('url');
 const AMF = require('./node_core_amf');
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
 const NodeCoreUtils = require('./node_core_utils');
 

@@ -13,7 +13,7 @@ const Handshake = require('./node_rtmp_handshake');
 const NodeCoreUtils = require('./node_core_utils');
 const NodeFlvSession = require('./node_flv_session');
 const context = require('./node_core_ctx');
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;

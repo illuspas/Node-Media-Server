@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
@@ -20,7 +20,7 @@ class NodeTransSession extends EventEmitter {
   run() {
     let vc = 'copy';
     let ac = this.conf.args.ac == 10 ? 'copy' : this.conf.ac ? this.conf.ac : 'aac';
-    let inPath = 'rtmp://localhost:' + this.conf.port + this.conf.streamPath;
+    let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
     let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
     let mapStr = '';
     if (this.conf.mp4) {
@@ -50,15 +50,15 @@ class NodeTransSession extends EventEmitter {
     // Logger.debug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
-      // Logger.debug(e);
+      Logger.ffdebug(e);
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      // Logger.debug(`输出：${data}`);
+      Logger.ffdebug(`FF输出：${data}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      // Logger.debug(`错误：${data}`);
+      Logger.ffdebug(`FF输出：${data}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {

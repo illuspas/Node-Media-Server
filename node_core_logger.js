@@ -4,7 +4,8 @@ LOG_TYPES = {
   NONE: 0,
   ERROR: 1,
   NORMAL: 2,
-  DEBUG: 3
+  DEBUG: 3,
+  FFDEBUG: 4
 };
 
 let logType = LOG_TYPES.NORMAL;
@@ -38,9 +39,15 @@ const debug = (...args) => {
   console.log(logTime(), chalk.bold.blue('[DEBUG]'), ...args);
 };
 
+const ffdebug = (...args) => {
+  if (logType < LOG_TYPES.FFDEBUG) return;
+
+  console.log(logTime(), chalk.bold.blue('[FFDEBUG]'), ...args);
+};
+
 module.exports = {
   LOG_TYPES,
   setLogType,
 
-  log, error, debug
+  log, error, debug, ffdebug
 }

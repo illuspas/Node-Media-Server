@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const NodeCoreUtils = require('./node_core_utils');
 const NodeRelaySession = require('./node_relay_session');
@@ -49,7 +49,7 @@ class NodeRelayServer {
         conf.name = conf.name ? conf.name : NodeCoreUtils.genRandomName();
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = conf.edge;
-        conf.ouPath = `rtmp://localhost:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
+        conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
         session.id = i;
         session.on('end', (id) => {
@@ -73,7 +73,7 @@ class NodeRelayServer {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}/${streamPath}`;
-        conf.ouPath = `rtmp://localhost:${this.config.rtmp.port}/${streamPath}`;
+        conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${streamPath}`;
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
@@ -104,7 +104,7 @@ class NodeRelayServer {
       if (isPush && app === conf.app) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
-        conf.inPath = `rtmp://localhost:${this.config.rtmp.port}/${streamPath}`;
+        conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${streamPath}`;
         conf.ouPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}/${streamPath}`;
         let session = new NodeRelaySession(conf);
         session.id = id;

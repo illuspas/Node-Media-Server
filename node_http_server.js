@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+
 
 const Fs = require('fs');
 const Http = require('http');
@@ -16,7 +16,7 @@ const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
 const HTTP_WEBROOT = './public';
 const HTTP_MEDIAROOT = './media';
-
+const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
 
 const streamsRoute = require('./api/routes/streams');

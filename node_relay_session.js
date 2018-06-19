@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
@@ -26,15 +26,15 @@ class NodeRelaySession extends EventEmitter {
     // Logger.debug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
-      // Logger.debug(e);
+      Logger.ffdebug(e);
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      // Logger.debug(`输出：${data}`);
+      Logger.ffdebug(`FF输出：${data}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      // Logger.debug(`错误：${data}`);
+      Logger.ffdebug(`FF输出：${data}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {

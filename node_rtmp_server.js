@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const Net = require('net');
 const NodeRtmpSession = require('./node_rtmp_session');

@@ -3,7 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const Crypto = require('crypto');
 

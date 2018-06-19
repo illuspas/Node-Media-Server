@@ -4,7 +4,7 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 
-const Logger = require('./logger');
+const Logger = require('./node_core_logger');
 
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
