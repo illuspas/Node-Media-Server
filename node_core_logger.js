@@ -24,25 +24,25 @@ const logTime = () => {
 const log = (...args) => {
   if (logType < LOG_TYPES.NORMAL) return;
 
-  console.log(logTime(), chalk.bold.green('[INFO]'), ...args);
+  console.log(logTime(), process.pid, chalk.bold.green('[INFO]'), ...args);
 };
 
 const error = (...args) => {
   if (logType < LOG_TYPES.ERROR) return;
 
-  console.log(logTime(), chalk.bold.red('[ERROR]'), ...args);
+  console.log(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
 };
 
 const debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
 
-  console.log(logTime(), chalk.bold.blue('[DEBUG]'), ...args);
+  console.log(logTime(), process.pid, chalk.bold.blue('[DEBUG]'), ...args);
 };
 
 const ffdebug = (...args) => {
   if (logType < LOG_TYPES.FFDEBUG) return;
 
-  console.log(logTime(), chalk.bold.blue('[FFDEBUG]'), ...args);
+  console.log(logTime(), process.pid, chalk.bold.blue('[FFDEBUG]'), ...args);
 };
 
 module.exports = {

@@ -1,4 +1,4 @@
-const NodeMediaServer = require('./node_media_server');
+const { NodeMediaServer } = require('./index');
 
 const config = {
   rtmp: {
@@ -20,7 +20,7 @@ const config = {
     cert: './certificate.pem',
   },
   auth: {
-    api : true,
+    api: true,
     api_user: 'admin',
     api_pass: 'admin',
     play: false,

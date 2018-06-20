@@ -10,7 +10,7 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
-const NodeCoreUtils = require('./node_core_utils');
+const NodeIpcServer = require('./node_ipc_server');
 const context = require('./node_core_ctx');
 
 class NodeMediaServer {
@@ -41,6 +41,11 @@ class NodeMediaServer {
       this.nls.run();
     }
     
+    if (this.config.cluster) {
+      this.nis = new NodeIpcServer(this.config);
+      this.nis.run();
+    }
+
     process.on('uncaughtException', function (err) {
       Logger.error('uncaughtException', err);
     });
@@ -59,6 +64,9 @@ class NodeMediaServer {
     }
     if (this.nls) {
       this.nls.stop();
+    }
+    if (this.nis) {
+      this.nis.stop();
     }
   }
 

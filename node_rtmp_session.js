@@ -126,6 +126,8 @@ class NodeRtmpSession {
     this.pingTime = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
     this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
+
+    this.isIPC = false;
     this.isLocal = this.ip === '127.0.0.1' || this.ip === '::1' || this.ip == '::ffff:127.0.0.1';
     this.isStarting = false;
     this.isPublishing = false;
@@ -201,9 +203,11 @@ class NodeRtmpSession {
         clearImmediate(this.pingInterval);
         this.pingInterval = null;
       }
+      if (!this.isIPC) {
+        Logger.log(`[rtmp disconnect] id=${this.id}`);
+        context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
+      }
 
-      Logger.log(`[rtmp disconnect] id=${this.id}`);
-      context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
       context.sessions.delete(this.id);
       this.socket.destroy();
     }
@@ -604,7 +608,9 @@ class NodeRtmpSession {
       } else {
         this.isFirstAudioReceived = true;
       }
-      Logger.log(`[rtmp publish] Handle audio. id=${this.id} streamPath=${this.publishStreamPath} sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName} ${this.audioSamplerate} ${this.audioChannels}ch`);
+      if (!this.isIPC) {
+        Logger.log(`[rtmp publish] Handle audio. id=${this.id} streamPath=${this.publishStreamPath} sound_format=${sound_format} sound_type=${sound_type} sound_size=${sound_size} sound_rate=${sound_rate} codec_name=${this.audioCodecName} ${this.audioSamplerate} ${this.audioChannels}ch`);
+      }
     }
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
@@ -672,7 +678,9 @@ class NodeRtmpSession {
       } else {
         this.isFirstVideoReceived = true;
       }
-      Logger.log(`[rtmp publish] Handle video. id=${this.id} streamPath=${this.publishStreamPath} frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName} ${this.videoWidth}x${this.videoHeight}`);
+      if (!this.isIPC) {
+        Logger.log(`[rtmp publish] Handle video. id=${this.id} streamPath=${this.publishStreamPath} frame_type=${frame_type} codec_id=${codec_id} codec_name=${this.videoCodecName} ${this.videoWidth}x${this.videoHeight}`);
+      }
     }
 
     let packet = RtmpPacket.create();
@@ -935,7 +943,9 @@ class NodeRtmpSession {
 
   onConnect(invokeMessage) {
     invokeMessage.cmdObj.app = invokeMessage.cmdObj.app.replace('/', ''); //fix jwplayer
-    context.nodeEvent.emit('preConnect', this.id, invokeMessage.cmdObj);
+    if (!this.isIPC) {
+      context.nodeEvent.emit('preConnect', this.id, invokeMessage.cmdObj);
+    }
     if (!this.isStarting) {
       return;
     }
@@ -951,8 +961,10 @@ class NodeRtmpSession {
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
     this.respondConnect(invokeMessage.transId);
-    Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
-    context.nodeEvent.emit('postConnect', this.id, invokeMessage.cmdObj);
+    if (!this.isIPC) {
+      Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
+      context.nodeEvent.emit('postConnect', this.id, invokeMessage.cmdObj);
+    }
   }
 
   onCreateStream(invokeMessage) {
@@ -973,13 +985,14 @@ class NodeRtmpSession {
     this.publishStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
     this.publishArgs = QueryString.parse(invokeMessage.streamName.split('?')[1]);
     this.publishStreamId = this.parserPacket.header.stream_id;
-
-    context.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
+    if (!this.isIPC) {
+      context.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
+    }
     if (!this.isStarting) {
       return;
     }
 
-    if (this.config.auth && this.config.auth.publish && !this.isLocal) {
+    if (this.config.auth && this.config.auth.publish && !this.isLocal && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
       if (!results) {
         Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
@@ -995,7 +1008,9 @@ class NodeRtmpSession {
       Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+      if (!this.isIPC) {
+        Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+      }
       context.publishers.set(this.publishStreamPath, this.id);
       this.isPublishing = true;
 
@@ -1010,7 +1025,9 @@ class NodeRtmpSession {
       setTimeout(() => {
         this.publishArgs.ac = this.audioCodec;
         this.publishArgs.vc = this.videoCodec;
-        context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
+        if (!this.isIPC) {
+          context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
+        }
       }, 200);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
 
     }
@@ -1020,13 +1037,14 @@ class NodeRtmpSession {
     this.playStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
     this.playArgs = QueryString.parse(invokeMessage.streamName.split('?')[1]);
     this.playStreamId = this.parserPacket.header.stream_id;
-
-    context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    if (!this.isIPC) {
+      context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    }
     if (!this.isStarting) {
       return;
     }
 
-    if (this.config.auth && this.config.auth.play && !this.isLocal) {
+    if (this.config.auth && this.config.auth.play && !this.isLocal && !this.isIPC) {
       let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
       if (!results) {
         Logger.log(`[rtmp play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
@@ -1036,7 +1054,9 @@ class NodeRtmpSession {
     }
 
     if (this.isPlaying) {
-      Logger.log(`[rtmp play] NetConnection is playing. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+      if (!this.isIPC) {
+        Logger.log(`[rtmp play] NetConnection is playing. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+      }
       this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.Play.BadConnection', 'Connection already playing');
     } else {
       this.respondPlay();
@@ -1103,8 +1123,10 @@ class NodeRtmpSession {
 
     this.isIdling = false;
     this.isPlaying = true;
-    context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
-    Logger.log(`[rtmp play] Join stream. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+    if (!this.isIPC) {
+      context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
+      Logger.log(`[rtmp play] Join stream. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+    }
   }
 
   onPause(invokeMessage) {
@@ -1177,10 +1199,14 @@ class NodeRtmpSession {
         if (publisherId != null) {
           context.sessions.get(publisherId).players.delete(this.id);
         }
-        context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+        if (!this.isIPC) {
+          context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+        }
         this.isPlaying = false;
       }
-      Logger.log(`[rtmp play] Close stream. id=${this.id} streamPath=${this.playStreamPath} streamId=${this.playStreamId}`);
+      if (!this.isIPC) {
+        Logger.log(`[rtmp play] Close stream. id=${this.id} streamPath=${this.playStreamPath} streamId=${this.playStreamId}`);
+      }
       if (this.isStarting) {
         this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
       }
@@ -1190,8 +1216,10 @@ class NodeRtmpSession {
 
     if (invokeMessage.streamId == this.publishStreamId) {
       if (this.isPublishing) {
-        Logger.log(`[rtmp publish] Close stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-        context.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);
+        if (!this.isIPC) {
+          Logger.log(`[rtmp publish] Close stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+          context.nodeEvent.emit('donePublish', this.id, this.publishStreamPath, this.publishArgs);
+        }
         if (this.isStarting) {
           this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Unpublish.Success', `${this.publishStreamPath} is now unpublished.`);
         }
@@ -1229,9 +1257,7 @@ class NodeRtmpSession {
       this.publishStreamId = 0;
       this.publishStreamPath = '';
     }
-
   }
-
 }
 
 module.exports = NodeRtmpSession;
