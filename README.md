@@ -25,6 +25,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support https/wss
  - Support Server Monitor
  - Support Rtsp/Rtmp relay
+ - Support multicore cluster mode
  
 # Usage 
 ```bash
@@ -56,7 +57,7 @@ nms.run();
 # Todo 
 - [x] support record stream 
 - [x] support transcode
-- [ ] support cluster
+- [x] support cluster
 - [x] support low latency hls
 - [x] server and streams status
 - [ ] server monitor frontend
