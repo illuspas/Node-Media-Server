@@ -46,6 +46,8 @@ class NodeIpcServer {
         Logger.debug('[rtmp ipc] Current process, ignore');
         return;
       }
+      
+      Logger.debug(`[rtmp ipc] receive message cmd=${msg.cmd} pid=${msg.pid} path=${msg.streamPath}`);
 
       if (msg.cmd === 'postPublish') {
         let ipcSession = new NodeIpcSession(msg.streamPath, this.ipcRootPath + IPC_NAME_SPACE + msg.pid, this.ipcPath);
@@ -57,7 +59,6 @@ class NodeIpcServer {
         this.sessions.delete(msg.streamPath);
       }
 
-      Logger.debug(`[rtmp ipc] receive message cmd=${msg.cmd} pid=${msg.pid} path=${msg.streamPath}`);
     });
   }
 

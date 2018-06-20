@@ -16,10 +16,9 @@ class NodeMediaCluster {
 
   run() {
     if (cluster.isMaster) {
-      Logger.log(`主进程 ${process.pid} 正在运行`);
+      Logger.log(`Master ${process.pid} is running`);
 
       const messageHandler = (msg) => {
-        //broadcast to all worker
         for (let id in cluster.workers) {
           cluster.workers[id].send(msg);
         }
@@ -30,23 +29,19 @@ class NodeMediaCluster {
         worker.on('message', messageHandler);
       }
 
-      // 衍生工作进程。
       for (let i = 0; i < this.config.cluster.num; i++) {
         newWorker();
       }
 
-      // 工作进程退出,重启一个
       cluster.on('exit', (worker, code, signal) => {
-        Logger.log(`工作进程 ${worker.process.pid} 已退出`);
+        Logger.log(`worker ${worker.process.pid} died`);
         newWorker();
       });
 
     } else {
-      // 工作进程可以共享任何 TCP 连接。
-      // 在本例子中，共享的是一个 HTTP 服务器。
       this.nms = new NodeMediaServer(this.config);
       this.nms.run();
-      Logger.log(`工作进程 ${process.pid} 已启动`);
+      Logger.log(`worker ${process.pid} started`);
     }
   }
 
