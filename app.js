@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const NodeMediaServer = require('./node_media_server');
 
 const config = {
@@ -30,7 +33,7 @@ const config = {
 };
 
 
-let nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {
@@ -47,10 +50,12 @@ nms.on('doneConnect', (id, args) => {
   console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
 });
 
-nms.on('prePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+nms.on('prePublish', (id, streamPath, args) => {
+  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${streamPath} args=${JSON.stringify(args)}`);
   // let session = nms.getSession(id);
   // session.reject();
+  const fileStream = fs.createWriteStream('./' + path.basename(streamPath) + '.flv');
+  nms.saveFlvStream(streamPath, fileStream);
 });
 
 nms.on('postPublish', (id, StreamPath, args) => {
@@ -74,4 +79,3 @@ nms.on('postPlay', (id, StreamPath, args) => {
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
-
