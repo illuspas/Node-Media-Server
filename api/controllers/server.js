@@ -1,7 +1,7 @@
 //
 //  Created by Mingliang Chen on 17/12/24.  Merry Christmas
 //  illuspas[a]gmail.com
-//  Copyright (c) 2017 Nodemedia. All rights reserved.
+//  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
 const OS = require('os');

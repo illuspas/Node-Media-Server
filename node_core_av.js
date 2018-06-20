@@ -1,7 +1,7 @@
 //
 //  Created by Mingliang Chen on 17/12/21.
 //  illuspas[a]gmail.com
-//  Copyright (c) 2017 Nodemedia. All rights reserved.
+//  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
 const Bitop = require('./node_core_bitop');

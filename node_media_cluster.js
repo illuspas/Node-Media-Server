@@ -1,7 +1,7 @@
 //
 //  Created by Mingliang Chen on 18/6/20.
 //  illuspas[a]gmail.com
-//  Copyright (c) 2017 Nodemedia. All rights reserved.
+//  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
 const NodeMediaServer = require('./node_media_server');
