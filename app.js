@@ -22,7 +22,7 @@ const config = {
   auth: {
     api : true,
     api_user: 'admin',
-    api_pass: 'nms2018',
+    api_pass: 'admin',
     play: false,
     publish: false,
     secret: 'nodemedia2017privatekey'

@@ -57,7 +57,7 @@ class NodeHttpServer {
     app.use(Express.static(this.webroot));
     app.use(Express.static(this.mediaroot));
 
-    if (this.config.auth.api) {
+    if (this.config.auth && this.config.auth.api) {
       app.use('/api/*', basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
     }
     app.use('/api/streams', streamsRoute(context));
