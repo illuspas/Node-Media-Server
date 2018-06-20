@@ -635,5 +635,5 @@ https://github.com/NodeMedia/NodeMediaDevice
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
 
-## Windows browser publisher plugin
+## Windows browser H.264+AAC rtmp publisher plugin(ActiveX/NPAPI)
 http://www.nodemedia.cn/products/node-media-publisher/
