@@ -161,17 +161,17 @@ class NodeRtmpSession {
     this.inLastAck = 0;
 
     this.appname = '';
-
     this.streams = 0;
 
     this.playStreamId = 0;
     this.playStreamPath = '';
     this.playArgs = {};
 
-
     this.publishStreamId = 0;
     this.publishStreamPath = '';
     this.publishArgs = {};
+
+    this.players = new Set();
 
     context.sessions.set(this.id, this);
   }
@@ -567,11 +567,7 @@ class NodeRtmpSession {
   }
 
   rtmpAudioHandler() {
-    if (!this.isPublishing) {
-      return;
-    }
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-
     if (!this.isFirstAudioReceived) {
       let sound_format = payload[0];
       let sound_type = sound_format & 0x01;
@@ -647,11 +643,7 @@ class NodeRtmpSession {
   }
 
   rtmpVideoHandler() {
-    if (!this.isPublishing) {
-      return;
-    }
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-
     let frame_type = payload[0];
     let codec_id = frame_type & 0x0f;
     frame_type = (frame_type >> 4) & 0x0f;
@@ -726,9 +718,6 @@ class NodeRtmpSession {
   }
 
   rtmpDataHandler() {
-    if (!this.isPublishing) {
-      return;
-    }
     let offset = this.parserPacket.header.type === RTMP_TYPE_FLEX_STREAM ? 1 : 0;
     let payload = this.parserPacket.payload.slice(offset, this.parserPacket.header.length);
     let dataMessage = AMF.decodeAmf0Data(payload);
@@ -1009,7 +998,7 @@ class NodeRtmpSession {
       Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
       context.publishers.set(this.publishStreamPath, this.id);
       this.isPublishing = true;
-      this.players = new Set();
+
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
       for (let idlePlayerId of context.idlePlayers) {
         let idlePlayer = context.sessions.get(idlePlayerId);
@@ -1235,7 +1224,6 @@ class NodeRtmpSession {
           this.flvGopCacheQueue.clear();
         }
         this.players.clear();
-        this.players = null;
         this.isPublishing = false;
       }
       this.publishStreamId = 0;
