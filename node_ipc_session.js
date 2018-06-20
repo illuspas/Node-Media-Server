@@ -49,7 +49,6 @@ class NodeIpcSession {
         this.pullSocket.write(Buffer.from(header));
         this.pullSocket.write(Buffer.from(payload));
       }
-
     });
 
     this.pushSocket.on('data', (data) => {
@@ -76,26 +75,26 @@ class NodeIpcSession {
     this.pullRtmp.on('script', (script, time) => {
       this.pushRtmp.pushScript(script, script.length, time);
     });
-
-    this.pullRtmp.on('status', (code, level, description) => {
-      // console.log('[pull]', code, level, description);
-      if (level === 'NetStream.Play.UnpublishNotify') {
+    this.pullRtmp.on('status', (level, code, description) => {
+      // console.log('[pull]', level, code, description);
+      if (code === 'NetStream.Play.UnpublishNotify') {
         this.isStart = false;
       }
     });
-
-    this.pushRtmp.on('status', (code, level, description) => {
-      // console.log('[push]', code, level, description);
+    this.pushRtmp.on('status', (level, code, description) => {
+      // console.log('[push]', level, code, description);
     });
   }
 
   stop() {
     this.isStart = false;
+    
     this.pullRtmp.stop();
     this.pushRtmp.stop();
 
     this.pullSocket.end();
     this.pushSocket.end();
+    
     Logger.debug(`[rtmp ipc] Stop ipc stream ${this.streamPath}`);
   }
 
