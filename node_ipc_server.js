@@ -8,7 +8,6 @@ const NodeRtmpSession = require('./node_rtmp_session');
 const NodeIpcSession = require('./node_ipc_session');
 const context = require('./node_core_ctx');
 const Logger = require('./node_core_logger');
-const path = require('path');
 const Net = require('net');
 const Os = require('os');
 
@@ -18,13 +17,18 @@ class NodeIpcServer {
   constructor(config) {
     this.config = config;
     this.sessions = new Map();
+    this.isWin = Os.platform() === 'win32';
 
-    if (Os.platform() === 'win32') {
-      this.ipcRootPath = path.join('\\\\?\\pipe', Os.tmpdir());
+    if (this.isWin) {
+      // On windows, using tcp socket for ipc :(
+      // windows named pipe doesn't work on cluster mode
+      // this.ipcRootPath = path.join('\\\\?\\pipe', Os.tmpdir());
+      this.ipcPath = 0;
     } else {
+      // On Unix like, using unix domain socket for ipc :)
       this.ipcRootPath = Os.tmpdir();
+      this.ipcPath = this.ipcRootPath + IPC_NAME_SPACE + process.pid;
     }
-    this.ipcPath = this.ipcRootPath + IPC_NAME_SPACE + process.pid;
 
     this.ipcServer = Net.createServer((socket) => {
       let session = new NodeRtmpSession(config, socket);
@@ -34,23 +38,42 @@ class NodeIpcServer {
   }
 
   run() {
-    this.ipcServer.listen(this.ipcPath, () => {
-      Logger.log(`Node Media IPC Server started`, this.ipcPath);
-    });
+    if (this.isWin) {
+      this.ipcServer.listen({ port: 0, host: '127.0.0.1', exclusive: true }, () => {
+        this.ipcPath = this.ipcServer.address().port;
+        Logger.log(`Node Media IPC Server started at`, this.ipcPath);
+      });
+    } else {
+      this.ipcServer.listen(this.ipcPath, () => {
+        Logger.log(`Node Media IPC Server started at`, this.ipcPath);
+      });
+    }
 
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
 
     process.on('message', (msg) => {
-      if (process.pid === msg.pid) {
-        Logger.debug('[rtmp ipc] Current process, ignore');
-        return;
+      if (this.isWin) {
+        if (this.ipcPath === msg.pid) {
+          Logger.debug('[rtmp ipc] Current process, ignore');
+          return;
+        }
+      } else {
+        if (process.pid === msg.pid) {
+          Logger.debug('[rtmp ipc] Current process, ignore');
+          return;
+        }
       }
-      
-      Logger.debug(`[rtmp ipc] receive message cmd=${msg.cmd} pid=${msg.pid} path=${msg.streamPath}`);
+
+      if (this.isWin) {
+        Logger.debug(`[rtmp ipc] receive message cmd=${msg.cmd} port=${msg.pid} path=${msg.streamPath}`);
+      } else {
+        Logger.debug(`[rtmp ipc] receive message cmd=${msg.cmd} pid=${msg.pid} path=${msg.streamPath}`);
+      }
 
       if (msg.cmd === 'postPublish') {
-        let ipcSession = new NodeIpcSession(msg.streamPath, this.ipcRootPath + IPC_NAME_SPACE + msg.pid, this.ipcPath);
+        let pullPath = this.isWin ? msg.pid : this.ipcRootPath + IPC_NAME_SPACE + msg.pid;
+        let ipcSession = new NodeIpcSession(msg.streamPath, pullPath, this.ipcPath);
         this.sessions.set(msg.streamPath, ipcSession);
         ipcSession.run();
       } else if (msg.cmd === 'donePublish') {
@@ -63,16 +86,17 @@ class NodeIpcServer {
   }
 
   stop() {
-
+    this.ipcServer.close();
   }
 
   onPostPublish(id, streamPath, args) {
-    process.send({ cmd: 'postPublish', pid: process.pid, streamPath });
+    let pid = this.isWin ? this.ipcPath : process.pid;
+    process.send({ cmd: 'postPublish', pid, streamPath });
   }
 
   onDonePublish(id, streamPath, args) {
-    console.log(streamPath);
-    process.send({ cmd: 'donePublish', pid: process.pid, streamPath });
+    let pid = this.isWin ? this.ipcPath : process.pid;
+    process.send({ cmd: 'donePublish', pid, streamPath });
   }
 
 }
