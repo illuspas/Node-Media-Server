@@ -11,6 +11,7 @@ const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
 const NodeIpcServer = require('./node_ipc_server');
+const NodeFlvSession = require('./node_flv_session');
 const context = require('./node_core_ctx');
 
 class NodeMediaServer {
@@ -40,7 +41,7 @@ class NodeMediaServer {
       this.nls = new NodeRelayServer(this.config);
       this.nls.run();
     }
-    
+
     if (this.config.cluster) {
       this.nis = new NodeIpcServer(this.config);
       this.nis.run();
@@ -73,6 +74,11 @@ class NodeMediaServer {
   getSession(id) {
     return context.sessions.get(id);
   }
+
+  saveFlvStream(streamPath, nodeStream) {
+    const flvSession = new NodeFlvSession(this.config, streamPath, nodeStream);
+    flvSession.run();
+  }
 }
 
-module.exports = NodeMediaServer
+module.exports = NodeMediaServer;
