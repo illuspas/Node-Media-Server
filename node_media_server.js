@@ -19,11 +19,11 @@ class NodeMediaServer {
   }
 
   run() {
-    if (this.config.hasOwnProperty(logType)) {
+    if (this.config.hasOwnProperty('logType')) {
       Logger.setLogType(this.config.logType);
     }
 
-    if (this.config.hasOwnProperty(logOutput)) {
+    if (this.config.hasOwnProperty('logOutput')) {
       Logger.setOutputFunction(this.config.logOutput);
     }
 
