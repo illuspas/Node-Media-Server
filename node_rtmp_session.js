@@ -1034,6 +1034,9 @@ class NodeRtmpSession {
   }
 
   onPlay(invokeMessage) {
+    if (typeof invokeMessage.streamName !== 'string') {
+      return;
+    }
     this.playStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
     this.playArgs = QueryString.parse(invokeMessage.streamName.split('?')[1]);
     this.playStreamId = this.parserPacket.header.stream_id;
