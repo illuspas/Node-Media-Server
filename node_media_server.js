@@ -19,7 +19,13 @@ class NodeMediaServer {
   }
 
   run() {
-    Logger.setLogType(this.config.logType);
+    if (this.config.hasOwnProperty(logType)) {
+      Logger.setLogType(this.config.logType);
+    }
+
+    if (this.config.hasOwnProperty(logOutput)) {
+      Logger.setOutputFunction(this.config.logOutput);
+    }
 
     if (this.config.rtmp) {
       this.nrs = new NodeRtmpServer(this.config);

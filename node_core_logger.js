@@ -9,11 +9,18 @@ LOG_TYPES = {
 };
 
 let logType = LOG_TYPES.NORMAL;
+let output = (...args) => console.log(...args);
 
 const setLogType = (type) => {
   if (typeof type !== 'number') return;
 
   logType = type;
+};
+
+const setOutputFunction = (func) => {
+  if (typeof func !== 'function') return;
+
+  output = func;
 };
 
 const logTime = () => {
@@ -24,30 +31,30 @@ const logTime = () => {
 const log = (...args) => {
   if (logType < LOG_TYPES.NORMAL) return;
 
-  console.log(logTime(), process.pid, chalk.bold.green('[INFO]'), ...args);
+  output(logTime(), process.pid, chalk.bold.green('[INFO]'), ...args);
 };
 
 const error = (...args) => {
   if (logType < LOG_TYPES.ERROR) return;
 
-  console.log(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
+  output(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
 };
 
 const debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
 
-  console.log(logTime(), process.pid, chalk.bold.blue('[DEBUG]'), ...args);
+  output(logTime(), process.pid, chalk.bold.blue('[DEBUG]'), ...args);
 };
 
 const ffdebug = (...args) => {
   if (logType < LOG_TYPES.FFDEBUG) return;
 
-  console.log(logTime(), process.pid, chalk.bold.blue('[FFDEBUG]'), ...args);
+  output(logTime(), process.pid, chalk.bold.blue('[FFDEBUG]'), ...args);
 };
 
 module.exports = {
   LOG_TYPES,
   setLogType,
-
+  setOutputFunction,
   log, error, debug, ffdebug
 }

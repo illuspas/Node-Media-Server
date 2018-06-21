@@ -161,9 +161,13 @@ There are a total of 4 possible options:
 - 1 - Log errors
 - 2 - Log errors and generic info
 - 3 - Log everything (debug)
+- 4 - Log everything and ffmpeg output
 
 Modifying the logging type is easy - just add a new value `logType` in the config and set it to a value between 0 and 4.
 By default, this is set to show errors and generic info internally (setting 2).
+
+You can also change where the output will go by adding a new value of `logOutput` in the config and set it to a function.
+By default, this is set to `console.log()`. The function should take a variable number of aruments.
 
 ```js
 const NodeMediaServer = require('node-media-server');
