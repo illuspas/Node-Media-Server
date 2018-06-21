@@ -4,12 +4,28 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const URL = require('url');
+const stream = require('stream');
 const AMF = require('./node_core_amf');
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
 const NodeCoreUtils = require('./node_core_utils');
 
 
+class Counter extends stream.Transform {
+  constructor(options) {
+    super(options);
+    this.bytesRead = 0;
+    this.bytesWritten = 0;
+  }
+
+  _transform(chunk, encoding, callback) {
+    const bytes = Buffer.byteLength(chunk, encoding);
+    this.bytesRead += bytes;
+    this.bytesWritten += bytes;
+    this.push(chunk);
+    return callback();
+  }
+}
 
 const FlvPacket = {
   create: (payload = null, type = 0, time = 0) => {
@@ -20,7 +36,7 @@ const FlvPacket = {
         type: type,
       },
       payload: payload
-    }
+    };
   }
 };
 
@@ -30,7 +46,6 @@ class NodeFlvSession {
     this.req = req;
     this.res = res;
     this.id = NodeCoreUtils.generateNewSessionID();
-    this.ip = this.req.socket.remoteAddress;
 
     this.playStreamPath = '';
     this.playArgs = null;
@@ -39,16 +54,33 @@ class NodeFlvSession {
     this.isPlaying = false;
     this.isIdling = false;
 
-    if (this.req.nmsConnectionType === 'ws') {
+    if (this.req.socket) {
+      this.ip = this.req.socket.remoteAddress;
+      if (this.req.nmsConnectionType === 'ws') {
+        this.res.on('close', this.onReqClose.bind(this));
+        this.res.on('error', this.onReqError.bind(this));
+        this.res.write = this.res.send;
+        this.res.end = this.res.close;
+        this.TAG = 'websocket-flv';
+      } else {
+        this.req.socket.on('close', this.onReqClose.bind(this));
+        this.req.on('error', this.onReqError.bind(this));
+        this.TAG = 'http-flv';
+      }
+    } else {
+      const counter = new Counter();
+      this.req = {
+        method: 'GET',
+        url: req,               // this is just the streamPath
+        socket: counter,
+        connection: counter,
+      };
+      this.res = counter;
+      this.ip = counter.remoteAddress = '::1';
       this.res.on('close', this.onReqClose.bind(this));
       this.res.on('error', this.onReqError.bind(this));
-      this.res.write = this.res.send;
-      this.res.end = this.res.close;
-      this.TAG = 'websocket-flv'
-    } else {
-      this.req.socket.on('close', this.onReqClose.bind(this));
-      this.req.on('error', this.onReqError.bind(this));
-      this.TAG = 'http-flv'
+      this.TAG = 'stream-flv';
+      counter.pipe(res);
     }
 
     context.sessions.set(this.id, this);
@@ -144,7 +176,7 @@ class NodeFlvSession {
     let players = publisher.players;
     players.add(this.id);
 
-    //send FLV header 
+    //send FLV header
     let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     if (publisher.isFirstAudioReceived) {
       FLVHeader[4] |= 0b00000100;
@@ -155,7 +187,7 @@ class NodeFlvSession {
     }
     this.res.write(FLVHeader);
 
-    //send Metadata 
+    //send Metadata
     if (publisher.metaData != null) {
       let packet = FlvPacket.create(publisher.metaData, 18);
       let tag = NodeFlvSession.createFlvTag(packet);
@@ -201,7 +233,7 @@ class NodeFlvSession {
     tagBuffer.writeUIntBE(0, 8, 3);
     tagBuffer.writeUInt32BE(PreviousTagSize, PreviousTagSize);
     packet.payload.copy(tagBuffer, 11, 0, packet.header.length);
-    return tagBuffer
+    return tagBuffer;
   }
 
 }
