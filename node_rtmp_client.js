@@ -574,7 +574,14 @@ class NodeRtmpClient {
 
   rtmpEventHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    // Logger.log('rtmpEventHandler', payload);
+    let event = payload.readUInt16BE();
+    let value = payload.readUInt32BE(2);
+    // Logger.log('rtmpEventHandler', event, value);
+    switch (event) {
+      case 6:
+        this.rtmpSendPingResponse(value);
+        break;
+    }
   }
 
   rtmpInvokeHandler() {
@@ -627,13 +634,12 @@ class NodeRtmpClient {
 
   rtmpOncreateStream(sid) {
     this.streamId = sid;
-
     if (this.isPublish) {
       this.rtmpSendPublish();
       this.rtmpSendSetChunkSize();
     } else {
       this.rtmpSendPlay();
-      this.rtmpSendSetBufferLength();
+      this.rtmpSendSetBufferLength(1000);
     }
   }
 
@@ -725,8 +731,18 @@ class NodeRtmpClient {
     this.sendInvokeMessage(this.streamId, opt);
   }
 
-  rtmpSendSetBufferLength() {
-
+  rtmpSendSetBufferLength(bufferTime) {
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_PROTOCOL;
+    packet.header.type = RTMP_TYPE_EVENT;
+    packet.payload = Buffer.alloc(10);
+    packet.header.length = packet.payload.length;
+    packet.payload.writeUInt16BE(0x03);
+    packet.payload.writeUInt32BE(this.streamId, 2);
+    packet.payload.writeUInt32BE(bufferTime, 6);
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
   }
 
   rtmpSendPublish() {
@@ -767,6 +783,18 @@ class NodeRtmpClient {
     this.sendInvokeMessage(this.streamId, opt);
   }
 
+  rtmpSendPingResponse(time) {
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_PROTOCOL;
+    packet.header.type = RTMP_TYPE_EVENT;
+    packet.payload = Buffer.alloc(6);
+    packet.header.length = packet.payload.length;
+    packet.payload.writeUInt16BE(0x07);
+    packet.payload.writeUInt32BE(time, 2);
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
+  }
 }
 
 module.exports = NodeRtmpClient

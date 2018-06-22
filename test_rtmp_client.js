@@ -1,7 +1,7 @@
 const NodeRtmpClient = require('./node_rtmp_client');
 
 let rc = new NodeRtmpClient('rtmp://192.168.0.10/live/stream');
-let rp = new NodeRtmpClient('rtmp://192.168.0.10/live/stream1');
+let rp = new NodeRtmpClient('rtmp://192.168.0.20/live/stream1');
 rc.on('audio', (audioData, timestamp) => {
   rp.pushAudio(audioData, timestamp);
 });
