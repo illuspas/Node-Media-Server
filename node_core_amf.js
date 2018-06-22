@@ -549,6 +549,9 @@ function amf0decObject(buf) { // TODO: Implement references!
     let prop = amf0decUString(iBuf);
     // Logger.debug('Got field for property', prop);
     len += prop.len;
+    if(iBuf.length < prop.len) {
+      break;
+    }
     if (iBuf.slice(prop.len).readUInt8(0) == 0x09) {
       len++;
       // Logger.debug('Found the end property');
@@ -933,15 +936,15 @@ function amf0Encode(a) {
 }
 
 
-const rtmpCmdDecode = {
+const rtmpCmdCode = {
   "_result": ["transId", "cmdObj", "info"],
   "_error": ["transId", "cmdObj", "info", "streamId"], // Info / Streamid are optional
   "onStatus": ["transId", "cmdObj", "info"],
-  "releaseStream": ["transId", "cmdObj", "streamId"],
+  "releaseStream": ["transId", "cmdObj", "streamName"],
   "getStreamLength": ["transId", "cmdObj", "streamId"],
   "getMovLen": ["transId", "cmdObj", "streamId"],
-  "FCPublish": ["transId", "cmdObj", "streamId"],
-  "FCUnpublish": ["transId", "cmdObj", "streamId"],
+  "FCPublish": ["transId", "cmdObj", "streamName"],
+  "FCUnpublish": ["transId", "cmdObj", "streamName"],
   "onFCPublish": ["transId", "cmdObj", "info"],
   "connect": ["transId", "cmdObj", "args"],
   "call": ["transId", "cmdObj", "args"],
@@ -958,7 +961,7 @@ const rtmpCmdDecode = {
   "pause": ["transId", "cmdObj", "pause", "ms"]
 };
 
-const rtmpDataDecode = {
+const rtmpDataCode = {
   "@setDataFrame": ["method", "dataObj"],
   "onMetaData": ["dataObj"],
   "|RtmpSampleAccess": ["bool1", "bool2"],
@@ -978,8 +981,8 @@ function decodeAmf0Data(dbuf) {
   resp.cmd = cmd.value;
   buffer = buffer.slice(cmd.len);
 
-  if (rtmpDataDecode[cmd.value]) {
-    rtmpDataDecode[cmd.value].forEach(function (n) {
+  if (rtmpDataCode[cmd.value]) {
+    rtmpDataCode[cmd.value].forEach(function (n) {
       if (buffer.length > 0) {
         let r = amf0DecodeOne(buffer);
         buffer = buffer.slice(r.len);
@@ -1005,8 +1008,8 @@ function decodeAMF0Cmd(dbuf) {
   resp.cmd = cmd.value;
   buffer = buffer.slice(cmd.len);
 
-  if (rtmpCmdDecode[cmd.value]) {
-    rtmpCmdDecode[cmd.value].forEach(function (n) {
+  if (rtmpCmdCode[cmd.value]) {
+    rtmpCmdCode[cmd.value].forEach(function (n) {
       if (buffer.length > 0) {
         let r = amf0DecodeOne(buffer);
         buffer = buffer.slice(r.len);
@@ -1027,8 +1030,8 @@ function decodeAMF0Cmd(dbuf) {
 function encodeAMF0Cmd(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
-  if (rtmpCmdDecode[opt.cmd]) {
-    rtmpCmdDecode[opt.cmd].forEach(function (n) {
+  if (rtmpCmdCode[opt.cmd]) {
+    rtmpCmdCode[opt.cmd].forEach(function (n) {
       if (opt.hasOwnProperty(n))
         data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
     });
@@ -1042,8 +1045,8 @@ function encodeAMF0Cmd(opt) {
 function encodeAMF0Data(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
-  if (rtmpDataDecode[opt.cmd]) {
-    rtmpDataDecode[opt.cmd].forEach(function (n) {
+  if (rtmpDataCode[opt.cmd]) {
+    rtmpDataCode[opt.cmd].forEach(function (n) {
       if (opt.hasOwnProperty(n))
         data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
     });
@@ -1067,8 +1070,8 @@ function decodeAMF3Cmd(dbuf) {
   resp.cmd = cmd.value;
   buffer = buffer.slice(cmd.len);
 
-  if (rtmpCmdDecode[cmd.value]) {
-    rtmpCmdDecode[cmd.value].forEach(function (n) {
+  if (rtmpCmdCode[cmd.value]) {
+    rtmpCmdCode[cmd.value].forEach(function (n) {
       if (buffer.length > 0) {
         let r = amf3DecodeOne(buffer);
         buffer = buffer.slice(r.len);
@@ -1089,8 +1092,8 @@ function decodeAMF3Cmd(dbuf) {
 function encodeAMF3Cmd(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
-  if (rtmpCmdDecode[opt.cmd]) {
-    rtmpCmdDecode[opt.cmd].forEach(function (n) {
+  if (rtmpCmdCode[opt.cmd]) {
+    rtmpCmdCode[opt.cmd].forEach(function (n) {
       if (opt.hasOwnProperty(n))
         data = Buffer.concat([data, amf3EncodeOne(opt[n])]);
     });

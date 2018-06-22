@@ -12,7 +12,9 @@ const Net = require('net');
 const AMF = require('./node_core_amf');
 
 const FLASHVER = "LNX 9,0,124,2";
+const RTMP_OUT_CHUNK_SIZE = 60000;
 const RTMP_PORT = 1935;
+
 const RTMP_HANDSHAKE_SIZE = 1536;
 const RTMP_HANDSHAKE_UNINIT = 0;
 const RTMP_HANDSHAKE_0 = 1;
@@ -25,7 +27,7 @@ const RTMP_PARSE_MESSAGE_HEADER = 2;
 const RTMP_PARSE_EXTENDED_TIMESTAMP = 3;
 const RTMP_PARSE_PAYLOAD = 4;
 
-const MAX_CHUNK_HEADER = 18;
+const RTMP_CHUNK_HEADER_MAX = 18;
 
 const RTMP_CHUNK_TYPE_0 = 0; // 11-bytes: timestamp(3) + length(3) + stream type(1) + stream id(4)
 const RTMP_CHUNK_TYPE_1 = 1; // 7-bytes: delta(3) + length(3) + stream type(1)
@@ -112,12 +114,12 @@ class NodeRtmpClient {
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
     this.launcher = new EventEmitter();
-    
+
     this.handshakePayload = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     this.handshakeState = RTMP_HANDSHAKE_UNINIT;
     this.handshakeBytes = 0;
 
-    this.parserBuffer = Buffer.alloc(MAX_CHUNK_HEADER);
+    this.parserBuffer = Buffer.alloc(RTMP_CHUNK_HEADER_MAX);
     this.parserState = RTMP_PARSE_INIT;
     this.parserBytes = 0;
     this.parserBasicBytes = 0;
@@ -225,19 +227,47 @@ class NodeRtmpClient {
   }
 
   stop() {
-
+    if(this.isPublish) {
+      this.rtmpSendFCUnpublish();
+    }
+    this.rtmpSendDeleteStream();
+    this.socket.end();
   }
 
   pushAudio(audioData, timestamp) {
-
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_AUDIO;
+    packet.header.type = RTMP_TYPE_AUDIO;
+    packet.payload = audioData;
+    packet.header.length = packet.payload.length;
+    packet.header.timestamp = timestamp;
+    let rtmpChunks = this.rtmpChunksCreate(packet);
+    this.socket.write(rtmpChunks);
   }
 
   pushVideo(videoData, timestamp) {
-
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_VIDEO;
+    packet.header.type = RTMP_TYPE_VIDEO;
+    packet.payload = videoData;
+    packet.header.length = packet.payload.length;
+    packet.header.timestamp = timestamp;
+    let rtmpChunks = this.rtmpChunksCreate(packet);
+    this.socket.write(rtmpChunks);
   }
 
   pushScript(scriptData, timestamp) {
-
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_DATA;
+    packet.header.type = RTMP_TYPE_DATA;
+    packet.payload = scriptData;
+    packet.header.length = packet.payload.length;
+    packet.header.timestamp = timestamp;
+    let rtmpChunks = this.rtmpChunksCreate(packet);
+    this.socket.write(rtmpChunks);
   }
 
   rtmpUrlParser(url) {
@@ -607,6 +637,18 @@ class NodeRtmpClient {
     this.launcher.emit('script', payload, this.parserPacket.clock, );
   }
 
+  sendInvokeMessage(sid, opt) {
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_INVOKE;
+    packet.header.type = RTMP_TYPE_INVOKE;
+    packet.header.stream_id = sid;
+    packet.payload = AMF.encodeAmf0Cmd(opt);
+    packet.header.length = packet.payload.length;
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
+  }
+
   rtmpSendConnect() {
     let opt = {
       cmd: 'connect',
@@ -614,6 +656,7 @@ class NodeRtmpClient {
       cmdObj: {
         app: this.info.app,
         flashVer: FLASHVER,
+        tcUrl: this.info.tcurl,
         fpad: 0,
         capabilities: 15,
         audioCodecs: 3191,
@@ -626,17 +669,30 @@ class NodeRtmpClient {
   }
 
   rtmpSendReleaseStream() {
-
+    let opt = {
+      cmd: 'releaseStream',
+      transId: 0,
+      cmdObj: null,
+      streamName: this.info.stream,
+    };
+    this.sendInvokeMessage(this.streamId, opt);
   }
 
   rtmpSendFCPublish() {
-
+    let opt = {
+      cmd: 'FCPublish',
+      transId: 0,
+      cmdObj: null,
+      streamName: this.info.stream,
+    };
+    this.sendInvokeMessage(this.streamId, opt);
   }
 
   rtmpSendCreateStream() {
     let opt = {
       cmd: 'createStream',
-      transId: RTMP_TRANSACTION_CREATE_STREAM
+      transId: RTMP_TRANSACTION_CREATE_STREAM,
+      cmdObj: null
     };
     this.sendInvokeMessage(0, opt);
   }
@@ -658,32 +714,44 @@ class NodeRtmpClient {
 
   }
 
-  sendInvokeMessage(sid, opt) {
-    let packet = RtmpPacket.create();
-    packet.header.fmt = RTMP_CHUNK_TYPE_0;
-    packet.header.cid = RTMP_CHANNEL_INVOKE;
-    packet.header.type = RTMP_TYPE_INVOKE;
-    packet.header.stream_id = sid;
-    packet.payload = AMF.encodeAmf0Cmd(opt);
-    packet.header.length = packet.payload.length;
-    let chunks = this.rtmpChunksCreate(packet);
-    this.socket.write(chunks);
+  rtmpSendPublish() {
+    let opt = {
+      cmd: 'publish',
+      transId: 0,
+      cmdObj: null,
+      streamName: this.info.stream,
+      type: 'live'
+    };
+    this.sendInvokeMessage(this.streamId, opt);
+  }
+
+  rtmpSendSetChunkSize() {
+    let rtmpBuffer = Buffer.from('02000000000004010000000000000000', 'hex');
+    rtmpBuffer.writeUInt32BE(this.inChunkSize, 12);
+    this.socket.write(rtmpBuffer);
+    this.outChunkSize = this.inChunkSize;
+  }
+
+  rtmpSendFCUnpublish() {
+    let opt = {
+      cmd: 'FCUnpublish',
+      transId: 0,
+      cmdObj: null,
+      streamName: this.info.stream,
+    };
+    this.sendInvokeMessage(this.streamId, opt);
+  }
+
+  rtmpSendDeleteStream() {
+    let opt = {
+      cmd: 'deleteStream',
+      transId: 0,
+      cmdObj: null,
+      streamId: this.streamId
+    };
+    this.sendInvokeMessage(this.streamId, opt);
   }
 
 }
 
 module.exports = NodeRtmpClient
-
-let rc = new NodeRtmpClient('rtmp://192.168.0.10/live/stream');
-console.log(rc.info);
-rc.on('audio', (audioData, timestamp) => {
-  Logger.debug('on audio', timestamp);
-});
-
-rc.on('video', (videoData, timestamp) => {
-
-});
-rc.on('script', (scriptData, timestamp) => {
-
-});
-rc.startPull();
