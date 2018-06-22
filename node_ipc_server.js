@@ -9,9 +9,6 @@ const NodeIpcSession = require('./node_ipc_session');
 const context = require('./node_core_ctx');
 const Logger = require('./node_core_logger');
 const Net = require('net');
-const Os = require('os');
-
-const IPC_NAME_SPACE = '/nms-ipc-sock-';
 
 class NodeIpcServer {
   constructor(config) {
