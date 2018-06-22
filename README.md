@@ -33,7 +33,7 @@ npm install node-media-server
 ```
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const {NodeMediaServer} = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -166,7 +166,7 @@ Modifying the logging type is easy - just add a new value `logType` in the confi
 By default, this is set to show errors and generic info internally (setting 2).
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const {NodeMediaServer} = require('node-media-server');
 
 const config = {
   logType: 3,
@@ -293,7 +293,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## Config https
 ```js
-const NodeMediaServer = require('node-media-server');
+const {NodeMediaServer} = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -466,7 +466,7 @@ http://localhost:8000/api/streams
 
 # Remux to HLS/DASH live stream
 ```js
-const NodeMediaServer = require('node-media-server');
+const {NodeMediaServer} = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -502,7 +502,7 @@ nms.run();
 
 # Record to MP4
 ```JS
-const NodeMediaServer = require('node-media-server');
+const {NodeMediaServer} = require('node-media-server');
 
 const config = {
   rtmp: {
