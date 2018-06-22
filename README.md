@@ -29,6 +29,8 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  
 # Usage 
 ```bash
+mkdir nms
+cd nms
 npm install node-media-server
 ```
 
@@ -52,6 +54,36 @@ const config = {
 var nms = new NodeMediaServer(config)
 nms.run();
 
+```
+# Multicore cluster mode
+```bash
+mkdir nms
+cd nms
+npm install node-media-server
+```
+
+```js
+const {NodeMediaCluster} = require('node-media-server');
+const numCPUs = require('os').cpus().length;
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  },
+  cluster: {
+    num: numCPUs
+  }
+};
+
+var nmcs = new NodeMediaCluster(config)
+nmcs.run();
 ```
 
 # Todo 
