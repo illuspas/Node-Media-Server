@@ -128,6 +128,9 @@ class NodeRtmpClient {
 
     this.inChunkSize = RTMP_CHUNK_SIZE;
     this.outChunkSize = RTMP_CHUNK_SIZE;
+
+    this.streamId = 0;
+    this.isSocketOpen = false;
   }
 
   onSocketData(data) {
@@ -185,14 +188,20 @@ class NodeRtmpClient {
 
   onSocketError(e) {
     Logger.error('rtmp_client', "onSocketError", e);
+    this.isSocketOpen = false;
+    this.stop();
   }
 
   onSocketClose() {
     Logger.debug('rtmp_client', "onSocketClose");
+    this.isSocketOpen = false;
+    this.stop();
   }
 
   onSocketTimeout() {
     Logger.debug('rtmp_client', "onSocketTimeout");
+    this.isSocketOpen = false;
+    this.stop();
   }
 
   on(event, callback) {
@@ -216,6 +225,7 @@ class NodeRtmpClient {
       c0c1.writeUInt32BE(Date.now() / 1000, 1);
       c0c1.writeUInt32BE(0, 5);
       this.socket.write(c0c1);
+      this.isSocketOpen = true;
       Logger.debug('[rtmp client] write c0c1');
     });
     this.socket.on('data', this.onSocketData.bind(this));
@@ -227,14 +237,18 @@ class NodeRtmpClient {
   }
 
   stop() {
-    if(this.isPublish) {
-      this.rtmpSendFCUnpublish();
+    if (this.streamId > 0 && this.isSocketOpen) {
+      if (this.isPublish) {
+        this.rtmpSendFCUnpublish();
+      }
+      this.rtmpSendDeleteStream();
     }
-    this.rtmpSendDeleteStream();
+    this.streamId = 0;
     this.socket.end();
   }
 
   pushAudio(audioData, timestamp) {
+    if (this.streamId == 0) return;
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_AUDIO;
@@ -247,6 +261,7 @@ class NodeRtmpClient {
   }
 
   pushVideo(videoData, timestamp) {
+    if (this.streamId == 0) return;
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_VIDEO;
@@ -259,6 +274,7 @@ class NodeRtmpClient {
   }
 
   pushScript(scriptData, timestamp) {
+    if (this.streamId == 0) return;
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_DATA;
@@ -584,8 +600,10 @@ class NodeRtmpClient {
   }
 
   rtmpCommandOnresult(invokeMessage) {
+    Logger.debug(invokeMessage);
     switch (invokeMessage.transId) {
       case RTMP_TRANSACTION_CONNECT:
+        this.launcher.emit('status', invokeMessage.info);
         this.rtmpOnconnect();
         break;
       case RTMP_TRANSACTION_CREATE_STREAM:
@@ -595,11 +613,11 @@ class NodeRtmpClient {
   }
 
   rtmpCommandOnerror(invokeMessage) {
-
+    this.launcher.emit('status', invokeMessage.info);
   }
 
   rtmpCommandOnstatus(invokeMessage) {
-
+    this.launcher.emit('status', invokeMessage.info);
   }
 
   rtmpOnconnect() {
