@@ -8,20 +8,20 @@ const NodeRtmpClient = require('./node_rtmp_client');
 
 class NodeIpcSession {
 
-  constructor(streamPath, pullPath, pushPath) {
+  constructor(streamPath, pullPort, pushPort) {
     this.streamPath = streamPath;
     this.app = streamPath.split('/')[1];
     this.stream = streamPath.split('/')[2];
 
-    this.pullPath = pullPath;
-    this.pullRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pullPath}${streamPath}`);
+    this.pullPort = pullPort;
+    this.pullRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pullPort}${streamPath}`);
 
-    this.pushPath = pushPath;
-    this.pushRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pushPath}${streamPath}`);
+    this.pushPort = pushPort;
+    this.pushRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pushPort}${streamPath}`);
 
     this.isStart = false;
 
-    Logger.debug(`[rtmp ipc] Create new ipc stream ${streamPath}`);
+    Logger.debug(`[rtmp ipc] Create new ipc stream ${streamPath} from port=${pullPort} to port=${pushPort}`);
   }
 
   run() {
