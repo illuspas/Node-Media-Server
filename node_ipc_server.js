@@ -17,18 +17,18 @@ class NodeIpcServer {
   constructor(config) {
     this.config = config;
     this.sessions = new Map();
-    this.isWin = Os.platform() === 'win32';
+    this.isWin = true;// Os.platform() === 'win32';
 
-    if (this.isWin) {
-      // On windows, using tcp socket for ipc :(
-      // windows named pipe doesn't work on cluster mode
-      // this.ipcRootPath = path.join('\\\\?\\pipe', Os.tmpdir());
-      this.ipcPath = 0;
-    } else {
-      // On Unix like, using unix domain socket for ipc :)
-      this.ipcRootPath = Os.tmpdir();
-      this.ipcPath = this.ipcRootPath + IPC_NAME_SPACE + process.pid;
-    }
+    // if (this.isWin) {
+    //   // On windows, using tcp socket for ipc :(
+    //   // windows named pipe doesn't work on cluster mode
+    //   // this.ipcRootPath = path.join('\\\\?\\pipe', Os.tmpdir());
+    this.ipcPath = 0;
+    // } else {
+    //   // On Unix like, using unix domain socket for ipc :)
+    //   this.ipcRootPath = Os.tmpdir();
+    //   this.ipcPath = this.ipcRootPath + IPC_NAME_SPACE + process.pid;
+    // }
 
     this.ipcServer = Net.createServer((socket) => {
       let session = new NodeRtmpSession(config, socket);

@@ -3,10 +3,8 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-
-const Net = require('net');
 const Logger = require('./node_core_logger');
-const { RtmpClient } = require('node-media-streamer');
+const NodeRtmpClient = require('./node_rtmp_client');
 
 class NodeIpcSession {
 
@@ -16,12 +14,11 @@ class NodeIpcSession {
     this.stream = streamPath.split('/')[2];
 
     this.pullPath = pullPath;
-    this.pullRtmp = new RtmpClient(this.app, this.stream, '');
-    this.pullSocket = null;
+    this.pullRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pullPath}${streamPath}`);
 
     this.pushPath = pushPath;
-    this.pushRtmp = new RtmpClient(this.app, this.stream, '');
-    this.pushSocket = null;
+    this.pushRtmp = new NodeRtmpClient(`rtmp://127.0.0.1:${pushPath}${streamPath}`);
+
     this.isStart = false;
 
     Logger.debug(`[rtmp ipc] Create new ipc stream ${streamPath}`);
@@ -29,72 +26,33 @@ class NodeIpcSession {
 
   run() {
     this.isStart = true;
-    this.pullSocket = Net.createConnection(this.pullPath, () => {
-      this.pullRtmp.startPull();
-    });
-    this.pushSocket = Net.createConnection(this.pushPath, () => {
-      this.pushRtmp.startPush();
-    });
-
-    this.pullSocket.on('data', (data) => {
-      this.pullRtmp.inputData(data, data.length);
-    });
-
-    this.pullSocket.on('error', (e) => {
-      this.isStart = false;
-    });
-
-    this.pullRtmp.on('send', (header, payload) => {
-      if (this.isStart) {
-        this.pullSocket.write(Buffer.from(header));
-        this.pullSocket.write(Buffer.from(payload));
+    this.pushRtmp.on('status', (info) => {
+      if (info.code === 'NetStream.Publish.Start') {
+        this.pullRtmp.startPull();
       }
     });
 
-    this.pushSocket.on('data', (data) => {
-      this.pushRtmp.inputData(data, data.length);
+    this.pullRtmp.on('audio', (audioData, timestamp) => {
+      this.pushRtmp.pushAudio(audioData, timestamp);
     });
 
-    this.pushSocket.on('error', (e) => {
-      this.isStart = false;
+    this.pullRtmp.on('video', (videoData, timestamp) => {
+      this.pushRtmp.pushVideo(videoData, timestamp);
     });
 
-    this.pushRtmp.on('send', (header, payload) => {
-      if (this.isStart) {
-        this.pushSocket.write(Buffer.from(header));
-        this.pushSocket.write(Buffer.from(payload));
-      }
+    this.pullRtmp.on('script', (scriptData, timestamp) => {
+      this.pushRtmp.pushScript(scriptData, timestamp);
     });
 
-    this.pullRtmp.on('audio', (audio, time) => {
-      this.pushRtmp.pushAudio(audio, audio.length, time);
-    });
-    this.pullRtmp.on('video', (video, time) => {
-      this.pushRtmp.pushVideo(video, video.length, time);
-    });
-    this.pullRtmp.on('script', (script, time) => {
-      this.pushRtmp.pushScript(script, script.length, time);
-    });
-    this.pullRtmp.on('status', (level, code, description) => {
-      // console.log('[pull]', level, code, description);
-      if (code === 'NetStream.Play.UnpublishNotify') {
-        this.isStart = false;
-      }
-    });
-    this.pushRtmp.on('status', (level, code, description) => {
-      // console.log('[push]', level, code, description);
-    });
+    this.pushRtmp.startPush();
   }
 
   stop() {
     this.isStart = false;
-    
+
     this.pullRtmp.stop();
     this.pushRtmp.stop();
 
-    this.pullSocket.end();
-    this.pushSocket.end();
-    
     Logger.debug(`[rtmp ipc] Stop ipc stream ${this.streamPath}`);
   }
 

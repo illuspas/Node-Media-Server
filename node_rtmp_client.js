@@ -107,9 +107,6 @@ const RtmpPacket = {
 
 class NodeRtmpClient {
   constructor(rtmpUrl) {
-
-    Logger.setLogType(3);
-
     this.url = rtmpUrl;
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
