@@ -138,7 +138,7 @@ class NodeRtmpClient {
       switch (this.handshakeState) {
         case RTMP_HANDSHAKE_UNINIT:
           // read s0
-          Logger.debug('[rtmp client] read s0');
+          // Logger.debug('[rtmp client] read s0');
           this.handshakeState = RTMP_HANDSHAKE_0;
           this.handshakeBytes = 0;
           bytes -= 1;
@@ -153,11 +153,11 @@ class NodeRtmpClient {
           bytes -= n;
           p += n;
           if (this.handshakeBytes === RTMP_HANDSHAKE_SIZE) {
-            Logger.debug('[rtmp client] read s1');
+            // Logger.debug('[rtmp client] read s1');
             this.handshakeState = RTMP_HANDSHAKE_1;
             this.handshakeBytes = 0;
             this.socket.write(this.handshakePayload);// write c2;
-            Logger.debug('[rtmp client] write c2');
+            // Logger.debug('[rtmp client] write c2');
           }
           break;
         case RTMP_HANDSHAKE_1:
@@ -169,7 +169,7 @@ class NodeRtmpClient {
           bytes -= n;
           p += n;
           if (this.handshakeBytes === RTMP_HANDSHAKE_SIZE) {
-            Logger.debug('[rtmp client] read s2');
+            // Logger.debug('[rtmp client] read s2');
             this.handshakeState = RTMP_HANDSHAKE_2;
             this.handshakeBytes = 0;
             this.handshakePayload = null;
@@ -184,19 +184,19 @@ class NodeRtmpClient {
   }
 
   onSocketError(e) {
-    Logger.error('rtmp_client', "onSocketError", e);
+    // Logger.error('rtmp_client', "onSocketError", e);
     this.isSocketOpen = false;
     this.stop();
   }
 
   onSocketClose() {
-    Logger.debug('rtmp_client', "onSocketClose");
+    // Logger.debug('rtmp_client', "onSocketClose");
     this.isSocketOpen = false;
     this.stop();
   }
 
   onSocketTimeout() {
-    Logger.debug('rtmp_client', "onSocketTimeout");
+    // Logger.debug('rtmp_client', "onSocketTimeout");
     this.isSocketOpen = false;
     this.stop();
   }
@@ -223,7 +223,7 @@ class NodeRtmpClient {
       c0c1.writeUInt32BE(0, 5);
       this.socket.write(c0c1);
       this.isSocketOpen = true;
-      Logger.debug('[rtmp client] write c0c1');
+      // Logger.debug('[rtmp client] write c0c1');
     });
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
@@ -557,7 +557,7 @@ class NodeRtmpClient {
     switch (this.parserPacket.header.type) {
       case RTMP_TYPE_SET_CHUNK_SIZE:
         this.inChunkSize = payload.readUInt32BE();
-        Logger.debug('set inChunkSize', this.inChunkSize);
+        // Logger.debug('set inChunkSize', this.inChunkSize);
         break;
       case RTMP_TYPE_ABORT:
         break;
@@ -565,7 +565,7 @@ class NodeRtmpClient {
         break;
       case RTMP_TYPE_WINDOW_ACKNOWLEDGEMENT_SIZE:
         this.ackSize = payload.readUInt32BE();
-        Logger.debug('set ack Size', this.ackSize);
+        // Logger.debug('set ack Size', this.ackSize);
         break;
       case RTMP_TYPE_SET_PEER_BANDWIDTH:
         break;
@@ -574,14 +574,14 @@ class NodeRtmpClient {
 
   rtmpEventHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    Logger.log('rtmpEventHandler', payload);
+    // Logger.log('rtmpEventHandler', payload);
   }
 
   rtmpInvokeHandler() {
     let offset = this.parserPacket.header.type === RTMP_TYPE_FLEX_MESSAGE ? 1 : 0;
     let payload = this.parserPacket.payload.slice(offset, this.parserPacket.header.length);
     let invokeMessage = AMF.decodeAmf0Cmd(payload);
-    Logger.log('rtmpInvokeHandler', invokeMessage);
+    // Logger.log('rtmpInvokeHandler', invokeMessage);
 
     switch (invokeMessage.cmd) {
       case '_result':
@@ -597,7 +597,7 @@ class NodeRtmpClient {
   }
 
   rtmpCommandOnresult(invokeMessage) {
-    Logger.debug(invokeMessage);
+    // Logger.debug(invokeMessage);
     switch (invokeMessage.transId) {
       case RTMP_TRANSACTION_CONNECT:
         this.launcher.emit('status', invokeMessage.info);
