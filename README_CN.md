@@ -22,12 +22,15 @@
  - 支持多核集群模式
  
 # 用法 
+## 单核模式
 ```bash
+mkdir nms
+cd nms
 npm install node-media-server
 ```
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const { NodeMediaServer } = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -45,7 +48,37 @@ const config = {
 
 var nms = new NodeMediaServer(config)
 nms.run();
+```
 
+## 多核模式
+```bash
+mkdir nms
+cd nms
+npm install node-media-server
+```
+
+```js
+const { NodeMediaCluster } = require('node-media-server');
+const numCPUs = require('os').cpus().length;
+const config = {
+  rtmp: {
+    port: 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 60,
+    ping_timeout: 30
+  },
+  http: {
+    port: 8000,
+    allow_origin: '*'
+  },
+  cluster: {
+    num: numCPUs
+  }
+};
+
+var nmcs = new NodeMediaCluster(config)
+nmcs.run();
 ```
 
 # Todo 
@@ -238,7 +271,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## 配置 https支持
 ```js
-const NodeMediaServer = require('node-media-server');
+const { NodeMediaServer } = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -412,7 +445,7 @@ http://localhost:8000/api/streams
 # 转 HLS/DASH 直播流
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const { NodeMediaServer } = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -449,7 +482,7 @@ nms.run();
 # 直播录制为MP4文件
 
 ```JS
-const NodeMediaServer = require('node-media-server');
+const { NodeMediaServer } = require('node-media-server');
 
 const config = {
   rtmp: {
