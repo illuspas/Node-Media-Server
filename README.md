@@ -29,7 +29,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  
 # Usage 
 
-## Singlecore model
+## Singlecore mode
 ```bash
 mkdir nms
 cd nms
