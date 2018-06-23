@@ -200,7 +200,7 @@ class NodeRtmpSession {
       }
 
       if (this.pingInterval != null) {
-        clearImmediate(this.pingInterval);
+        clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
       if (!this.isIPC) {
