@@ -203,6 +203,7 @@ class NodeRtmpSession {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
+      
       if (!this.isIPC) {
         Logger.log(`[rtmp disconnect] id=${this.id}`);
         context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);

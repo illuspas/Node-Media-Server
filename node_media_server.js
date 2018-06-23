@@ -32,15 +32,23 @@ class NodeMediaServer {
     }
 
     if (this.config.trans) {
-      this.nts = new NodeTransServer(this.config);
-      this.nts.run();
+      if (this.config.cluster) {
+        Logger.log('NodeTransServer does not work in cluster mode');
+      } else {
+        this.nts = new NodeTransServer(this.config);
+        this.nts.run();
+      }
     }
 
     if (this.config.relay) {
-      this.nls = new NodeRelayServer(this.config);
-      this.nls.run();
+      if (this.config.cluster) {
+        Logger.log('NodeRelayServer does not work in cluster mode');
+      } else {
+        this.nls = new NodeRelayServer(this.config);
+        this.nls.run();
+      }
     }
-    
+
     if (this.config.cluster) {
       this.nis = new NodeIpcServer(this.config);
       this.nis.run();
