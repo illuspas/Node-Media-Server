@@ -6,8 +6,10 @@
 
 const NodeMediaCluster = require('./node_media_cluster');
 const NodeMediaServer = require('./node_media_server');
+const NodeRtmpClient = require('./node_rtmp_client');
 
 module.exports = {
-    NodeMediaCluster,
-    NodeMediaServer
-  };
+  NodeMediaCluster,
+  NodeMediaServer,
+  NodeRtmpClient
+};
