@@ -184,7 +184,7 @@ class NodeRtmpClient {
   }
 
   onSocketError(e) {
-    // Logger.error('rtmp_client', "onSocketError", e);
+    Logger.error('rtmp_client', "onSocketError", e);
     this.isSocketOpen = false;
     this.stop();
   }
@@ -222,7 +222,6 @@ class NodeRtmpClient {
       c0c1.writeUInt32BE(Date.now() / 1000, 1);
       c0c1.writeUInt32BE(0, 5);
       this.socket.write(c0c1);
-      this.isSocketOpen = true;
       // Logger.debug('[rtmp client] write c0c1');
     });
     this.socket.on('data', this.onSocketData.bind(this));
@@ -230,18 +229,20 @@ class NodeRtmpClient {
     this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('timeout', this.onSocketTimeout.bind(this));
     this.socket.setTimeout(60000);
-
   }
 
   stop() {
-    if (this.streamId > 0 && this.isSocketOpen) {
-      if (this.isPublish) {
-        this.rtmpSendFCUnpublish();
+    if (this.streamId > 0) {
+      if(!this.socket.destroyed) {
+        if (this.isPublish) {
+          this.rtmpSendFCUnpublish();
+        }
+        this.rtmpSendDeleteStream();
+        this.socket.destroy();
       }
-      this.rtmpSendDeleteStream();
+      this.streamId = 0;
+      this.launcher.emit('close');
     }
-    this.streamId = 0;
-    this.socket.end();
   }
 
   pushAudio(audioData, timestamp) {
