@@ -28,8 +28,21 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support multicore cluster mode
  
 # Usage 
+## git version
+```bash
+mkdir nms
+cd nms
+git clone https://github.com/illuspas/Node-Media-Server
+npm i
+node app.js
+```
+>Run with Multicore mode 
+```
+node cluster.js
+```
 
-## Singlecore mode
+## npm version (recommended)
+### Singlecore mode
 ```bash
 mkdir nms
 cd nms
@@ -57,7 +70,7 @@ var nms = new NodeMediaServer(config)
 nms.run();
 
 ```
-## Multicore cluster mode
+### Multicore cluster mode
 ```bash
 mkdir nms
 cd nms
