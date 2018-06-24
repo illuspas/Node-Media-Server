@@ -463,16 +463,6 @@ class NodeRtmpClient {
           break;
       }
     }
-
-    this.inAckSize += data.length;
-    if (this.inAckSize >= 0xf0000000) {
-      this.inAckSize = 0;
-      this.inLastAck = 0;
-    }
-    if (this.ackSize > 0 && this.inAckSize - this.inLastAck >= this.ackSize) {
-      this.inLastAck = this.inAckSize;
-      this.sendACK(this.inAckSize);
-    }
   }
 
   rtmpPacketParse() {
