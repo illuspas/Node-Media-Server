@@ -27,6 +27,22 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Rtsp/Rtmp relay
  - Support multicore cluster mode
  
+ 
+# Todo 
+- [x] support record stream 
+- [x] support transcode
+- [x] support cluster
+- [x] support low latency hls
+- [x] server and streams status
+- [ ] server monitor frontend
+- [x] on_connect/on_publish/on_play/on_done event callback
+- [ ] multi resolution transcoding 
+- [ ] hardware acceleration transcoding. 
+- [x] rtmp/rtsp relay with ffmpeg
+- [ ] admin panel
+- [ ] zerolatency rtmp/rtsp relay without ffmpeg
+- [ ] support webrtc 
+ 
 # Usage 
 ## git version
 ```bash
@@ -100,21 +116,6 @@ const config = {
 var nmcs = new NodeMediaCluster(config)
 nmcs.run();
 ```
-
-# Todo 
-- [x] support record stream 
-- [x] support transcode
-- [x] support cluster
-- [x] support low latency hls
-- [x] server and streams status
-- [ ] server monitor frontend
-- [x] on_connect/on_publish/on_play/on_done event callback
-- [ ] multi resolution transcoding 
-- [ ] hardware acceleration transcoding. 
-- [x] rtmp/rtsp relay with ffmpeg
-- [ ] admin panel
-- [ ] zerolatency rtmp/rtsp relay without ffmpeg
-- [ ] webrtc
 
 # Publishing live streams
 ## From FFmpeg
