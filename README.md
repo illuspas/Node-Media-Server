@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
 [![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
-[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ![logo](https://www.nodemedia.cn/uploads/site_logo.png)
 
