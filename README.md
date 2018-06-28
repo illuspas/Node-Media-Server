@@ -111,8 +111,10 @@ nmcs.run();
 - [x] on_connect/on_publish/on_play/on_done event callback
 - [ ] multi resolution transcoding 
 - [ ] hardware acceleration transcoding. 
-- [x] rtmp relay
+- [x] rtmp/rtsp relay with ffmpeg
 - [ ] admin panel
+- [ ] zerolatency rtmp/rtsp relay without ffmpeg
+- [ ] webrtc
 
 # Publishing live streams
 ## From FFmpeg
