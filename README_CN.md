@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
+[![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 一个 Node.js 实现的RTMP/HTTP/WebSocket/HLS/DASH流媒体服务器
 
@@ -20,9 +21,36 @@
  - 支持RTMP直播流录制为MP4文件并开启faststart
  - 支持RTMP/RTSP中继
  - 支持多核集群模式
- 
+
+# Todo 
+- [x] 支持录制为MP4回放
+- [x] 支持实时转码
+- [x] 支持多核模式
+- [x] 支持低延迟HLS/DASH
+- [x] 支持服务器和流媒体信息统计
+- [ ] 服务器和流媒体信息统计的前端样式
+- [x] on_connect/on_publish/on_play/on_done 事件回调
+- [ ] 多分辨率转码
+- [ ] 硬件加速转码
+- [X] Rtmp/Rtsp 中继
+- [ ] 管理面板
+- [ ] 不依赖ffmpeg的零延迟rtmp/rtsp中继 
+
 # 用法 
-## 单核模式
+## git 版本
+```bash
+mkdir nms
+cd nms
+git clone https://github.com/illuspas/Node-Media-Server
+npm i
+node app.js
+```
+>使用多核模式运行
+```
+node cluster.js
+```
+## npm 版本(推荐)
+### 单核模式
 ```bash
 mkdir nms
 cd nms
@@ -50,7 +78,7 @@ var nms = new NodeMediaServer(config)
 nms.run();
 ```
 
-## 多核模式
+### 多核模式
 ```bash
 mkdir nms
 cd nms
@@ -80,19 +108,6 @@ const config = {
 var nmcs = new NodeMediaCluster(config)
 nmcs.run();
 ```
-
-# Todo 
-- [x] 支持录制为MP4回放
-- [x] 支持实时转码
-- [x] 支持多核模式
-- [x] 支持低延迟HLS/DASH
-- [x] 支持服务器和流媒体信息统计
-- [ ] 服务器和流媒体信息统计的前端样式
-- [x] on_connect/on_publish/on_play/on_done 事件回调
-- [ ] 多分辨率转码
-- [ ] 硬件加速转码
-- [X] RTMP 中继
-- [ ] 管理面板
 
 # 直播发布
 ## 使用 FFmpeg 推流
