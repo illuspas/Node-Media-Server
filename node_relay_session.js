@@ -21,6 +21,8 @@ class NodeRelaySession extends EventEmitter {
 
     let argv = ['-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', this.conf.inPath, '-c', 'copy', '-f', 'flv', this.conf.ouPath];
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
+      argv.unshift('-1');
+      argv.unshift('-stream_loop');
       argv.unshift('-re');
     }
     Logger.ffdebug(argv.toString());
