@@ -5,7 +5,12 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+![logo](https://www.nodemedia.cn/uploads/site_logo.png)
+
 一个 Node.js 实现的RTMP/HTTP/WebSocket/HLS/DASH流媒体服务器
+
+## 微信赞赏码
+![zan](https://nodemedia.oss-cn-hangzhou.aliyuncs.com/1531102579211.jpg)
 
 # 特性
  - 跨平台支持 Windows/Linux/Unix
