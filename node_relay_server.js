@@ -23,11 +23,11 @@ class NodeRelayServer {
   run() {
     try {
       fs.accessSync(this.config.relay.ffmpeg, fs.constants.X_OK);
-    }catch(error) {
+    } catch (error) {
       Logger.error(`Node Media Relay Server startup failed. ffmpeg:${this.config.relay.ffmpeg} cannot be executed.`);
       return;
     }
-    
+
     context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
     context.nodeEvent.on('donePlay', this.onDonePlay.bind(this));
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
@@ -52,6 +52,7 @@ class NodeRelayServer {
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
         session.id = i;
+        session.streamPath = `/${conf.app}/${conf.name}`;
         session.on('end', (id) => {
           this.staticSessions.delete(id);
         });
@@ -123,6 +124,12 @@ class NodeRelayServer {
     let session = this.dynamicSessions.get(id);
     if (session) {
       session.end();
+    }
+
+    for (session of this.staticSessions.values()) {
+      if (session.streamPath === streamPath) {
+        session.end();
+      }
     }
   }
 

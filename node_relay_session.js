@@ -56,8 +56,7 @@ class NodeRelaySession extends EventEmitter {
   }
 
   end() {
-    // this.ffmpeg_exec.kill('SIGINT');
-    this.ffmpeg_exec.stdin.write('q');
+    this.ffmpeg_exec.kill('SIGKILL');
   }
 }
 
