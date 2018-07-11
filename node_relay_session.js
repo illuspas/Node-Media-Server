@@ -11,6 +11,8 @@ const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
 
+const RTSP_TRANSPORT = ['udp', 'tcp', 'udp_multicast', 'http'];
+
 class NodeRelaySession extends EventEmitter {
   constructor(conf) {
     super();
@@ -25,6 +27,14 @@ class NodeRelaySession extends EventEmitter {
       argv.unshift('-stream_loop');
       argv.unshift('-re');
     }
+
+    if (this.conf.inPath.startsWith('rtsp://') && this.conf.rtsp_transport) {
+      if (RTSP_TRANSPORT.indexOf(this.conf.rtsp_transport) > -1) {
+        argv.unshift(this.conf.rtsp_transport);
+        argv.unshift('-rtsp_transport');
+      }
+    }
+
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
