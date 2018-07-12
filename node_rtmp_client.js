@@ -646,7 +646,7 @@ class NodeRtmpClient {
 
   rtmpDataHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    this.launcher.emit('script', payload, this.parserPacket.clock, );
+    this.launcher.emit('script', payload, this.parserPacket.clock);
   }
 
   sendInvokeMessage(sid, opt) {
