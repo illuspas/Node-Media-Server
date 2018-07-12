@@ -600,7 +600,8 @@ relay: {
       app: 'cctv',
       mode: 'static',
       edge: 'rtsp://admin:admin888@192.168.0.149:554/ISAPI/streaming/channels/101',
-      name: '0_149_101'
+      name: '0_149_101',
+      rtsp_transport : 'tcp' //['udp', 'tcp', 'udp_multicast', 'http']
     }, {
         app: 'iptv',
         mode: 'static',
