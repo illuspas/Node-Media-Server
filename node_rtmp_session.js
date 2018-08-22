@@ -119,6 +119,8 @@ class NodeRtmpSession extends EventEmitter {
     this.publishStreamPath = '';
     this.publishArgs = '';
 
+    this.subtitlesOffset = 0;
+
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
     this.on('play', this.onPlay);
@@ -639,6 +641,8 @@ class NodeRtmpSession extends EventEmitter {
     let rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, rtmpBody);
 
+    this.subtitlesOffset = rtmpHeader.timestamp;
+
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && rtmpBody[1] == 1) {
         this.rtmpGopCacheQueue.clear();
@@ -911,7 +915,11 @@ class NodeRtmpSession extends EventEmitter {
           messageStreamID: this.playStreamId
         };
 
-        let metaDataRtmpMessage = this.createRtmpMessage(rtmpHeader, publisher.metaData);
+        const metaData = AMF.decodeAmf0Data(publisher.metaData);
+
+        metaData.cmdObj.subtitlesOffset = publisher.subtitlesOffset;
+
+        let metaDataRtmpMessage = this.createRtmpMessage(rtmpHeader, AMF.encodeAmf0Data(metaData));
         this.socket.write(metaDataRtmpMessage);
       }
 
