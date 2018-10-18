@@ -8,6 +8,7 @@ const Logger = require('./node_core_logger');
 const NodeCoreUtils = require('./node_core_utils');
 const NodeRelaySession = require('./node_relay_session');
 const context = require('./node_core_ctx');
+const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
 const fs = require('fs');
 const _ = require('lodash');
 
@@ -20,11 +21,18 @@ class NodeRelayServer {
 
   }
 
-  run() {
+  async run() {
     try {
       fs.accessSync(this.config.relay.ffmpeg, fs.constants.X_OK);
     } catch (error) {
       Logger.error(`Node Media Relay Server startup failed. ffmpeg:${this.config.relay.ffmpeg} cannot be executed.`);
+      return;
+    }
+
+    let version = await getFFmpegVersion(this.config.trans.ffmpeg);
+    if (version === '' || parseInt(version.split('.')[0]) < 4) {
+      Logger.error(`Node Media Relay Server startup failed. ffmpeg requires version 4.0.0 above`);
+      Logger.error('Download the latest ffmpeg static program:', getFFmpegUrl());
       return;
     }
 

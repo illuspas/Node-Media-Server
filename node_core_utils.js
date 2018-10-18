@@ -5,6 +5,8 @@
 //
 const Crypto = require('crypto');
 const EventEmitter = require('events');
+const { spawn } = require('child_process');
+const readline = require('readline');
 const context = require('./node_core_ctx');
 
 function generateNewSessionID() {
@@ -46,6 +48,48 @@ function verifyAuth(signStr, streamId, secretKey) {
   return shv === ohv;
 }
 
-module.exports.generateNewSessionID = generateNewSessionID;
-module.exports.verifyAuth = verifyAuth;
-module.exports.genRandomName = genRandomName;
+function getFFmpegVersion(ffpath) {
+  return new Promise((resolve, reject) => {
+    let ffmpeg_exec = spawn(ffpath, ['-version']);
+    let version = '';
+    ffmpeg_exec.on('error', (e) => {
+      reject(e);
+    });
+    ffmpeg_exec.stdout.on('data', (data) => {
+      try {
+        version = data.toString().split(/(?:\r\n|\r|\n)/g)[0].split('\ ')[2];
+      } catch (e) {
+      }
+    });
+    ffmpeg_exec.on('close', (code) => {
+      resolve(version);
+    });
+  });
+}
+
+function getFFmpegUrl() {
+  let url = '';
+  switch (process.platform) {
+    case 'darwin':
+      url = 'https://ffmpeg.zeranoe.com/builds/macos64/static/ffmpeg-latest-macos64-static.zip';
+      break;
+    case 'win32':
+      url = 'https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip | https://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.zip';
+      break;
+    case 'linux':
+      url = 'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz | https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz';
+      break;
+    default:
+      url = 'http://ffmpeg.org/download.html';
+      break;
+  }
+  return url;
+}
+
+module.exports = {
+  generateNewSessionID,
+  verifyAuth,
+  genRandomName,
+  getFFmpegVersion,
+  getFFmpegUrl
+}
