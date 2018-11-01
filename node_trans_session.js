@@ -23,6 +23,8 @@ class NodeTransSession extends EventEmitter {
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
     let ouPath = `${this.conf.mediaroot}/${this.conf.app}/${this.conf.stream}`;
     let mapStr = '';
+    let analyzeDuration = this.conf.analyzeDuration || '1000000';
+
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
       let now = new Date();
@@ -46,7 +48,7 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
     }
     mkdirp.sync(ouPath);
-    let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
+    let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', analyzeDuration, '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
