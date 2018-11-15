@@ -55,9 +55,6 @@ class NodeMediaServer {
       this.nis.run();
     }
 
-    process.on('uncaughtException', function (err) {
-      Logger.error('uncaughtException', err);
-    });
 
     Https.get("https://registry.npmjs.org/node-media-server", function (res) {
       let size = 0;
@@ -78,10 +75,18 @@ class NodeMediaServer {
       });
     }).on('error', function (e) {
     });
+
+    // process.on('uncaughtException', function (err) {
+    //   Logger.error('uncaughtException', err);
+    // });
   }
 
   on(eventName, listener) {
     context.nodeEvent.on(eventName, listener);
+  }
+
+  removeListener(eventName, listener) {
+    context.nodeEvent.removeListener(eventName, listener);
   }
 
   stop() {
