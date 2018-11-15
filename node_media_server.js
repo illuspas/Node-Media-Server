@@ -54,13 +54,17 @@ class NodeMediaServer {
       this.nis.run();
     }
 
-    process.on('uncaughtException', function (err) {
-      Logger.error('uncaughtException', err);
-    });
+    // process.on('uncaughtException', function (err) {
+    //   Logger.error('uncaughtException', err);
+    // });
   }
 
   on(eventName, listener) {
     context.nodeEvent.on(eventName, listener);
+  }
+
+  removeListener(eventName, listener) {
+    context.nodeEvent.removeListener(eventName, listener);
   }
 
   stop() {
