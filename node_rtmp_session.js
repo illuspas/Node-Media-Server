@@ -174,7 +174,7 @@ class NodeRtmpSession {
     this.publishArgs = {};
 
     this.players = new Set();
-
+    this.writeBufferQueue = [];
     context.sessions.set(this.id, this);
   }
 
@@ -203,7 +203,7 @@ class NodeRtmpSession {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
-      
+
       if (!this.isIPC) {
         Logger.log(`[rtmp disconnect] id=${this.id}`);
         context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
@@ -217,6 +217,14 @@ class NodeRtmpSession {
   reject() {
     Logger.log(`[rtmp reject] id=${this.id}`);
     this.stop();
+  }
+
+  writeBuffer(data) {
+    this.writeBufferQueue.push(data);
+    if (this.writeBufferQueue.length >= 10) {
+      this.socket.write(Buffer.concat(this.writeBufferQueue));
+      this.writeBufferQueue.length = 0;
+    }
   }
 
   onSocketClose() {
@@ -638,7 +646,7 @@ class NodeRtmpSession {
       if (playerSession instanceof NodeRtmpSession) {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveAudio) {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
-          playerSession.socket.write(rtmpChunks);
+          playerSession.writeBuffer(rtmpChunks);
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, (e) => {
@@ -715,7 +723,7 @@ class NodeRtmpSession {
       if (playerSession instanceof NodeRtmpSession) {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveVideo) {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
-          playerSession.socket.write(rtmpChunks);
+          playerSession.writeBuffer(rtmpChunks);
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, (e) => {

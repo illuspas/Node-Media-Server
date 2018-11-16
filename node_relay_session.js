@@ -7,9 +7,6 @@ const Logger = require('./node_core_logger');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
-const dateFormat = require('dateformat');
-const mkdirp = require('mkdirp');
-const fs = require('fs');
 
 const RTSP_TRANSPORT = ['udp', 'tcp', 'udp_multicast', 'http'];
 
@@ -20,7 +17,6 @@ class NodeRelaySession extends EventEmitter {
   }
 
   run() {
-
     let argv = ['-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', this.conf.inPath, '-c', 'copy', '-f', 'flv', this.conf.ouPath];
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
       argv.unshift('-1');

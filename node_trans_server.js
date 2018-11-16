@@ -7,17 +7,18 @@ const Logger = require('./node_core_logger');
 
 const NodeTransSession = require('./node_trans_session');
 const context = require('./node_core_ctx');
+const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
 const fs = require('fs');
 const _ = require('lodash');
 const mkdirp = require('mkdirp');
 
 class NodeTransServer {
-  constructor(config) {
+  constructor(config) {   
     this.config = config;
     this.transSessions = new Map();
   }
 
-  run() {
+  async run() {
     try {
       mkdirp.sync(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
@@ -28,8 +29,15 @@ class NodeTransServer {
 
     try {
       fs.accessSync(this.config.trans.ffmpeg, fs.constants.X_OK);
-    }catch(error) {
+    } catch (error) {
       Logger.error(`Node Media Trans Server startup failed. ffmpeg:${this.config.trans.ffmpeg} cannot be executed.`);
+      return;
+    }
+
+    let version = await getFFmpegVersion(this.config.trans.ffmpeg);
+    if (version === '' || parseInt(version.split('.')[0]) < 4) {
+      Logger.error(`Node Media Trans Server startup failed. ffmpeg requires version 4.0.0 above`);
+      Logger.error('Download the latest ffmpeg static program:', getFFmpegUrl());
       return;
     }
 
@@ -41,7 +49,7 @@ class NodeTransServer {
     }
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
-    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}`);
+    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}, ffmpeg version: ${version}`);
   }
 
   onPostPublish(id, streamPath, args) {
