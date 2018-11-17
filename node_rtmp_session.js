@@ -631,7 +631,7 @@ class NodeRtmpSession {
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
-    //cache gop 
+    //cache gop
     if (this.rtmpGopCacheQueue != null) {
       if (this.aacSequenceHeader != null && payload[1] === 0) {
         //skip aac sequence header
@@ -703,7 +703,7 @@ class NodeRtmpSession {
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
 
-    //cache gop 
+    //cache gop
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && payload[1] == 1) {
         this.rtmpGopCacheQueue.clear();
@@ -1037,7 +1037,7 @@ class NodeRtmpSession {
         if (!this.isIPC) {
           context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
         }
-      }, 200);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
+      }, 1000);//200毫秒后基本上能得到音视频编码信息，这时候再发出事件，便于转码器做判断
 
     }
   }
