@@ -51,6 +51,11 @@ class NodeTransSession extends EventEmitter {
     let argv = ['-y', '-fflags', 'nobuffer', '-analyzeduration', analyzeDuration, '-i', inPath, '-c:v', vc, '-c:a', ac, '-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr];
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+
+    this.ffmpeg_exec.stdin.on('error', (e) => {
+      Logger.log('FFMpeg stdin error', e);
+    });
+
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
     });
