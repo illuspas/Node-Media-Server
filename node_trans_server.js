@@ -64,6 +64,7 @@ class NodeTransServer {
       conf.streamPath = streamPath;
       conf.stream = stream;
       conf.args = args;
+      conf.cleanupFunction = this.config.trans.cleanupFunction;
       if (app === conf.app) {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
