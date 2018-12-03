@@ -66,7 +66,7 @@ class NodeTransSession extends EventEmitter {
       this.emit('end');
 
       if (typeof this.conf.cleanupFunction === 'function') {
-        this.conf.cleanupFunction(ouPath);
+        this.conf.cleanupFunction(ouPath, this.conf);
       } else {
         fs.readdir(ouPath, function (err, files) {
           if (!err) {
