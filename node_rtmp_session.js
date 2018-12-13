@@ -497,7 +497,11 @@ class NodeRtmpSession {
     this.parserPacket.header.fmt = fmt;
     this.parserPacket.header.cid = cid;
     this.rtmpChunkMessageHeaderRead();
-    // Logger.log(this.parserPacket);
+
+    if(this.parserPacket.header.type > RTMP_TYPE_METADATA) {
+      Logger.error("rtmp packet parse error.",this.parserPacket);
+      this.stop();
+    }
 
   }
 
