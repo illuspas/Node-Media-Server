@@ -94,7 +94,6 @@ const RtmpPacket = {
         stream_id: 0
       },
       clock: 0,
-      delta: 0,
       payload: null,
       capacity: 0,
       bytes: 0
@@ -431,14 +430,15 @@ class NodeRtmpSession {
           if (this.parserBytes >= size) {
             if (this.parserPacket.header.timestamp === 0xFFFFFF) {
               extended_timestamp = this.parserBuffer.readUInt32BE(rtmpHeaderSize[this.parserPacket.header.fmt] + this.parserBasicBytes);
+            } else {
+              extended_timestamp = this.parserPacket.header.timestamp;
             }
 
-            if (0 === this.parserPacket.bytes) {
+            if (this.parserPacket.bytes === 0) {
               if (RTMP_CHUNK_TYPE_0 === this.parserPacket.header.fmt) {
-                this.parserPacket.clock = 0xFFFFFF === this.parserPacket.header.timestamp ? extended_timestamp : this.parserPacket.header.timestamp;
-                this.parserPacket.delta = 0;
+                this.parserPacket.clock = extended_timestamp;
               } else {
-                this.parserPacket.delta = 0xFFFFFF === this.parserPacket.header.timestamp ? extended_timestamp : this.parserPacket.header.timestamp;
+                this.parserPacket.clock += extended_timestamp;
               }
               this.rtmpPacketAlloc();
             }
@@ -457,7 +457,6 @@ class NodeRtmpSession {
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;
-            this.parserPacket.clock += this.parserPacket.delta;
             this.rtmpHandler();
           } else if (0 === (this.parserPacket.bytes % this.inChunkSize)) {
             this.parserState = RTMP_PARSE_INIT;
@@ -982,13 +981,6 @@ class NodeRtmpSession {
 
   onPublish(invokeMessage) {
     if (typeof invokeMessage.streamName !== 'string') {
-      //Wirecast fix #67
-      /**
-       * String 'publish'
-       * Number 0
-       * Null
-       * Boolean false ??? 这是要爪子?
-       */
       return;
     }
     this.publishStreamPath = '/' + this.appname + '/' + invokeMessage.streamName.split('?')[0];
