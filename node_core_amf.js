@@ -978,20 +978,25 @@ function decodeAmf0Data(dbuf) {
   let resp = {};
 
   let cmd = amf0DecodeOne(buffer);
-  resp.cmd = cmd.value;
-  buffer = buffer.slice(cmd.len);
-
-  if (rtmpDataCode[cmd.value]) {
-    rtmpDataCode[cmd.value].forEach(function (n) {
-      if (buffer.length > 0) {
-        let r = amf0DecodeOne(buffer);
-        buffer = buffer.slice(r.len);
-        resp[n] = r.value;
-      }
-    });
-  } else {
-    Logger.error('Unknown command', resp);
+  if(cmd) {
+    resp.cmd = cmd.value;
+    buffer = buffer.slice(cmd.len);
+  
+    if (rtmpDataCode[cmd.value]) {
+      rtmpDataCode[cmd.value].forEach(function (n) {
+        if (buffer.length > 0) {
+          let r = amf0DecodeOne(buffer);
+          if(r) {
+            buffer = buffer.slice(r.len);
+            resp[n] = r.value;
+          }
+        }
+      });
+    } else {
+      Logger.error('Unknown command', resp);
+    }
   }
+
   return resp
 }
 
