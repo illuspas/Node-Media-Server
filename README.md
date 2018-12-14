@@ -678,8 +678,8 @@ https://github.com/illuspas/ffmpeg-hw-win32
 http://www.nodemedia.cn/products/node-media-client/win/
 
 # Thanks
-* Javier Gomez javiergomezm***@***.com
+* Javier Gomez javiergomezmora@***.com
 * trustfarm
 * Anonymous
 * leeoxiang leeoxiang@***.com
-* Aaron Turner (@torch2424) torch**424@***.com
+* Aaron Turner (@torch2424) torch2424@***.com
