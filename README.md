@@ -650,22 +650,11 @@ relay: {
 }
 ```
 
-# Thanks
-RTSP, RTMP, and HTTP server implementation in Node.js  
-https://github.com/iizukanao/node-rtsp-rtmp-server
-
-Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols  
-https://github.com/delian/node-amfutils
-
 # Publisher and Player App/SDK
 
 ## Android Livestream App
-https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
-
-http://www.nodemedia.cn/uploads/qlive-release.apk
-
-## iOS Livestream App
-https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1321792616&mt=8
+https://play.google.com/store/apps/details?id=cn.nodemedia.qlive  
+http://www.nodemedia.cn/uploads/qlive-release.apk  
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
@@ -676,20 +665,21 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 ## React-Native SDK
 https://github.com/NodeMedia/react-native-nodemediaclient
 
-## Flash Publisher
-https://github.com/NodeMedia/NodeMediaClient-Web
-
-## Raspberry pi Publisher
-https://github.com/NodeMedia/NodeMediaDevice
-
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
 
 ## Windows browser plugin(ActiveX/NPAPI)
 * H.264/H.265+AAC rtmp publisher
 * Camera/Desktop + Microphone capture
-* Nvidia / AMD / Intel HWAccel
+* Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
 * Ultra low latency rtmp/rtsp/http live player
 * Only 6MB installation package
 
 http://www.nodemedia.cn/products/node-media-client/win/
+
+# Thanks
+* Javier Gomez javiergomezm***@***.com
+* trustfarm
+* Anonymous
+* leeoxiang leeoxiang@***.com
+* Aaron Turner (@torch2424) torch**424@***.com
