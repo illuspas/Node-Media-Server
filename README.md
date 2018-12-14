@@ -685,5 +685,11 @@ https://github.com/NodeMedia/NodeMediaDevice
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
 
-## Windows browser H.264+AAC rtmp publisher plugin(ActiveX/NPAPI)
-http://www.nodemedia.cn/products/node-media-publisher/
+## Windows browser plugin(ActiveX/NPAPI)
+* H.264/H.265+AAC rtmp publisher
+* Camera/Desktop + Microphone capture
+* Nvidia / AMD / Intel HWAccel
+* Ultra low latency rtmp/rtsp/http live player
+* Only 6MB installation package
+
+http://www.nodemedia.cn/products/node-media-client/win/
