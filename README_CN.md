@@ -596,22 +596,11 @@ relay: {
 }
 ```
 
-# 感谢
-RTSP, RTMP, and HTTP server implementation in Node.js  
-https://github.com/iizukanao/node-rtsp-rtmp-server
-
-Node.JS module that provides an API for encoding and decoding of AMF0 and AMF3 protocols  
-https://github.com/delian/node-amfutils
-
-# 直播推流与播放SDK与APP
+# 推流与播放 App/SDK
 
 ## Android Livestream App
-https://play.google.com/store/apps/details?id=cn.nodemedia.qlive
-
-http://www.nodemedia.cn/uploads/qlive-release.apk
-
-## iOS Livestream App
-https://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=1321792616&mt=8
+https://play.google.com/store/apps/details?id=cn.nodemedia.qlive  
+http://www.nodemedia.cn/uploads/qlive-release.apk  
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
@@ -622,14 +611,22 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 ## React-Native SDK
 https://github.com/NodeMedia/react-native-nodemediaclient
 
-## Flash Publisher
-https://github.com/NodeMedia/NodeMediaClient-Web
-
-## Raspberry pi Publisher
-https://github.com/NodeMedia/NodeMediaDevice
-
 ## FFmpeg-hw-win32
 https://github.com/illuspas/ffmpeg-hw-win32
 
-## Windows浏览器推流插件
-http://www.nodemedia.cn/products/node-media-publisher/
+## Windows 浏览器插件(ActiveX/NPAPI)
+* H.264/H.265+AAC rtmp 推流器
+* 摄像头/桌面 + 麦克风 捕获
+* Nvidia/AMD/Intel 硬件加速的编解码器
+* 超低延迟的 rtmp/rtsp/http 直播播放器
+* 只有6M大小的安装包
+
+http://www.nodemedia.cn/products/node-media-client/win/
+
+# 感谢
+* Javier Gomez javiergomezmora@***.com
+* trustfarm
+* Anonymous
+* leeoxiang leeoxiang@***.com
+* Aaron Turner (@torch2424) torch2424@***.com
+
