@@ -61,6 +61,14 @@ function getStreams(req, res, next) {
               break;
             }
             case 'NodeFlvSession': {
+              let protocol;
+              if (session.TAG === 'websocket-flv') {
+                protocol = 'ws';
+              } else if (session.TAG === 'stream-flv') {
+                protocol = 'stream';
+              } else {
+                protocol = 'http';
+              }
               stats[app][stream]['subscribers'].push({
                 app: app,
                 stream: stream,
@@ -68,7 +76,7 @@ function getStreams(req, res, next) {
                 connectCreated: session.connectTime,
                 bytes: session.req.connection.bytesWritten,
                 ip: session.req.connection.remoteAddress,
-                protocol: session.TAG === 'websocket-flv' ? 'ws' : 'http'
+                protocol: protocol
               });
 
               break;
