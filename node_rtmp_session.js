@@ -674,7 +674,7 @@ class NodeRtmpSession {
         this.videoLevel = info.level;
         this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
         this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
-        Logger.log(`[rtmp publish] avc sequence header`,this.avcSequenceHeader);
+        //Logger.log(`[rtmp publish] avc sequence header`,this.avcSequenceHeader);
       }
     }
 
