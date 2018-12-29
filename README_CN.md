@@ -624,6 +624,8 @@ https://github.com/illuspas/ffmpeg-hw-win32
 http://www.nodemedia.cn/products/node-media-client/win/
 
 # 感谢
+* 熊科辉
+* Ken Lee
 * Anonymous 	kasra.shahram@***.com
 * Erik Herz erikherz68@***.com
 * Javier Gomez javiergomezmora@***.com
