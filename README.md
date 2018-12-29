@@ -168,7 +168,7 @@ http://localhost:8000/live/STREAM_NAME/index.mpd
 ## via flv.js over http-flv
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -187,7 +187,7 @@ http://localhost:8000/live/STREAM_NAME/index.mpd
 ## via flv.js over websocket-flv
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
