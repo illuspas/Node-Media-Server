@@ -45,6 +45,11 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 - [ ] support webrtc 
  
 # Usage 
+## docker version
+```bash
+docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
+```
+
 ## git version
 ```bash
 mkdir nms
