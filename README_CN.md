@@ -42,6 +42,11 @@
 - [ ] 不依赖ffmpeg的零延迟rtmp/rtsp中继 
 
 # 用法 
+## docker 版本
+```bash
+docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
+```
+
 ## git 版本
 ```bash
 mkdir nms
