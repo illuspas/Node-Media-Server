@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
 [![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
-[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
+[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ![logo](https://www.nodemedia.cn/uploads/site_logo.png)
@@ -27,24 +27,24 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Server Monitor
  - Support Rtsp/Rtmp relay
  - Support multicore cluster mode
- 
- 
-# Todo 
-- [x] support record stream 
+
+
+# Todo
+- [x] support record stream
 - [x] support transcode
 - [x] support cluster
 - [x] support low latency hls
 - [x] server and streams status
 - [ ] server monitor frontend
 - [x] on_connect/on_publish/on_play/on_done event callback
-- [ ] multi resolution transcoding 
-- [ ] hardware acceleration transcoding. 
+- [ ] multi resolution transcoding
+- [ ] hardware acceleration transcoding.
 - [x] rtmp/rtsp relay with ffmpeg
 - [ ] admin panel
 - [ ] zerolatency rtmp/rtsp relay without ffmpeg
-- [ ] support webrtc 
- 
-# Usage 
+- [ ] support webrtc
+
+# Usage
 ## docker version (only_linux_x64)
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
@@ -58,7 +58,7 @@ git clone https://github.com/illuspas/Node-Media-Server
 npm i
 node app.js
 ```
->Run with Multicore mode 
+>Run with Multicore mode
 ```
 node cluster.js
 ```
@@ -145,7 +145,7 @@ URL : rtmp://localhost/live
 Stream key : STREAM_NAME
 
 # Accessing the live stream
-## RTMP 
+## RTMP
 ```
 rtmp://localhost/live/STREAM_NAME
 ```
@@ -343,7 +343,7 @@ nms.on('donePlay', (id, StreamPath, args) => {
 ## Generate certificate
 ```bash
 openssl genrsa -out privatekey.pem 1024
-openssl req -new -key privatekey.pem -out certrequest.csr 
+openssl req -new -key privatekey.pem -out certrequest.csr
 openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
 ```
 
@@ -381,8 +381,8 @@ wss://localhost:8443/live/STREAM_NAME.flv
 ```
 >In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
 
-# API 
-## Protected API 
+# API
+## Protected API
 ```
 const config = {
  .......
@@ -391,7 +391,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'nms2018',
   },
- 
+
  ......
 }
 ```
@@ -555,7 +555,7 @@ var nms = new NodeMediaServer(config)
 nms.run();
 ```
 
-# Record to MP4
+# Record to MP4/FLV
 ```JS
 const {NodeMediaServer} = require('node-media-server');
 
@@ -579,6 +579,7 @@ const config = {
         app: 'vod',
         mp4: true,
         mp4Flags: '[movflags=faststart]',
+        flv: true
       }
     ]
   }
@@ -620,7 +621,7 @@ relay: {
 }
 ```
 
-## Dynamic pull 
+## Dynamic pull
 When the local server receives a play request.
 If the stream does not exist, pull the stream from the configured edge server to local.
 When the stream is not played by the client, it automatically disconnects.
