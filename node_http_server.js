@@ -31,14 +31,12 @@ class NodeHttpServer {
 
     let app = Express();
 
-    app.all(['*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4'], (req, res, next) => {
+    app.all(['/api/*','*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4', '*.flv'], (req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
       next();
     });
 
-
     app.all('*.flv', (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
       if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'range');
@@ -51,8 +49,6 @@ class NodeHttpServer {
         this.onConnect(req, res);
       }
     });
-
-
 
     app.use(Express.static(this.webroot));
     app.use(Express.static(this.mediaroot));
