@@ -43,6 +43,7 @@ class NodeTransSession extends EventEmitter {
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
       watcher = chokidar.watch(ouPath);
+      console.log('HLS RUNNING');
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
