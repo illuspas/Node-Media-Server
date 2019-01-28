@@ -22,6 +22,7 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
+    console.log('NODE_TRANS_SESSION!');
     let watcher;
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
@@ -70,6 +71,7 @@ class NodeTransSession extends EventEmitter {
 
     // watching path for files being added
     watcher.on('add', function (path) {
+      console.log('File Added..');
       //check file
       checkFile(path);
     });
