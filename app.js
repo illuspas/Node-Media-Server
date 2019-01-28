@@ -1,21 +1,21 @@
 const { NodeMediaServer } = require('./index');
-
+require('dotenv').config();
 const config = {
   rtmp: {
-    port: 1935,
+    port: process.env.RTMP_PORT,
     chunk_size: 60000,
     gop_cache: true,
     ping: 60,
     ping_timeout: 30
   },
   http: {
-    port: 8000,
+    port: process.env.HTTP_PORT,
     webroot: './public',
     mediaroot: './media',
     allow_origin: '*'
   },
   https: {
-    port: 8443,
+    port: process.env.HTTPS_PORT,
     key: './privatekey.pem',
     cert: './certificate.pem',
   },
@@ -26,6 +26,21 @@ const config = {
     play: false,
     publish: false,
     secret: 'nodemedia2017privatekey'
+  },
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+        // {
+        //   app: 'live',
+        //   mp4: true,
+        //   mp4Flags: '[movflags=faststart]',
+        // },
+        {
+          app: 'live',
+          hls: true,
+          hlsFlags: '[hls_time=1.5:hls_list_size=0]',
+        },
+    ],
   },
 };
 

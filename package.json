@@ -20,12 +20,16 @@
   "bugs": {
     "url": "https://github.com/illuspas/Node-Media-Server/issues"
   },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
+  "homepage": "https://github.com/BONCOM/Node-Media-Server.git#readme",
   "dependencies": {
+    "aws-sdk": "^2.394.0",
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.1",
+    "chokidar": "^2.0.4",
     "dateformat": "^3.0.3",
+    "dotenv": "^6.2.0",
     "express": "^4.16.3",
+    "fluent-ffmpeg": "^2.1.2",
     "lodash": "^4.17.10",
     "mkdirp": "^0.5.1",
     "ws": "^5.1.1"
