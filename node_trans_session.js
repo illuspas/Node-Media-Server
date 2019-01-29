@@ -39,7 +39,7 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = `${v1()}-index.m3u8`;
+      let hlsFileName = `${this.conf.stream}-${v1()}-index.m3u8`;
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
@@ -134,7 +134,7 @@ const uploadFile = function (path){
   //upload ts files
   let params = {
     Bucket: process.env.S3_BUCKET,
-    Key: path.substring(18,path.length),
+    Key: path.replace(/^.*[\\\/]/, ''),
     Body: fs.createReadStream(path),
     ACL: 'public-read',
   };
