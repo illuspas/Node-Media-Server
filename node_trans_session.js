@@ -4,7 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Logger = require('./node_core_logger');
-
+const { v1 } = require('uuid');
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
@@ -39,7 +39,7 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = 'index.m3u8';
+      let hlsFileName = `${v1()}-index.m3u8`;
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
@@ -71,7 +71,6 @@ class NodeTransSession extends EventEmitter {
 
     // watching path for files being added
     watcher.on('add', function (path) {
-      console.log('File Added..');
       //check file
       checkFile(path);
     });
@@ -151,9 +150,6 @@ const uploadFile = function (path){
       }
     });
   });
-  // if(path !== 'media/live/stream/index.m3u8'){
-  //   checkFile('media/live/stream/index.m3u8');
-  // }
 };
 
 module.exports = NodeTransSession;

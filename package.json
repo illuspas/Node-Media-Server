@@ -32,6 +32,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "lodash": "^4.17.10",
     "mkdirp": "^0.5.1",
+    "uuid": "^3.3.2",
     "ws": "^5.1.1"
   },
   "engines": {
