@@ -27,7 +27,7 @@ const config = {
     api: true,
     api_user: 'admin',
     api_pass: 'admin',
-    play: true,
+    play: false,
     publish: true,
     secret: 'radiantNodeMediaServer2019'
   },
@@ -49,14 +49,19 @@ const config = {
 };
 //local
 const expiration = moment().add(3, 'minutes').unix();
-const HashValue = MD5(`/live/stream-${expiration}-${config.auth.secret}`);
+const HashValue = MD5(`/live/local-${expiration}-${config.auth.secret}`);
 console.log('localhost url');
 console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
 console.log(`Hash Value = ${HashValue.toString()}`);
-console.log(`Request Address looks like = rtmp://localhost/live/stream?sign=${expiration}-${HashValue}`);
+console.log(`Request Address looks like = rtmp://localhost/live/local?sign=${expiration}-${HashValue}`);
 // server
+const expiration2 = moment().add(5, 'minutes').unix();
+const HashValue2 = MD5(`/live/tacos-${expiration2}-${config.auth.secret}`);
+console.log('server signed url');
+console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
+console.log(`Hash Value = ${HashValue2.toString()}`);
 console.log('server url');
-console.log(`Request Address looks like = rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/live/stream?sign=${expiration}-${HashValue}`);
+console.log(`Request Address looks like = rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/live/tacos?sign=${expiration2}-${HashValue2}`);
 
 
 let nms = new NodeMediaServer(config);
