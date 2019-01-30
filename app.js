@@ -1,5 +1,9 @@
 const { NodeMediaServer } = require('./index');
 require('dotenv').config();
+
+const MD5 = require('md5');
+const moment = require('moment');
+
 const config = {
   rtmp: {
     port: process.env.RTMP_PORT,
@@ -23,9 +27,9 @@ const config = {
     api: true,
     api_user: 'admin',
     api_pass: 'admin',
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
+    play: true,
+    publish: true,
+    secret: 'radiantNodeMediaServer2019'
   },
   trans: {
     ffmpeg: '/usr/local/bin/ffmpeg',
@@ -44,8 +48,13 @@ const config = {
   },
 };
 
+const expiration = moment().add(3, 'minutes').unix();
+const HashValue = MD5(`/live/stream-${expiration}-${config.auth.secret}`);
+console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
+console.log(`Hash Value = ${HashValue.toString()}`);
+console.log(`Request Address looks like = rtmp://localhost/live/stream?sign=${expiration}-${HashValue}`);
 
-let nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {

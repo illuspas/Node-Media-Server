@@ -9,11 +9,8 @@ const EventEmitter = require('events');
 const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
-const fs = require('fs');
 
-const chokidar = require('chokidar');
-
-const AWS = require('./aws_util/aws-util');
+const fileHandler = require('./Radiant/fileHandler');
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -39,12 +36,11 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = `${this.conf.stream}-${v1()}-index.m3u8`;
+      let hlsFileName = `${this.conf.stream}-${v1()}-.m3u8`;
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
-      watcher = chokidar.watch(ouPath);
-      console.log('HLS RUNNING');
+      fileHandler.watcher(ouPath);
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
@@ -69,12 +65,6 @@ class NodeTransSession extends EventEmitter {
       Logger.ffdebug(`FF输出：${data}`);
     });
 
-    // watching path for files being added
-    watcher.on('add', function (path) {
-      //check file
-      checkFile(path);
-    });
-
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
@@ -86,70 +76,5 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.stdin.write('q');
   }
 }
-
-/**
- * fileStat
- * @param path
- * @returns {Promise<any>}
- */
-const fileStat = function(path){
-  return new Promise((resolve, reject) => {
-    fs.stat(path, (err, info) => {
-      if(err) {
-        reject(err);
-      }
-      resolve(info);
-    });
-  });
-};
-
-/**
- * checkFileAgain
- * @param path
- * @param fileInfo
- */
-const checkFile = function (path){
-  setTimeout((args) => {
-    fileStat(args[0].path).then((fileInfo) => {
-      if(fileInfo.size === 0) {
-        checkFile(path);
-      } else {
-        uploadFile(path);
-        console.log(`uploading file: ${path} with size: ${fileInfo.size}`);
-      }
-
-    }).catch((err)=>{
-      console.log(err);
-    })
-  }, 1000, [{
-    path
-  }]);
-};
-
-/**
- * uploadFile
- * @param path
- */
-const uploadFile = function (path){
-  //upload ts files
-  let params = {
-    Bucket: process.env.S3_BUCKET,
-    Key: path.replace(/^.*[\\\/]/, ''),
-    Body: fs.createReadStream(path),
-    ACL: 'public-read',
-  };
-
-  AWS.getS3().upload(params, (err, data) => {
-    if(err){
-      console.log(err);
-    }
-    console.log(`${data.Key} uploaded to: ${data.Bucket}`);
-    fs.unlink(path, (err, data) => {
-      if(err){
-        console.log(err);
-      }
-    });
-  });
-};
 
 module.exports = NodeTransSession;
