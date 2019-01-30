@@ -47,12 +47,17 @@ const config = {
     ],
   },
 };
-
+//local
 const expiration = moment().add(3, 'minutes').unix();
 const HashValue = MD5(`/live/stream-${expiration}-${config.auth.secret}`);
+console.log('localhost url');
 console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
 console.log(`Hash Value = ${HashValue.toString()}`);
 console.log(`Request Address looks like = rtmp://localhost/live/stream?sign=${expiration}-${HashValue}`);
+// server
+console.log('server url');
+console.log(`Request Address looks like = rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/live/stream?sign=${expiration}-${HashValue}`);
+
 
 let nms = new NodeMediaServer(config);
 nms.run();
