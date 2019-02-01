@@ -4,7 +4,8 @@
   "description": "A Node.js implementation of RTMP Server",
   "main": "index.js",
   "scripts": {
-    "test": "node app.js"
+    "test": "No Tests Setup...Yet",
+    "start" : "node app.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   "homepage": "https://github.com/BONCOM/Node-Media-Server.git#readme",
   "dependencies": {
     "aws-sdk": "^2.394.0",
+    "axios": "^0.18.0",
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
@@ -30,6 +32,8 @@
     "dotenv": "^6.2.0",
     "express": "^4.16.3",
     "fluent-ffmpeg": "^2.1.2",
+    "graphql": "^14.1.1",
+    "graphql-tag": "^2.10.1",
     "lodash": "^4.17.10",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
@@ -38,6 +42,6 @@
     "ws": "^5.1.1"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.15.0"
   }
 }

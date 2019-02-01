@@ -20,7 +20,6 @@ class NodeTransSession extends EventEmitter {
 
   run() {
     console.log('NODE_TRANS_SESSION!');
-    let watcher;
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
@@ -28,19 +27,19 @@ class NodeTransSession extends EventEmitter {
     let mapStr = '';
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
-      let now = new Date();
       let mp4FileName = dateFormat('yyyy-mm-dd-HH-MM') + '.mp4';
       let mapMp4 = `${this.conf.mp4Flags}${ouPath}/${mp4FileName}|`;
       mapStr += mapMp4;
       Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + ouPath + '/' + mp4FileName);
     }
     if (this.conf.hls) {
+      // GET the Params for the user token so the graphql call works
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = `${this.conf.stream}-${v1()}-.m3u8`;
+      let hlsFileName = `${this.conf.stream}=${v1()}=.m3u8`;
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
-      fileHandler.watcher(ouPath);
+      fileHandler.watcher(ouPath, this.conf.args);
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
@@ -67,6 +66,7 @@ class NodeTransSession extends EventEmitter {
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
+      fileHandler.end(this.conf.streamPath);
       this.emit('end');
     });
   }

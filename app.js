@@ -28,7 +28,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'admin',
     play: false,
-    publish: true,
+    publish: false,
     secret: 'radiantNodeMediaServer2019'
   },
   trans: {
@@ -43,6 +43,11 @@ const config = {
           app: 'live',
           hls: true,
           hlsFlags: '[hls_time=1.5:hls_list_size=0]',
+        },
+        {
+          app: 'radiant',
+          hls: true,
+          hlsFlags: '[hls_time=1:hls_list_size=0]',
         },
     ],
   },

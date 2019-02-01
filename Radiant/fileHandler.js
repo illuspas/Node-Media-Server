@@ -1,16 +1,52 @@
+require('dotenv').config();
+
 const fs = require('fs');
+const axios = require('axios');
 const chokidar = require('chokidar');
+const gql = require('graphql-tag');
+const { print } = require('graphql');
 
 const AWS = require('../aws_util/aws-util');
 
-module.exports.watcher = (ouPath) => {
-    const watcher = chokidar.watch(ouPath);
+const radiantBackendEndpoints = {
+    LOCAL: process.env.RADIANT_BACKEND_LOCAL_SERVER,
+    DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
+    STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
+    PRODUCTION: process.env.PROD_RADIANT_BACKEND_SERVER,
+};
 
+
+let authToken = '';
+
+const streamTracker = {
+
+};
+
+module.exports.watcher = (ouPath, args) => {
+    const watcher = chokidar.watch(ouPath);
+    authToken = args.token ? args.token : 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzMjQ3MC1jYjIyLTExZTgtYjY0NC04OWIzMzlmNzY3YjE6VXNlcnMiLCJpYXQiOjE1MzkwMjExMzAsImV4cCI6MzA3ODY0NzA2MH0.n_Gy9L78Nu0_npbgdco0FM5RG9B8Ay6-nxcYJPczp0o';
     // watching path for files being added
+    streamTracker[ouPath.substring(2,ouPath.length)] = {
+      streaming: true,
+      m3u8Key: false,
+    };
     watcher.on('add', function (path) {
       //check file
-      checkFile(path);
+      checkFile({
+          path,
+          conversationTopicId: args.conversationTopicId ? args.conversationTopicId : '05bdf610-fe34-11e8-870f-2b591aa8f78f:ConversationTopics',
+      });
     });
+};
+
+module.exports.end = (streamPath) => {
+  // check directory for files left
+    fs.readdir(`./media${streamPath}`, (err, files) => {
+        files.forEach(file => {
+            checkFile({ path: `media${streamPath}/${file}`});
+            console.log('-=*[cleanup remaining files]*=-');
+        });
+    })
 };
 
 /**
@@ -31,37 +67,37 @@ const fileStat = function(path){
 
 /**
  * checkFileAgain
- * @param path
- * @param fileInfo
+ * @param info
  */
-const checkFile = function (path){
+const checkFile = function (info){
     setTimeout((args) => {
-        fileStat(args[0].path).then((fileInfo) => {
+        fileStat(args[0].info.path).then((fileInfo) => {
             if(fileInfo.size === 0) {
-                checkFile(path);
+                console.log(`-=*[checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec]*=-`);
+                checkFile(info);
             } else {
-                uploadFile(path);
-                console.log(`uploading file: ${path} with size: ${fileInfo.size}`);
+                uploadFile(info);
+                console.log(`-=*[uploading file: ${info.path} with size: ${fileInfo.size}]*=-`);
             }
 
         }).catch((err)=>{
             console.log(err);
         })
-    }, 1000, [{
-        path
+    }, 1500, [{
+        info
     }]);
 };
 
 /**
  * uploadFile
- * @param path
+ * @param info
  */
-const uploadFile = function (path){
-    //upload ts files
+const uploadFile = function (info){
+    //upload files
     let params = {
         Bucket: process.env.S3_BUCKET,
-        Key: path.replace(/^.*[\\\/]/, ''),
-        Body: fs.createReadStream(path),
+        Key: info.path.replace(/^.*[\\\/]/, ''),
+        Body: fs.createReadStream(info.path),
         ACL: 'public-read',
     };
 
@@ -70,10 +106,129 @@ const uploadFile = function (path){
             console.log(err);
         }
         console.log(`${data.Key} uploaded to: ${data.Bucket}`);
-        fs.unlink(path, (err, data) => {
+        const pathFind = info.path.match(/^(.*[\\\/])/);
+        const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
+        if(info.path.replace(/^.*[\\\/]/, '').split('.')[1] === 'm3u8' && !streamTracker[mainPath].m3u8Key){
+            createVideoStream(info.conversationTopicId, info.conversationTopicPermissions)
+                .then((vidData) => updateVideoStream(vidData, data.Key, mainPath)
+                .then((res) => {
+                    console.log(`-=*[updated the video Stream : ${res}]*=-`);
+            }));
+        }
+        fs.unlink(info.path, (err, data) => {
             if(err){
                 console.log(err);
             }
         });
+    });
+};
+
+const query = gql`
+    mutation createCTVide($location: String, $conversationTopicId: ID!){
+        conversationTopic{
+            createConversationTopicVideo(input:{
+                location: $location,
+                conversationTopicId:$conversationTopicId,
+                conversationTopicPermissions:[READ, WRITE]
+            }){
+                video{
+                    id
+                }
+                videoHLSStreamUpload{
+                    id
+                    segments{
+                        id
+                        uploadUrl{
+                            url
+                        }
+                    }
+                }
+                thumbnailUploadUrl{
+                    url
+                }
+            }
+        }
+    }
+`;
+
+/**
+ * createVideoStream
+ * @param conversationTopicId
+ * @param conversationTopicPermissions
+ * @returns {Promise<T | never>}
+ */
+const createVideoStream = function(conversationTopicId, conversationTopicPermissions) {
+    const options = {
+        headers: {
+            Accept: "application/json",
+            subauth: authToken,
+            "Content-Type": "application/json"
+        }
+    };
+    const variables = {
+        location: 'test location',
+        conversationTopicId,
+    };
+    let endpoint = radiantBackendEndpoints[process.env.ENV];
+    return axios.post(endpoint, {
+        query: print(query),
+        variables,
+    }, options).then((results) => {
+        console.log('-=*[created Video Stream]*=-');
+        console.log(results.data.data);
+        return results.data.data;
+    }).catch((err) => {
+       console.log('ERROR -- created Video Stream');
+       console.log(err);
+    });
+};
+
+
+const videoStreamQuery = gql`
+    mutation updateStream($id: ID!, $m3u8Key: String!){
+        liveStream{
+            updateStream(input:{
+                id: $id,
+                m3u8Key: $m3u8Key
+            }){
+                id
+                downloadUrl{
+                    url
+                }
+            }
+        }
+    }
+`;
+
+/**
+ * updateVideoStream
+ * @param vidData
+ * @param mainPath
+ * @returns {Promise<T | never>}
+ */
+const updateVideoStream = function(vidData, key, mainPath) {
+    const options = {
+        headers: {
+            Accept: "application/json",
+            subauth: authToken,
+            "Content-Type": "application/json"
+        }
+    };
+    const variables = {
+        id: vidData.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id,
+        m3u8Key: key,
+    };
+    let endpoint = radiantBackendEndpoints[process.env.ENV];
+    return axios.post(endpoint, {
+        query: print(videoStreamQuery),
+        variables,
+    }, options).then((results) => {
+        console.log('-=*[Updated Video Stream]*=-');
+        streamTracker[mainPath].m3u8Key = true;
+        console.log(results.data.data);
+        return results.data.data;
+    }).catch((err) => {
+        console.log('ERROR -- Updated Video Stream');
+        console.log(err);
     });
 };
