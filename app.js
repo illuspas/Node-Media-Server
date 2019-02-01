@@ -28,7 +28,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'admin',
     play: false,
-    publish: false,
+    publish: false, // enables sign parameter to be used for server
     secret: 'radiantNodeMediaServer2019'
   },
   trans: {
