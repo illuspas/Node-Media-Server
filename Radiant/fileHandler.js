@@ -32,6 +32,9 @@ module.exports.watcher = (ouPath, args) => {
     };
     watcher.on('add', function (path) {
       //check file
+        streamTracker[path] = {
+            retry: 0,
+        };
       checkFile({
           path,
           conversationTopicId: args.conversationTopicId ? args.conversationTopicId : '05bdf610-fe34-11e8-870f-2b591aa8f78f:ConversationTopics',
@@ -40,13 +43,20 @@ module.exports.watcher = (ouPath, args) => {
 };
 
 module.exports.end = (streamPath) => {
+    streamTracker[`media${streamPath}`].streaming = false;
   // check directory for files left
-    fs.readdir(`./media${streamPath}`, (err, files) => {
-        files.forEach(file => {
-            checkFile({ path: `media${streamPath}/${file}`});
-            console.log('-=*[cleanup remaining files]*=-');
+    setTimeout(() => {
+        fs.readdir(`./media${streamPath}`, (err, files) => {
+            if(err){
+                console.log('-=*[ERROR: no such file or directory ]*=-');
+            }
+            console.log('-=*[ Cleanup remaining files ]*=-');
+            files.forEach(file => {
+                checkFile({ path: `media${streamPath}/${file}`});
+
+            });
         });
-    })
+    }, 1000);
 };
 
 /**
@@ -73,11 +83,15 @@ const checkFile = function (info){
     setTimeout((args) => {
         fileStat(args[0].info.path).then((fileInfo) => {
             if(fileInfo.size === 0) {
-                console.log(`-=*[checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec]*=-`);
-                checkFile(info);
+                console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
+                if(streamTracker[info.path].retry <= 3){
+                    streamTracker[info.path].retry++;
+                    checkFile(info);
+                }
             } else {
+                delete streamTracker[info.path];
                 uploadFile(info);
-                console.log(`-=*[uploading file: ${info.path} with size: ${fileInfo.size}]*=-`);
+                console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
 
         }).catch((err)=>{
@@ -109,10 +123,13 @@ const uploadFile = function (info){
         const pathFind = info.path.match(/^(.*[\\\/])/);
         const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
         if(info.path.replace(/^.*[\\\/]/, '').split('.')[1] === 'm3u8' && !streamTracker[mainPath].m3u8Key){
+            streamTracker[mainPath].m3u8Key = true;
             createVideoStream(info.conversationTopicId, info.conversationTopicPermissions)
                 .then((vidData) => updateVideoStream(vidData, data.Key, mainPath)
                 .then((res) => {
-                    console.log(`-=*[updated the video Stream : ${res}]*=-`);
+                    console.log('-=*[ Updated the video Stream ]*=-' );
+                    console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
+                    console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
             }));
         }
         fs.unlink(info.path, (err, data) => {
@@ -174,8 +191,9 @@ const createVideoStream = function(conversationTopicId, conversationTopicPermiss
         query: print(query),
         variables,
     }, options).then((results) => {
-        console.log('-=*[created Video Stream]*=-');
-        console.log(results.data.data);
+        console.log('-=*[ Created Video Stream ]*=-');
+        console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
+        console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
         return results.data.data;
     }).catch((err) => {
        console.log('ERROR -- created Video Stream');
@@ -223,8 +241,7 @@ const updateVideoStream = function(vidData, key, mainPath) {
         query: print(videoStreamQuery),
         variables,
     }, options).then((results) => {
-        console.log('-=*[Updated Video Stream]*=-');
-        streamTracker[mainPath].m3u8Key = true;
+        console.log('-=*[ Updated Video Stream ]*=-');
         console.log(results.data.data);
         return results.data.data;
     }).catch((err) => {
