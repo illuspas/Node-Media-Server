@@ -1,4 +1,4 @@
-#RADIANT NODE MEDIA SERVER
+# RADIANT NODE MEDIA SERVER
 
 ## Configuration
 
@@ -19,13 +19,13 @@ example
   
 ```
 
-##Running Server
+## Running Server
 
 `npm start` or `node app.js`
 
-##Using Server
+## Using Server
 
-###RTMP UP
+### RTMP UP
 
 javascript example signing url
 ```
@@ -48,7 +48,7 @@ rtmp://localhost/radiant/123?sign=1549059252-84c5c395681132c0cb3d7687d58cf38b
 =conversationTopicId=123&token=84c5c395681132c0cb3d7687d58cf38b
 ```
 
- ####Anatomy of our RTMP URL
+ #### Anatomy of our RTMP URL
  
  rtmp = Real-Time Messaging Protocol [rtmp](https://en.wikipedia.org/wiki/Real-Time_Messaging_Protocol)  
 
