@@ -1,21 +1,25 @@
 const { NodeMediaServer } = require('./index');
+require('dotenv').config();
+
+const MD5 = require('md5');
+const moment = require('moment');
 
 const config = {
   rtmp: {
-    port: 1935,
+    port: process.env.RTMP_PORT,
     chunk_size: 60000,
     gop_cache: true,
     ping: 60,
     ping_timeout: 30
   },
   http: {
-    port: 8000,
+    port: process.env.HTTP_PORT,
     webroot: './public',
     mediaroot: './media',
     allow_origin: '*'
   },
   https: {
-    port: 8443,
+    port: process.env.HTTPS_PORT,
     key: './privatekey.pem',
     cert: './certificate.pem',
   },
@@ -24,13 +28,52 @@ const config = {
     api_user: 'admin',
     api_pass: 'admin',
     play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
+    publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
+    secret: 'radiantNodeMediaServer2019'
+  },
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+        // {
+        //   app: 'live',
+        //   mp4: true,
+        //   mp4Flags: '[movflags=faststart]',
+        // },
+        {
+          app: 'live',
+          hls: true,
+          hlsFlags: '[hls_time=1.5:hls_list_size=0]',
+        },
+        {
+          app: 'radiant',
+          hls: true,
+          hlsFlags: '[hls_time=1:hls_list_size=0]',
+        },
+    ],
   },
 };
+//local
+const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzMjQ3MC1jYjIyLTExZTgtYjY0NC04OWIzMzlmNzY3YjE6VXNlcnMiLCJpYXQiOjE1MzkwMjExMzAsImV4cCI6MzA3ODY0NzA2MH0.n_Gy9L78Nu0_npbgdco0FM5RG9B8Ay6-nxcYJPczp0o';
+const userId2 = '9f7d3ab0-0eb3-11e9-8ec7-99c86bfb1fff:Users';
+const userId = '77f32470-cb22-11e8-b644-89b339f767b1:Users';
+const conversationTopicId = '05bdf610-fe34-11e8-870f-2b591aa8f78f:ConversationTopics';
+const expiration = moment().add(3, 'minutes').unix();
+const HashValue = MD5(`/radiant/${userId}-${expiration}-${config.auth.secret}`);
+console.log('localhost url');
+console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
+console.log(`Hash Value = ${HashValue.toString()}`);
+console.log(`Request Address looks like = rtmp://localhost/radiant/${userId}?sign=${expiration}-${HashValue}&token=${token}&conversationTopicId=${conversationTopicId}`);
+// server
+const expiration2 = moment().add(5, 'minutes').unix();
+const HashValue2 = MD5(`/radiant/${userId}-${expiration2}-${config.auth.secret}`);
+console.log('server signed url');
+console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
+console.log(`Hash Value = ${HashValue2.toString()}`);
+console.log('server url');
+console.log(`Request Address looks like = rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/radiant/${userId}?sign=${expiration2}-${HashValue2}&token=${token}&conversationTopicId=${conversationTopicId}`);
 
 
-let nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {
