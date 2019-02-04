@@ -29,7 +29,7 @@ const config = {
     api_pass: 'admin',
     play: false,
     publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
-    secret: 'radiantNodeMediaServer2019'
+    secret: process.env.SHARED_SECRET,
   },
   trans: {
     ffmpeg: '/usr/local/bin/ffmpeg',
@@ -57,21 +57,38 @@ const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzM
 const userId2 = '9f7d3ab0-0eb3-11e9-8ec7-99c86bfb1fff:Users';
 const userId = '77f32470-cb22-11e8-b644-89b339f767b1:Users';
 const conversationTopicId = '05bdf610-fe34-11e8-870f-2b591aa8f78f:ConversationTopics';
-const expiration = moment().add(3, 'minutes').unix();
-const HashValue = MD5(`/radiant/${userId}-${expiration}-${config.auth.secret}`);
+const expiration = moment().add(20, 'minutes').unix();
+const HashValue = MD5(`/radiant/${userId}-${expiration}-${process.env.SHARED_SECRET}`);
 console.log('localhost url');
 console.log(`Expiration Value = ${expiration} = ${moment.unix(expiration)}`);
 console.log(`Hash Value = ${HashValue.toString()}`);
-console.log(`Request Address looks like = rtmp://localhost/radiant/${userId}?sign=${expiration}-${HashValue}&token=${token}&conversationTopicId=${conversationTopicId}`);
-// server
-const expiration2 = moment().add(5, 'minutes').unix();
-const HashValue2 = MD5(`/radiant/${userId}-${expiration2}-${config.auth.secret}`);
-console.log('server signed url');
+console.log('localhost url:');
+console.log('----');
+console.log(`rtmp://localhost/radiant/${userId}?sign=${expiration}-${HashValue}&token=${token}&conversationTopicId=${conversationTopicId}`);
+console.log('----');
+
+// server Dev
+const expiration2 = moment().add(10, 'minutes').unix();
+const HashValue2 = MD5(`/radiant/${userId}-${expiration2}-${process.env.SHARED_SECRET}`);
+console.log('Dev Server signed url');
 console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
 console.log(`Hash Value = ${HashValue2.toString()}`);
-console.log('server url');
-console.log(`Request Address looks like = rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/radiant/${userId}?sign=${expiration2}-${HashValue2}&token=${token}&conversationTopicId=${conversationTopicId}`);
+console.log('server url:');
+console.log('----');
+console.log(`rtmp://ec2-34-211-234-98.us-west-2.compute.amazonaws.com/radiant/${userId}?sign=${expiration2}-${HashValue2}&token=${token}&conversationTopicId=${conversationTopicId}`);
+console.log('----');
 
+// Stage Dev
+const conversationTopicId3 = '1f881130-d967-11e8-b793-4b1a63886a0b:ConversationTopics';
+const expiration3 = moment().add(10, 'minutes').unix();
+const HashValue3 = MD5(`/radiant/${userId}-${expiration3}-${process.env.SHARED_SECRET}`);
+console.log('Stage Server signed url');
+console.log(`Expiration Value = ${expiration3} = ${moment.unix(expiration3)}`);
+console.log(`Hash Value = ${HashValue3.toString()}`);
+console.log('server url:');
+console.log('----');
+console.log(`rtmp://ec2-54-213-162-104.us-west-2.compute.amazonaws.com/radiant/${userId}?sign=${expiration3}-${HashValue3}&token=${token}&conversationTopicId=${conversationTopicId3}`);
+console.log('----');
 
 let nms = new NodeMediaServer(config);
 nms.run();
