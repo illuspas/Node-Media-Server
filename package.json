@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "No Tests Setup...Yet",
-    "start" : "node app.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
+    "node-random-name": "^1.0.1",
     "uuid": "^3.3.2",
     "ws": "^5.1.1"
   },
