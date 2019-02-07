@@ -107,12 +107,15 @@ const checkFile = function (info){
  * @param info
  */
 const uploadFile = function (info){
+    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+    const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     //upload files
     let params = {
         Bucket: process.env.S3_BUCKET,
         Key: info.path.replace(/^.*[\\\/]/, ''),
         Body: fs.createReadStream(info.path),
         ACL: 'public-read',
+        ContentType: mimeType,
     };
 
     AWS.getS3().upload(params, (err, data) => {
@@ -122,7 +125,7 @@ const uploadFile = function (info){
         console.log(`${data.Key} uploaded to: ${data.Bucket}`);
         const pathFind = info.path.match(/^(.*[\\\/])/);
         const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-        if(info.path.replace(/^.*[\\\/]/, '').split('.')[1] === 'm3u8' && !streamTracker[mainPath].m3u8Key){
+        if(ext === 'm3u8' && !streamTracker[mainPath].m3u8Key){
             streamTracker[mainPath].m3u8Key = true;
             createVideoStream(info.conversationTopicId, info.conversationTopicPermissions)
                 .then((vidData) => updateVideoStream(vidData, data.Key, mainPath)
