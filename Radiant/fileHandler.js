@@ -181,7 +181,7 @@ const createVideoStream = function(conversationTopicId, conversationTopicPermiss
     const options = {
         headers: {
             Accept: "application/json",
-            subauth: authToken,
+            subauth: `Bearer ${authToken}`,
             "Content-Type": "application/json"
         }
     };

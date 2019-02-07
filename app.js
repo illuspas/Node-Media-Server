@@ -26,8 +26,8 @@ const config = {
   },
   auth: {
     api: true,
-    api_user: 'admin',
-    api_pass: 'admin',
+    api_user: process.env.API_USER,
+    api_pass: process.env.API_PASSWORD,
     play: false,
     publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
     secret: process.env.SHARED_SECRET,
