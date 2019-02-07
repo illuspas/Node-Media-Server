@@ -107,12 +107,15 @@ const checkFile = function (info){
  * @param info
  */
 const uploadFile = function (info){
+    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+    const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     //upload files
     let params = {
         Bucket: process.env.S3_BUCKET,
         Key: info.path.replace(/^.*[\\\/]/, ''),
         Body: fs.createReadStream(info.path),
         ACL: 'public-read',
+        ContentType: mimeType,
     };
 
     AWS.getS3().upload(params, (err, data) => {

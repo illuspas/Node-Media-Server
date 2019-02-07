@@ -29,7 +29,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'admin',
     play: false,
-    publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
+    publish: false,//process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
     secret: process.env.SHARED_SECRET,
   },
   trans: {
@@ -78,10 +78,10 @@ console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
 console.log(`Hash Value = ${HashValue2.toString()}`);
 console.log('server url:');
 console.log('----');
-console.log(`rtmp://ec2-34-220-71-189.us-west-2.compute.amazonaws.com/radiant/${user}?sign=${expiration2}-${HashValue2}&token=${token}&conversationTopicId=${conversationTopicId}`);
+console.log(`rtmp://ec2-18-236-155-177.us-west-2.compute.amazonaws.com/radiant/${user}?sign=${expiration2}-${HashValue2}&token=${token}&conversationTopicId=${conversationTopicId}`);
 console.log('----');
 
-// Stage Dev
+// Stage
 const conversationTopicId3 = '1f881130-d967-11e8-b793-4b1a63886a0b:ConversationTopics';
 const expiration3 = moment().add(10, 'minutes').unix();
 const HashValue3 = MD5(`/radiant/${user}-${expiration3}-${process.env.SHARED_SECRET}`);
