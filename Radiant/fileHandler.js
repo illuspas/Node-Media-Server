@@ -231,7 +231,7 @@ const updateVideoStream = function(vidData, key, mainPath) {
     const options = {
         headers: {
             Accept: "application/json",
-            subauth: authToken,
+            subauth: `Bearer ${authToken}`,
             "Content-Type": "application/json"
         }
     };
