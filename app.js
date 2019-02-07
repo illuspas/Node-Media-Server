@@ -29,7 +29,7 @@ const config = {
     api_user: 'admin',
     api_pass: 'admin',
     play: false,
-    publish: false,//process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
+    publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
     secret: process.env.SHARED_SECRET,
   },
   trans: {
