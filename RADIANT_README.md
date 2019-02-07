@@ -32,7 +32,7 @@ javascript example signing url
 // server
 const expiration2 = moment().add(5, 'minutes').unix();
 const userId = 123;
-const token = JWT web token
+const token = JWT web token without the Bearer
 const conversationId = asdrrvew;
 const HashValue2 = MD5(`/radiant/${userId}-${expiration2}-${config.auth.secret}`);
 console.log(`Expiration Value = ${expiration2} = ${moment.unix(expiration2)}`);
