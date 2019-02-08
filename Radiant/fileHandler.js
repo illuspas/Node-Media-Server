@@ -54,10 +54,14 @@ module.exports.end = (streamPath) => {
                 const fileC = file.split('.')[1];
                 if(fileC === 'm3u8') {
                     // checkM3U8(`media${streamPath}/${file}`);
-                } else if(fileC === 'DS_Store'){
-                    fs.unlink(`media${streamPath}/${file}`, (err, data) => {
-                        if(err){
-                            console.log(err);
+                } else {
+                    fs.stat(file, (err) => {
+                        if(err === null) {
+                            fs.unlink(`media${streamPath}/${file}`, (err, data) => {
+                                if(err){
+                                    console.log(err);
+                                }
+                            });
                         }
                     });
                 }
@@ -75,7 +79,6 @@ const checkM3U8 = (file) => {
     fs.stat(file, (err) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
-                console.log(line);
                 if(line === '#EXT-X-ENDLIST\n'){
                     console.log(`#EXT-X-ENDLIST => ${file}`);
                     console.log(`Deleting file => ${file}`);
@@ -118,7 +121,7 @@ const checkFile = function (info){
     setTimeout((args) => {
         fileStat(args[0].info.path).then((fileInfo) => {
             if(fileInfo.size === 0) {
-                console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
+                // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
                 if(streamTracker[info.path].retry <= 3){
                     streamTracker[info.path].retry++;
                     checkFile(info);
@@ -129,7 +132,7 @@ const checkFile = function (info){
                     delete streamTracker[info.path];
                 }
                 uploadFile(info);
-                console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
+                // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
 
         }).catch((err)=>{
@@ -160,7 +163,7 @@ const uploadFile = function (info){
         if(err){
             console.log(err);
         } else {
-            console.log(`${data.Key} uploaded to: ${data.Bucket}`);
+            // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
             const pathFind = info.path.match(/^(.*[\\\/])/);
             const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
             if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
@@ -185,9 +188,9 @@ const uploadFile = function (info){
                 uploadFile({
                     path: `${mainPath}/${m3u8}-i.m3u8`
                 });
-                console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
+                // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
                 // delete ts file
-                console.log(`deleting file => ${info.path}`);
+                // console.log(`deleting file => ${info.path}`);
                 fs.stat(info.path, (err) => {
                     if(err === null) {
                         fs.unlink(info.path, (err, data) => {
@@ -315,7 +318,7 @@ const updateVideoStream = function(vidData, key, mainPath, authToken) {
         variables,
     }, options).then((results) => {
         console.log('-=*[ Updated Video Stream ]*=-');
-        console.log(results.data.data);
+        console.log(`-=*[ ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
         return results.data.data;
     }).catch((err) => {
         console.log('ERROR -- Updated Video Stream');
