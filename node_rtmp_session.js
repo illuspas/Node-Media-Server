@@ -339,6 +339,11 @@ class NodeRtmpSession {
     let headerSize = chunkBasicHeader.length + chunkMessageHeader.length + (useExtendedTimestamp ? 4 : 0);
 
     let n = headerSize + payloadSize + Math.floor(payloadSize / chunkSize);
+
+    if(header.timestamp > 0xffffffff) {
+      return;
+    }
+
     if (useExtendedTimestamp) {
       n += Math.floor(payloadSize / chunkSize) * 4;
     }
