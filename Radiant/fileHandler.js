@@ -167,7 +167,7 @@ const uploadFile = function (info){
                 streamTracker[info.path].m3u8 = true;
                 console.log(`-=*[ Creating Video Stream ]*=-`);
                 console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
-
+                console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
                 createVideoStream(info.conversationTopicId, info.authToken)
                     .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
                         .then((res) => {
@@ -236,10 +236,11 @@ const query = gql`
 /**
  * createVideoStream
  * @param conversationTopicId
- * @param conversationTopicPermissions
+ * @param authToken
  * @returns {Promise<T | never>}
  */
 const createVideoStream = function(conversationTopicId, authToken) {
+    console.log(`-=*[ auth token = ${authToken} ]*=-`);
     const options = {
         headers: {
             Accept: "application/json",
@@ -288,9 +289,11 @@ const videoStreamQuery = gql`
  * updateVideoStream
  * @param vidData
  * @param mainPath
+ * @param authToken
  * @returns {Promise<T | never>}
  */
 const updateVideoStream = function(vidData, key, mainPath, authToken) {
+    console.log(`-=*[ auth token = ${authToken} ]*=-`);
     const options = {
         headers: {
             Accept: "application/json",
