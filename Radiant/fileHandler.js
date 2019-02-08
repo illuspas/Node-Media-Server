@@ -299,7 +299,6 @@ const videoStreamQuery = gql`
  * @returns {Promise<T | never>}
  */
 const updateVideoStream = function(vidData, key, mainPath, authToken) {
-    console.log(`-=*[ auth token = ${authToken} ]*=-`);
     const options = {
         headers: {
             Accept: "application/json",
