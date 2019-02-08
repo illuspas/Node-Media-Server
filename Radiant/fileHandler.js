@@ -22,6 +22,11 @@ const streamTracker = {
 
 module.exports.watcher = (ouPath, args) => {
     console.log(`watcher started for : ${ouPath}`);
+    console.log('**********');
+    console.log('**********');
+    console.log(`ARGS : => ${JSON.stringify(args)}`);
+    console.log('**********');
+    console.log('**********');
     const watcher = chokidar.watch(ouPath);
     const authToken = args.token;
     // call watcher close?
