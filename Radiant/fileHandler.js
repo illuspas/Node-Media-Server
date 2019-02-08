@@ -6,7 +6,6 @@ const axios = require('axios');
 const chokidar = require('chokidar');
 const gql = require('graphql-tag');
 const { print } = require('graphql');
-const path = require('path');
 
 const AWS = require('../aws_util/aws-util');
 
