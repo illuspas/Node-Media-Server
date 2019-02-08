@@ -20,10 +20,12 @@ const streamTracker = {
 
 };
 
+let watcher;
+
 module.exports.watcher = (ouPath, args) => {
     console.log(`watcher started for : ${ouPath}`);
 
-    const watcher = chokidar.watch(ouPath);
+    watcher = chokidar.watch(ouPath);
     const authToken = args.token;
     // call watcher close?
     watcher.on('add', function (path) {
@@ -35,6 +37,7 @@ module.exports.watcher = (ouPath, args) => {
         if(ext === 'm3u8'){
             streamTracker[path].m3u8 = false;
         }
+        // console.log(`TOPIC = ${args.conversationTopicId}`);
       checkFile({
           path,
           conversationTopicId: args.conversationTopicId,
@@ -44,6 +47,9 @@ module.exports.watcher = (ouPath, args) => {
 };
 
 module.exports.end = (streamPath) => {
+
+    watcher.close();
+
   // check directory for files left
     setTimeout(() => {
         fs.readdir(`./media${streamPath}`, (err, files) => {
@@ -122,7 +128,7 @@ const checkFile = function (info){
                 }
             }
         });
-    }, 500, [{
+    }, 1500, [{
         info
     }]);
 };
@@ -150,21 +156,25 @@ const uploadFile = function (info){
             // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
             const pathFind = info.path.match(/^(.*[\\\/])/);
             const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-            if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
-                streamTracker[info.path].m3u8 = true;
-                console.log(`-=*[ Creating Video Stream ]*=-`);
-                console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
-                console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
-                createVideoStream(info.conversationTopicId, info.authToken)
-                    .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
-                        .then((res) => {
-                            console.log('-=*[ Updated the video Stream ]*=-' );
-                            console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
-                            console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                        })).catch((err => {
-                    console.log(err);
-                }));
+            try{
+                if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
+                    streamTracker[info.path].m3u8 = true;
+                    console.log(`-=*[ CREATING VIDEO STREAM ]*=-`);
+                    console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
+                    console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
+                    createVideoStream(info.conversationTopicId, info.authToken)
+                        .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
+                            .then((res) => {
+                                console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
+                                console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
+                            })).catch((err => {
+                        console.log(err);
+                    }));
+                }
+            } catch (e) {
+                console.log(`ERROR: ${e.message} not too big of a deal :D`);
             }
+
 
             if(ext === 'ts'){
                 // upload m3u8 to keep it updated
@@ -246,7 +256,7 @@ const createVideoStream = function(conversationTopicId, authToken) {
         query: print(query),
         variables,
     }, options).then((results) => {
-        console.log('-=*[ Created Video Stream ]*=-');
+        console.log('-=*[ CREATED VIDEO STREAM ]*=-');
         console.log(`-=*[ Conversation Topic Id = ${conversationTopicId} ]*=-`);
         console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
         console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
@@ -302,7 +312,7 @@ const updateVideoStream = function(vidData, key, mainPath, authToken) {
         query: print(videoStreamQuery),
         variables,
     }, options).then((results) => {
-        console.log('-=*[ Updated Video Stream ]*=-');
+        console.log('-=*[ UPDATING VIDEO STREAM ]*=-');
         console.log(`-=*[ ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
         return results.data.data;
     }).catch((err) => {
