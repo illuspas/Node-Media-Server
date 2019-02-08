@@ -104,14 +104,15 @@ const checkM3U8 = (file) => {
  * @returns {Promise<any>}
  */
 const fileStat = function(path){
-    return new Promise((resolve, reject) => {
+    // return new Promise((resolve, reject) => {
         fs.stat(path, (err, info) => {
             if(err) {
-                reject(err);
+                // reject(err);
             }
-            resolve(info);
+            // resolve(info);
+            return info;
         });
-    });
+    // });
 };
 
 /**
@@ -120,31 +121,24 @@ const fileStat = function(path){
  */
 const checkFile = function (info){
     setTimeout((args) => {
-        fileStat(args[0].info.path).then((fileInfo) => {
-            if(fileInfo.size === 0) {
-                // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                if(streamTracker[info.path].retry <= 3){
-                    streamTracker[info.path].retry++;
-                    checkFile(info);
+        fs.stat(args[0].info.path, (err, fileInfo) => {
+            if(err === null) {
+                if(fileInfo.size === 0) {
+                    // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
+                    if(streamTracker[info.path].retry <= 3){
+                        streamTracker[info.path].retry++;
+                        checkFile(info);
+                    }
+                } else {
+                    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+                    if(ext !== 'm3u8') {
+                        delete streamTracker[info.path];
+                    }
+                    uploadFile(info);
+                    // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
                 }
-            } else {
-                const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
-                if(ext !== 'm3u8') {
-                    delete streamTracker[info.path];
-                }
-                console.log('**********');
-                console.log('**********');
-                console.log(`ARGS : => ${JSON.stringify(args)}`);
-                console.log('**********');
-                console.log('**********');
-
-                uploadFile(info);
-                // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
-
-        }).catch((err)=>{
-            console.log(err);
-        })
+        });
     }, 1000, [{
         info
     }]);
@@ -165,11 +159,22 @@ const uploadFile = function (info){
         ACL: 'public-read',
         ContentType: mimeType,
     };
-
+    console.log('**********');
+    console.log('**********');
+    console.log(`ARGS : => ${JSON.stringify(info)}`);
+    console.log('**********');
+    console.log('**********');
     AWS.getS3().upload(params, (err, data) => {
         if(err){
             console.log(err);
         } else {
+
+            console.log('**********');
+            console.log('**********');
+            console.log(`ARGS : => ${JSON.stringify(info)}`);
+            console.log('**********');
+            console.log('**********');
+
             // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
             const pathFind = info.path.match(/^(.*[\\\/])/);
             const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
