@@ -27,13 +27,6 @@ module.exports.watcher = (ouPath, args) => {
     const authToken = args.token;
     // call watcher close?
     watcher.on('add', function (path) {
-
-        console.log('**********');
-        console.log('**********');
-        console.log(`ARGS : => ${JSON.stringify(args)}`);
-        console.log('**********');
-        console.log('**********');
-
         //check file
         streamTracker[path] = {
             retry: 0,
@@ -139,6 +132,12 @@ const checkFile = function (info){
                 if(ext !== 'm3u8') {
                     delete streamTracker[info.path];
                 }
+                console.log('**********');
+                console.log('**********');
+                console.log(`ARGS : => ${JSON.stringify(args)}`);
+                console.log('**********');
+                console.log('**********');
+
                 uploadFile(info);
                 // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
