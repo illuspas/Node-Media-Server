@@ -1,10 +1,12 @@
 require('dotenv').config();
 
 const fs = require('fs');
+const readLastLines = require('read-last-lines');
 const axios = require('axios');
 const chokidar = require('chokidar');
 const gql = require('graphql-tag');
 const { print } = require('graphql');
+const path = require('path');
 
 const AWS = require('../aws_util/aws-util');
 
@@ -15,35 +17,33 @@ const radiantBackendEndpoints = {
     PRODUCTION: process.env.PROD_RADIANT_BACKEND_SERVER,
 };
 
-
-let authToken = '';
-
 const streamTracker = {
 
 };
 
 module.exports.watcher = (ouPath, args) => {
+    console.log(`watcher started for : ${ouPath}`);
     const watcher = chokidar.watch(ouPath);
-    authToken = args.token ? args.token : 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzMjQ3MC1jYjIyLTExZTgtYjY0NC04OWIzMzlmNzY3YjE6VXNlcnMiLCJpYXQiOjE1MzkwMjExMzAsImV4cCI6MzA3ODY0NzA2MH0.n_Gy9L78Nu0_npbgdco0FM5RG9B8Ay6-nxcYJPczp0o';
-    // watching path for files being added
-    streamTracker[ouPath.substring(2,ouPath.length)] = {
-      streaming: true,
-      m3u8Key: false,
-    };
+    const authToken = args.token;
+    // call watcher close?
     watcher.on('add', function (path) {
-      //check file
+        //check file
         streamTracker[path] = {
             retry: 0,
         };
+        const ext = path.replace(/^.*[\\\/]/, '').split('.')[1];
+        if(ext === 'm3u8'){
+            streamTracker[path].m3u8 = false;
+        }
       checkFile({
           path,
-          conversationTopicId: args.conversationTopicId ? args.conversationTopicId : '05bdf610-fe34-11e8-870f-2b591aa8f78f:ConversationTopics',
+          conversationTopicId: args.conversationTopicId,
+          authToken,
       });
     });
 };
 
 module.exports.end = (streamPath) => {
-    streamTracker[`media${streamPath}`].streaming = false;
   // check directory for files left
     setTimeout(() => {
         fs.readdir(`./media${streamPath}`, (err, files) => {
@@ -52,11 +52,47 @@ module.exports.end = (streamPath) => {
             }
             console.log('-=*[ Cleanup remaining files ]*=-');
             files.forEach(file => {
-                checkFile({ path: `media${streamPath}/${file}`});
-
+                const fileC = file.split('.')[1];
+                if(fileC === 'm3u8') {
+                    // checkM3U8(`media${streamPath}/${file}`);
+                } else if(fileC === 'DS_Store'){
+                    fs.unlink(`media${streamPath}/${file}`, (err, data) => {
+                        if(err){
+                            console.log(err);
+                        }
+                    });
+                }
             });
         });
-    }, 1000);
+    }, 1500);
+
+};
+
+/**
+ * checkM3U8
+ * @param file
+ */
+const checkM3U8 = (file) => {
+    fs.stat(file, (err) => {
+        if(err === null) {
+            readLastLines.read(file, 1).then((line) => {
+                console.log(line);
+                if(line === '#EXT-X-ENDLIST\n'){
+                    console.log(`#EXT-X-ENDLIST => ${file}`);
+                    console.log(`Deleting file => ${file}`);
+                    fs.unlink(file, (err, data) => {
+                        if(err){
+                            console.log(err);
+                        }
+                        delete streamTracker[file];
+                    });
+                } else {
+                    // for debugging
+                    // console.log('NOT END OF STREAM');
+                }
+            });
+        }
+    });
 };
 
 /**
@@ -89,7 +125,10 @@ const checkFile = function (info){
                     checkFile(info);
                 }
             } else {
-                delete streamTracker[info.path];
+                const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+                if(ext !== 'm3u8') {
+                    delete streamTracker[info.path];
+                }
                 uploadFile(info);
                 console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
@@ -97,7 +136,7 @@ const checkFile = function (info){
         }).catch((err)=>{
             console.log(err);
         })
-    }, 1500, [{
+    }, 1000, [{
         info
     }]);
 };
@@ -121,25 +160,49 @@ const uploadFile = function (info){
     AWS.getS3().upload(params, (err, data) => {
         if(err){
             console.log(err);
-        }
-        console.log(`${data.Key} uploaded to: ${data.Bucket}`);
-        const pathFind = info.path.match(/^(.*[\\\/])/);
-        const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-        if(ext === 'm3u8' && !streamTracker[mainPath].m3u8Key){
-            streamTracker[mainPath].m3u8Key = true;
-            createVideoStream(info.conversationTopicId, info.conversationTopicPermissions)
-                .then((vidData) => updateVideoStream(vidData, data.Key, mainPath)
-                .then((res) => {
-                    console.log('-=*[ Updated the video Stream ]*=-' );
-                    console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
-                    console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
-            }));
-        }
-        fs.unlink(info.path, (err, data) => {
-            if(err){
-                console.log(err);
+        } else {
+            console.log(`${data.Key} uploaded to: ${data.Bucket}`);
+            const pathFind = info.path.match(/^(.*[\\\/])/);
+            const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
+            if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
+                streamTracker[info.path].m3u8 = true;
+                console.log(`-=*[ Creating Video Stream ]*=-`);
+                console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
+
+                createVideoStream(info.conversationTopicId, info.authToken)
+                    .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
+                        .then((res) => {
+                            console.log('-=*[ Updated the video Stream ]*=-' );
+                            console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
+                            console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
+                        })).catch((err => {
+                    console.log(err);
+                }));
             }
-        });
+
+            if(ext === 'ts'){
+                // upload m3u8 to keep it updated
+                const m3u8 = data.Key.split('-')[0];
+                uploadFile({
+                    path: `${mainPath}/${m3u8}-i.m3u8`
+                });
+                console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
+                // delete ts file
+                console.log(`deleting file => ${info.path}`);
+                fs.stat(info.path, (err) => {
+                    if(err === null) {
+                        fs.unlink(info.path, (err, data) => {
+                            if(err){
+                                console.log(err);
+                            }
+                        });
+                    }
+                });
+            } else if(ext === 'm3u8'){
+                const m3u8 = data.Key.split('-')[0];
+                checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
+            }
+        }
     });
 };
 
@@ -177,7 +240,7 @@ const query = gql`
  * @param conversationTopicPermissions
  * @returns {Promise<T | never>}
  */
-const createVideoStream = function(conversationTopicId, conversationTopicPermissions) {
+const createVideoStream = function(conversationTopicId, authToken) {
     const options = {
         headers: {
             Accept: "application/json",
@@ -195,6 +258,7 @@ const createVideoStream = function(conversationTopicId, conversationTopicPermiss
         variables,
     }, options).then((results) => {
         console.log('-=*[ Created Video Stream ]*=-');
+        console.log(`-=*[ Conversation Topic Id = ${conversationTopicId} ]*=-`);
         console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
         console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
         return results.data.data;
@@ -227,11 +291,11 @@ const videoStreamQuery = gql`
  * @param mainPath
  * @returns {Promise<T | never>}
  */
-const updateVideoStream = function(vidData, key, mainPath) {
+const updateVideoStream = function(vidData, key, mainPath, authToken) {
     const options = {
         headers: {
             Accept: "application/json",
-            subauth: `Bearer ${authToken}`,
+            subauth: `${authToken}`,
             "Content-Type": "application/json"
         }
     };
@@ -240,6 +304,10 @@ const updateVideoStream = function(vidData, key, mainPath) {
         m3u8Key: key,
     };
     let endpoint = radiantBackendEndpoints[process.env.ENV];
+
+    console.log(`-=*[ UPDATING VIDEO STREAM ]*=-`);
+    console.log(`-=*[ key = ${key} ]*=-`);
+    // i have thumbnail upload url here
     return axios.post(endpoint, {
         query: print(videoStreamQuery),
         variables,
