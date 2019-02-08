@@ -39,6 +39,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
     "node-random-name": "^1.0.1",
+    "read-last-lines": "^1.6.0",
     "uuid": "^3.3.2",
     "ws": "^5.1.1"
   },
