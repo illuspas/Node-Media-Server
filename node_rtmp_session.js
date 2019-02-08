@@ -331,18 +331,12 @@ class NodeRtmpSession {
     let chunkSize = this.outChunkSize;
     let chunksOffset = 0;
     let payloadOffset = 0;
-
     let chunkBasicHeader = this.rtmpChunkBasicHeaderCreate(header.fmt, header.cid);
     let chunkBasicHeader3 = this.rtmpChunkBasicHeaderCreate(RTMP_CHUNK_TYPE_3, header.cid);
     let chunkMessageHeader = this.rtmpChunkMessageHeaderCreate(header);
     let useExtendedTimestamp = header.timestamp >= 0xffffff;
     let headerSize = chunkBasicHeader.length + chunkMessageHeader.length + (useExtendedTimestamp ? 4 : 0);
-
     let n = headerSize + payloadSize + Math.floor(payloadSize / chunkSize);
-
-    if(header.timestamp > 0xffffffff) {
-      return;
-    }
 
     if (useExtendedTimestamp) {
       n += Math.floor(payloadSize / chunkSize) * 4;
@@ -460,6 +454,10 @@ class NodeRtmpSession {
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;
+            if(this.parserPacket.clock > 0xffffffff){
+              //TODO Shit code, rewrite chunkcreate
+              break;
+            }
             this.rtmpHandler();
           } else if (0 === (this.parserPacket.bytes % this.inChunkSize)) {
             this.parserState = RTMP_PARSE_INIT;
