@@ -159,22 +159,11 @@ const uploadFile = function (info){
         ACL: 'public-read',
         ContentType: mimeType,
     };
-    console.log('**********');
-    console.log('**********');
-    console.log(`ARGS : => ${JSON.stringify(info)}`);
-    console.log('**********');
-    console.log('**********');
+
     AWS.getS3().upload(params, (err, data) => {
         if(err){
             console.log(err);
         } else {
-
-            console.log('**********');
-            console.log('**********');
-            console.log(`ARGS : => ${JSON.stringify(info)}`);
-            console.log('**********');
-            console.log('**********');
-
             // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
             const pathFind = info.path.match(/^(.*[\\\/])/);
             const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
@@ -198,7 +187,9 @@ const uploadFile = function (info){
                 // upload m3u8 to keep it updated
                 const m3u8 = data.Key.split('-')[0];
                 uploadFile({
-                    path: `${mainPath}/${m3u8}-i.m3u8`
+                    path: `${mainPath}/${m3u8}-i.m3u8`,
+                    authToken: info.authToken,
+                    conversationTopicId: info.conversationTopicId,
                 });
                 // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
                 // delete ts file
