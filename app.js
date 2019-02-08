@@ -54,7 +54,7 @@ const config = {
   },
 };
 //local
-const token = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzMjQ3MC1jYjIyLTExZTgtYjY0NC04OWIzMzlmNzY3YjE6VXNlcnMiLCJpYXQiOjE1MzkwMjExMzAsImV4cCI6MzA3ODY0NzA2MH0.n_Gy9L78Nu0_npbgdco0FM5RG9B8Ay6-nxcYJPczp0o';
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3N2YzMjQ3MC1jYjIyLTExZTgtYjY0NC04OWIzMzlmNzY3YjE6VXNlcnMiLCJpYXQiOjE1MzkwMjExMzAsImV4cCI6MzA3ODY0NzA2MH0.n_Gy9L78Nu0_npbgdco0FM5RG9B8Ay6-nxcYJPczp0o';
 const userId2 = '9f7d3ab0-0eb3-11e9-8ec7-99c86bfb1fff:Users';
 // const userId = '77f32470-cb22-11e8-b644-89b339f767b1:Users';
 const user = randomName({first: true, gender: 'female'});
