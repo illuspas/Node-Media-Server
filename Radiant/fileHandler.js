@@ -55,10 +55,10 @@ module.exports.end = (streamPath) => {
                 const fileC = file.split('.')[1];
                 if(fileC === 'm3u8') {
                     // checkM3U8(`media${streamPath}/${file}`);
-                } else {
+                } else if(fileC === 'DS_Store'){
                     fs.stat(file, (err) => {
                         if(err === null) {
-                            fs.unlink(`media${streamPath}/${file}`, (err, data) => {
+                            fs.unlink(file, (err, data) => {
                                 if(err){
                                     console.log(err);
                                 }
@@ -99,23 +99,6 @@ const checkM3U8 = (file) => {
 };
 
 /**
- * fileStat
- * @param path
- * @returns {Promise<any>}
- */
-const fileStat = function(path){
-    // return new Promise((resolve, reject) => {
-        fs.stat(path, (err, info) => {
-            if(err) {
-                // reject(err);
-            }
-            // resolve(info);
-            return info;
-        });
-    // });
-};
-
-/**
  * checkFileAgain
  * @param info
  */
@@ -139,7 +122,7 @@ const checkFile = function (info){
                 }
             }
         });
-    }, 1000, [{
+    }, 500, [{
         info
     }]);
 };
