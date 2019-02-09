@@ -20,9 +20,12 @@ const streamTracker = {
 
 };
 
+let watcher;
+
 module.exports.watcher = (ouPath, args) => {
     console.log(`watcher started for : ${ouPath}`);
-    const watcher = chokidar.watch(ouPath);
+
+    watcher = chokidar.watch(ouPath);
     const authToken = args.token;
     // call watcher close?
     watcher.on('add', function (path) {
@@ -34,6 +37,7 @@ module.exports.watcher = (ouPath, args) => {
         if(ext === 'm3u8'){
             streamTracker[path].m3u8 = false;
         }
+        // console.log(`TOPIC = ${args.conversationTopicId}`);
       checkFile({
           path,
           conversationTopicId: args.conversationTopicId,
@@ -43,6 +47,9 @@ module.exports.watcher = (ouPath, args) => {
 };
 
 module.exports.end = (streamPath) => {
+
+    watcher.close();
+
   // check directory for files left
     setTimeout(() => {
         fs.readdir(`./media${streamPath}`, (err, files) => {
@@ -55,9 +62,13 @@ module.exports.end = (streamPath) => {
                 if(fileC === 'm3u8') {
                     // checkM3U8(`media${streamPath}/${file}`);
                 } else if(fileC === 'DS_Store'){
-                    fs.unlink(`media${streamPath}/${file}`, (err, data) => {
-                        if(err){
-                            console.log(err);
+                    fs.stat(file, (err) => {
+                        if(err === null) {
+                            fs.unlink(file, (err, data) => {
+                                if(err){
+                                    console.log(err);
+                                }
+                            });
                         }
                     });
                 }
@@ -75,7 +86,6 @@ const checkM3U8 = (file) => {
     fs.stat(file, (err) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
-                console.log(line);
                 if(line === '#EXT-X-ENDLIST\n'){
                     console.log(`#EXT-X-ENDLIST => ${file}`);
                     console.log(`Deleting file => ${file}`);
@@ -95,47 +105,30 @@ const checkM3U8 = (file) => {
 };
 
 /**
- * fileStat
- * @param path
- * @returns {Promise<any>}
- */
-const fileStat = function(path){
-    return new Promise((resolve, reject) => {
-        fs.stat(path, (err, info) => {
-            if(err) {
-                reject(err);
-            }
-            resolve(info);
-        });
-    });
-};
-
-/**
  * checkFileAgain
  * @param info
  */
 const checkFile = function (info){
     setTimeout((args) => {
-        fileStat(args[0].info.path).then((fileInfo) => {
-            if(fileInfo.size === 0) {
-                console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                if(streamTracker[info.path].retry <= 3){
-                    streamTracker[info.path].retry++;
-                    checkFile(info);
+        fs.stat(args[0].info.path, (err, fileInfo) => {
+            if(err === null) {
+                if(fileInfo.size === 0) {
+                    // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
+                    if(streamTracker[info.path].retry <= 3){
+                        streamTracker[info.path].retry++;
+                        checkFile(info);
+                    }
+                } else {
+                    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+                    if(ext !== 'm3u8') {
+                        delete streamTracker[info.path];
+                    }
+                    uploadFile(info);
+                    // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
                 }
-            } else {
-                const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
-                if(ext !== 'm3u8') {
-                    delete streamTracker[info.path];
-                }
-                uploadFile(info);
-                console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
             }
-
-        }).catch((err)=>{
-            console.log(err);
-        })
-    }, 1000, [{
+        });
+    }, 1500, [{
         info
     }]);
 };
@@ -160,34 +153,40 @@ const uploadFile = function (info){
         if(err){
             console.log(err);
         } else {
-            console.log(`${data.Key} uploaded to: ${data.Bucket}`);
+            // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
             const pathFind = info.path.match(/^(.*[\\\/])/);
             const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-            if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
-                streamTracker[info.path].m3u8 = true;
-                console.log(`-=*[ Creating Video Stream ]*=-`);
-                console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
-                console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
-                createVideoStream(info.conversationTopicId, info.authToken)
-                    .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
-                        .then((res) => {
-                            console.log('-=*[ Updated the video Stream ]*=-' );
-                            console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
-                            console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                        })).catch((err => {
-                    console.log(err);
-                }));
+            try{
+                if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
+                    streamTracker[info.path].m3u8 = true;
+                    console.log(`-=*[ CREATING VIDEO STREAM ]*=-`);
+                    console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
+                    console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
+                    createVideoStream(info.conversationTopicId, info.authToken)
+                        .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
+                            .then((res) => {
+                                console.log(`-=*[ StreamID = : ${res.liveStream.updateStream.id} ]*=-`);
+                                console.log(`-=*[ Stream downloadUrl : ${res.liveStream.updateStream.downloadUrl.url} ]*=-`);
+                            })).catch((err => {
+                        console.log(err);
+                    }));
+                }
+            } catch (e) {
+                console.log(`ERROR: ${e.message} not too big of a deal :D`);
             }
+
 
             if(ext === 'ts'){
                 // upload m3u8 to keep it updated
                 const m3u8 = data.Key.split('-')[0];
                 uploadFile({
-                    path: `${mainPath}/${m3u8}-i.m3u8`
+                    path: `${mainPath}/${m3u8}-i.m3u8`,
+                    authToken: info.authToken,
+                    conversationTopicId: info.conversationTopicId,
                 });
-                console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
+                // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
                 // delete ts file
-                console.log(`deleting file => ${info.path}`);
+                // console.log(`deleting file => ${info.path}`);
                 fs.stat(info.path, (err) => {
                     if(err === null) {
                         fs.unlink(info.path, (err, data) => {
@@ -257,7 +256,7 @@ const createVideoStream = function(conversationTopicId, authToken) {
         query: print(query),
         variables,
     }, options).then((results) => {
-        console.log('-=*[ Created Video Stream ]*=-');
+        console.log('-=*[ CREATED VIDEO STREAM ]*=-');
         console.log(`-=*[ Conversation Topic Id = ${conversationTopicId} ]*=-`);
         console.log(`-=*[ Video Id = ${results.data.data.conversationTopic.createConversationTopicVideo.video.id} ]*=-`);
         console.log(`-=*[ Video Stream Id = ${results.data.data.conversationTopic.createConversationTopicVideo.videoHLSStreamUpload.id} ]*=-`);
@@ -293,7 +292,6 @@ const videoStreamQuery = gql`
  * @returns {Promise<T | never>}
  */
 const updateVideoStream = function(vidData, key, mainPath, authToken) {
-    console.log(`-=*[ auth token = ${authToken} ]*=-`);
     const options = {
         headers: {
             Accept: "application/json",
@@ -314,8 +312,8 @@ const updateVideoStream = function(vidData, key, mainPath, authToken) {
         query: print(videoStreamQuery),
         variables,
     }, options).then((results) => {
-        console.log('-=*[ Updated Video Stream ]*=-');
-        console.log(results.data.data);
+        console.log('-=*[ UPDATING VIDEO STREAM ]*=-');
+        console.log(`-=*[ ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
         return results.data.data;
     }).catch((err) => {
         console.log('ERROR -- Updated Video Stream');

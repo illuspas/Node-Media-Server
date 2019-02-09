@@ -35,7 +35,6 @@ class NodeTransSession extends EventEmitter {
     if (this.conf.hls) {
       // GET the Params for the user token so the graphql call works
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      // let hlsFileName = `${this.conf.stream}=${v1()}=.m3u8`;
       const fileName = v1();
       const newName = fileName.replace(/-/g, '');
       let hlsFileName = `${newName}-i.m3u8`;
