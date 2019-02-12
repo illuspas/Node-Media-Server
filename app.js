@@ -1,5 +1,11 @@
 const { NodeMediaServer } = require('./index');
-require('dotenv').config();
+const dotenv = require('dotenv').config();
+const dotenvParseVariables = require('dotenv-parse-variables');
+
+if(dotenv.error){
+
+}
+const env = dotenvParseVariables(dotenv.parsed);
 
 const MD5 = require('md5');
 const moment = require('moment');
@@ -29,7 +35,7 @@ const config = {
     api_user: process.env.API_USER,
     api_pass: process.env.API_PASSWORD,
     play: false,
-    publish: process.env.SECURE_PUBLISH, // enables sign parameter to be used for server
+    publish: env.SECURE_PUBLISH, // enables sign parameter to be used for server
     secret: process.env.SHARED_SECRET,
   },
   trans: {
