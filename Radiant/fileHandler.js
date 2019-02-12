@@ -11,15 +11,19 @@ const { print } = require('graphql');
 const AWS = require('../aws_util/aws-util');
 
 const radiantBackendEndpoints = {
-    LOCAL: process.env.RADIANT_BACKEND_LOCAL_SERVER,
+    LOCAL: process.env.LOCAL_RADIANT_BACKEND_SERVER,
     DEV: process.env.DEV_RADIANT_BACKEND_SERVER,
     STAGING: process.env.STAGING_RADIANT_BACKEND_SERVER,
-    PRODUCTION: process.env.PROD_RADIANT_BACKEND_SERVER,
+    PRODUCTION: process.env.PRODUCTION_RADIANT_BACKEND_SERVER,
 };
 
-const streamTracker = {
-
+const S3Bucket = {
+    DEV: process.env.DEV_S3_BUCKET,
+    STAGING: process.env.STAGING_S3_BUCKET,
+    PRODUCTION: process.env.PRODUCTION_S3_BUCKET,
 };
+
+const streamTracker = {};
 let watcher;
 
 module.exports.watcher = (ouPath, args) => {
@@ -143,7 +147,7 @@ const uploadFile = function (info){
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     //upload files
     let params = {
-        Bucket: process.env.S3_BUCKET,
+        Bucket: S3Bucket[process.env.ENV],
         Key: info.path.replace(/^.*[\\\/]/, ''),
         Body: fs.createReadStream(info.path),
         ACL: 'public-read',
@@ -390,7 +394,7 @@ const updateVideo = function(videoId, thumbnailUrl, authToken){
  */
 const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId){
     const params = {
-        Bucket: process.env.S3_BUCKET,
+        Bucket: S3Bucket[process.env.ENV],
         Key: fileKey,
         Body: fs.createReadStream(thumb),
         ACL: 'public-read',
@@ -460,10 +464,10 @@ const createThumbnail = function(mainPath, fileKey) {
                    reject(e);
                });
                ffmpegSpawn.stdout.on('data', (d) => {
-                   console.log(`Thumbnail: ${d}`);
+                   // console.log(`Thumbnail: ${d}`);
                });
                ffmpegSpawn.stderr.on('data', (d) => {
-                   console.log(`Thumbnail: ${d}`);
+                   // console.log(`Thumbnail: ${d}`);
                });
                ffmpegSpawn.on('close', (c) => {
                    console.log(`Thumbnail Close: ${c}`);
