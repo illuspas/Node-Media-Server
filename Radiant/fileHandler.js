@@ -113,9 +113,11 @@ const checkFile = function (info){
             if(err === null) {
                 if(fileInfo.size <= 50000) {
                     // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                    if(streamTracker[info.path].retry <= 6){
+                    if(streamTracker[info.path].retry <= 3){
                         streamTracker[info.path].retry++;
                         checkFile(info);
+                    } else {
+                        uploadFile(info);
                     }
                 } else {
                     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
@@ -127,7 +129,7 @@ const checkFile = function (info){
                 }
             }
         });
-    }, 2000, [{
+    }, 1000, [{
         info
     }]);
 };
@@ -166,8 +168,8 @@ const uploadFile = function (info){
                             .then((res) => {
                                 console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                 console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                return createThumbnail(mainPath, `${data.Key.split('-')[0]}`).then((thumbnail) => {
-                                    return uploadThumbnail(thumbnail, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id);
+                                return createThumbnail(mainPath, `${data.Key.split('-')[0]}`).then((thumbnailInfo) => {
+                                    return uploadThumbnail(thumbnailInfo.thumbnailPath, thumbnailInfo.videoPath, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id);
                                 });
                             })).catch((err => {
                         console.log(err);
@@ -381,11 +383,12 @@ const updateVideo = function(videoId, thumbnailUrl, authToken){
 /**
  * uploadThumbnail
  * @param thumb
+ * @param videoPath
  * @param fileKey
  * @param authToken
  * @param videoId
  */
-const uploadThumbnail = function(thumb, fileKey, authToken, videoId){
+const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId){
     const params = {
         Bucket: process.env.S3_BUCKET,
         Key: fileKey,
@@ -401,13 +404,21 @@ const uploadThumbnail = function(thumb, fileKey, authToken, videoId){
             console.log(data);
             // update thumbnail on video record
             updateVideo(videoId, data.Location, authToken).then((data) => {
-                console.log(`VIDEO UPDATED SUCCESS => ${data}`);
+                console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
                 // delete thumbnail
                 fs.unlink(thumb, (err) => {
                     if(err){
                         console.log(`Error Deleting thumbnail for ${fileKey}: ${err}`);
                     } else {
-                        console.log(`Deleted File: ${fileKey}`);
+                        // console.log(`Deleted File: ${fileKey}`);
+                    }
+                });
+                // delete thumbnail video file reference
+                fs.unlink(videoPath, (err) => {
+                    if(err){
+                        console.log(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
+                    } else {
+                        // console.log(`Deleted File: ${videoPath}`);
                     }
                 });
             }).catch((err) => {
@@ -456,12 +467,12 @@ const createThumbnail = function(mainPath, fileKey) {
                });
                ffmpegSpawn.on('close', (c) => {
                    console.log(`Thumbnail Close: ${c}`);
-                   resolve(thumbnailPath);
+                   resolve({ thumbnailPath, videoPath });
                });
            } else {
                console.log(`No Video File: ${err}`);
            }
         });
-        }, 500);
+        }, 1000);
     });
 };
