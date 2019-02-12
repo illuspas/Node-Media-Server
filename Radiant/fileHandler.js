@@ -334,7 +334,7 @@ const updateVideoQuery = gql`
     mutation updateVideo($id: ID!, $thumbnail: String!){
         updateVideo(input:{
             id:$id
-            thumbnail:$thumbnail
+            thumbnailUrl:$thumbnail
         }){
             id
             thumbnailUrl
