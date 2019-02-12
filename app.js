@@ -3,7 +3,7 @@ const dotenv = require('dotenv').config();
 const dotenvParseVariables = require('dotenv-parse-variables');
 
 if(dotenv.error){
-
+  throw dotenv.error;
 }
 const env = dotenvParseVariables(dotenv.parsed);
 
