@@ -33,7 +33,7 @@ const config = {
     secret: process.env.SHARED_SECRET,
   },
   trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
+    ffmpeg: process.env.FFMPEG_PATH,
     tasks: [
         // {
         //   app: 'live',
