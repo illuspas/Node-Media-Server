@@ -41,19 +41,11 @@ module.exports.watcher = (ouPath, args) => {
             streamTracker[path].m3u8 = false;
         }
         // console.log(`TOPIC = ${args.conversationTopicId}`);
-        if(ext !== 'DS_Store'){
-            checkFile({
-                path,
-                conversationTopicId: args.conversationTopicId,
-                authToken,
-            });
-        } else if(ext === 'DS_Store'){
-            fs.unlink(path, (err) => {
-               if(err){
-                   console.log(err);
-               }
-            });
-        }
+      checkFile({
+          path,
+          conversationTopicId: args.conversationTopicId,
+          authToken,
+      });
     });
 };
 
@@ -133,7 +125,7 @@ const checkFile = function (info){
                 if(err === null) {
                     if(fileInfo.size <= 50000 && ext !== 'm3u8') {
                         // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                        if(streamTracker[info.path].retry <= 3){
+                        if(streamTracker[info.path].retry <= 4){
                             streamTracker[info.path].retry++;
                             checkFile(info);
                         } else {
@@ -150,7 +142,7 @@ const checkFile = function (info){
                     console.log(`File not found ${err}`);
                 }
             });
-        }, 500, [{
+        }, 1000, [{
             info
         }]);
     }
