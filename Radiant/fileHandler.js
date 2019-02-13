@@ -41,11 +41,19 @@ module.exports.watcher = (ouPath, args) => {
             streamTracker[path].m3u8 = false;
         }
         // console.log(`TOPIC = ${args.conversationTopicId}`);
-      checkFile({
-          path,
-          conversationTopicId: args.conversationTopicId,
-          authToken,
-      });
+        if(ext !== 'DS_Store'){
+            checkFile({
+                path,
+                conversationTopicId: args.conversationTopicId,
+                authToken,
+            });
+        } else if(ext === 'DS_Store'){
+            fs.unlink(path, (err) => {
+               if(err){
+                   console.log(err);
+               }
+            });
+        }
     });
 };
 
@@ -116,10 +124,14 @@ const checkM3U8 = (file) => {
  * @param info
  */
 const checkFile = function (info){
+    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
+    if(ext === 'm3u8'){
+        uploadFile(info);
+    }
     setTimeout((args) => {
         fs.stat(args[0].info.path, (err, fileInfo) => {
             if(err === null) {
-                if(fileInfo.size <= 50000) {
+                if(fileInfo.size <= 50000 && ext !== 'm3u8') {
                     // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
                     if(streamTracker[info.path].retry <= 3){
                         streamTracker[info.path].retry++;
@@ -128,11 +140,12 @@ const checkFile = function (info){
                         uploadFile(info);
                     }
                 } else {
-                    const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
                     if(ext !== 'm3u8') {
                         delete streamTracker[info.path];
                     }
-                    uploadFile(info);
+                    if(ext !== 'm3u8'){
+                        uploadFile(info);
+                    }
                     // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
                 }
             }  else {
@@ -181,7 +194,7 @@ const uploadFile = function (info){
                                         console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
                                         console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
                                         return createThumbnail(mainPath, `${data.Key.split('-')[0]}`).then((thumbnailInfo) => {
-                                            return uploadThumbnail(thumbnailInfo.thumbnailPath, thumbnailInfo.videoPath, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id);
+                                            return uploadThumbnail(thumbnailInfo.thumbnailPath, thumbnailInfo.videoPath, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id, 0);
                                         });
                                     })).catch((err => {
                                 console.log(err);
@@ -405,16 +418,17 @@ const updateVideo = function(videoId, thumbnailUrl, authToken){
  * @param authToken
  * @param videoId
  */
-const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId){
-    const params = {
-        Bucket: S3Bucket[process.env.ENV],
-        Key: fileKey,
-        Body: fs.createReadStream(thumb),
-        ACL: 'public-read',
-        ContentType: 'image/png',
-    };
+const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, retry){
     fs.stat(thumb, (err) => {
-       if(err === null) {
+        if(err === null) {
+            const params = {
+                Bucket: S3Bucket[process.env.ENV],
+                Key: fileKey,
+                Body: fs.createReadStream(thumb),
+                ACL: 'public-read',
+                ContentType: 'image/png',
+            };
+
            // upload thumbnail
            AWS.getS3().upload(params, (err, data) => {
                if(err){
@@ -447,9 +461,13 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId){
            });
        } else {
            console.log(`File not found ${err} aborting thumbnail upload`);
+            console.log(`Retrying Thumbnail Upload for ${fileKey} thumb: ${thumb}`);
+            retry++;
+            if(retry <= 3){
+                uploadThumbnail(thumb, videoPath, fileKey, authToken, videoId, retry);
+            }
        }
     });
-
 };
 /**
  * createThumbnail
