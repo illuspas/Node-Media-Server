@@ -69,9 +69,11 @@ module.exports.end = (streamPath) => {
                         if(err === null) {
                             fs.unlink(file, (err, data) => {
                                 if(err){
-                                    console.log(err);
+                                    console.log(`ERROR: File Not Found ${err.message}`);
                                 }
                             });
+                        } else {
+                            console.log(`File not found ${err}`);
                         }
                     });
                 }
@@ -92,9 +94,9 @@ const checkM3U8 = (file) => {
                 if(line === '#EXT-X-ENDLIST\n'){
                     console.log(`#EXT-X-ENDLIST => ${file}`);
                     console.log(`Deleting file => ${file}`);
-                    fs.unlink(file, (err, data) => {
+                    fs.unlink(file, (err) => {
                         if(err){
-                            console.log(err);
+                            console.log(`ERROR: File Not Found ${err.message}`);
                         }
                         delete streamTracker[file];
                     });
@@ -103,6 +105,8 @@ const checkM3U8 = (file) => {
                     // console.log('NOT END OF STREAM');
                 }
             });
+        } else {
+            console.log(`File not found ${err}`);
         }
     });
 };
@@ -131,6 +135,8 @@ const checkFile = function (info){
                     uploadFile(info);
                     // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
                 }
+            }  else {
+                console.log(`File not found ${err}`);
             }
         });
     }, 1000, [{
@@ -145,72 +151,81 @@ const checkFile = function (info){
 const uploadFile = function (info){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
-    //upload files
-    let params = {
-        Bucket: S3Bucket[process.env.ENV],
-        Key: info.path.replace(/^.*[\\\/]/, ''),
-        Body: fs.createReadStream(info.path),
-        ACL: 'public-read',
-        ContentType: mimeType,
-    };
+    fs.stat(info.path, (err) => {
+        if(err === null) {
+            //upload files
+            let params = {
+                Bucket: S3Bucket[process.env.ENV],
+                Key: info.path.replace(/^.*[\\\/]/, ''),
+                Body: fs.createReadStream(info.path),
+                ACL: 'public-read',
+                ContentType: mimeType,
+            };
 
-    AWS.getS3().upload(params, (err, data) => {
-        if(err){
-            console.log(err);
-        } else {
-            // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
-            const pathFind = info.path.match(/^(.*[\\\/])/);
-            const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
-            try{
-                if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
-                    streamTracker[info.path].m3u8 = true;
-                    console.log(`-=*[ CREATING VIDEO STREAM ]*=-`);
-                    // console.log(`-=*[ conversationTopicId = ${info.conversationTopicId} ]*=-`);
-                    // console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
-                    createVideoStream(info.conversationTopicId, info.authToken)
-                        .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
-                            .then((res) => {
-                                console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
-                                console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
-                                return createThumbnail(mainPath, `${data.Key.split('-')[0]}`).then((thumbnailInfo) => {
-                                    return uploadThumbnail(thumbnailInfo.thumbnailPath, thumbnailInfo.videoPath, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id);
-                                });
-                            })).catch((err => {
-                        console.log(err);
-                    }));
-                }
-            } catch (e) {
-                console.log(`ERROR: ${e.message} not too big of a deal :D`);
-            }
-
-            if(ext === 'ts'){
-                // upload m3u8 to keep it updated
-                const m3u8 = data.Key.split('-')[0];
-                uploadFile({
-                    path: `${mainPath}/${m3u8}-i.m3u8`,
-                    authToken: info.authToken,
-                    conversationTopicId: info.conversationTopicId,
-                });
-                // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
-                // delete ts file
-                // console.log(`deleting file => ${info.path}`);
-                if(info.path === `${mainPath}/${m3u8}-i1.ts`){
-                    // dont delete
+            AWS.getS3().upload(params, (err, data) => {
+                if(err){
+                    console.log(`Error Uploading FILE to S3: ${err}`);
                 } else {
-                    fs.stat(info.path, (err) => {
-                        if(err === null) {
-                            fs.unlink(info.path, (err, data) => {
-                                if(err){
-                                    console.log(err);
+                    // console.log(`${data.Key} uploaded to: ${data.Bucket}`);
+                    const pathFind = info.path.match(/^(.*[\\\/])/);
+                    const mainPath = pathFind[0].substr(0, pathFind[0].length - 1);
+                    try{
+                        if(ext === 'm3u8' && !streamTracker[info.path].m3u8){
+                            streamTracker[info.path].m3u8 = true;
+                            // console.log(`-=*[ CREATING VIDEO STREAM ]*=-`);
+                            console.log(`-=*[ CREATING VIDEO STREAM conversationTopicId = ${info.conversationTopicId} fileKey = ${info.path.replace(/^.*[\\\/]/, '')} ]*=-`);
+                            // console.log(`-=*[ auth token = ${info.authToken} ]*=-`);
+                            createVideoStream(info.conversationTopicId, info.authToken)
+                                .then((vidData) => updateVideoStream(vidData, data.Key, mainPath, info.authToken)
+                                    .then((res) => {
+                                        console.log(`-=*[ StreamID = : ${res.videoStreamData.liveStream.updateStream.id} ]*=-`);
+                                        console.log(`-=*[ Stream downloadUrl : ${res.videoStreamData.liveStream.updateStream.downloadUrl.url} ]*=-`);
+                                        return createThumbnail(mainPath, `${data.Key.split('-')[0]}`).then((thumbnailInfo) => {
+                                            return uploadThumbnail(thumbnailInfo.thumbnailPath, thumbnailInfo.videoPath, data.Key.split('-')[0],  info.authToken, res.vidData.conversationTopic.createConversationTopicVideo.video.id);
+                                        });
+                                    })).catch((err => {
+                                console.log(err);
+                            }));
+                        }
+                    } catch (e) {
+                        console.log(`ERROR: ${e.message} not too big of a deal :D`);
+                    }
+
+                    if(ext === 'ts'){
+                        // upload m3u8 to keep it updated
+                        const m3u8 = data.Key.split('-')[0];
+                        console.log(`-=*[ Updating - conversationTopicId = ${info.conversationTopicId} fileKey = ${m3u8} ]*=-`);
+                        uploadFile({
+                            path: `${mainPath}/${m3u8}-i.m3u8`,
+                            authToken: info.authToken,
+                            conversationTopicId: info.conversationTopicId,
+                        });
+                        // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
+                        // delete ts file
+                        // console.log(`deleting file => ${info.path}`);
+                        if(info.path === `${mainPath}/${m3u8}-i1.ts`){
+                            // dont delete
+                        } else {
+                            fs.stat(info.path, (err) => {
+                                if(err === null) {
+                                    fs.unlink(info.path, (err, data) => {
+                                        if(err){
+                                            console.log(`ERROR: File Not Found ${err.message}`);
+                                        }
+                                    });
+                                } else {
+                                    console.log(`File not found ${err}`);
                                 }
                             });
                         }
-                    });
+                    } else if(ext === 'm3u8'){
+                        const m3u8 = data.Key.split('-')[0];
+                        checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
+                    }
                 }
-            } else if(ext === 'm3u8'){
-                const m3u8 = data.Key.split('-')[0];
-                checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
-            }
+            });
+        } else {
+            console.log(`File not found ${err} aborting upload`);
         }
     });
 };
@@ -322,15 +337,14 @@ const updateVideoStream = function(vidData, key, mainPath, authToken) {
         query: print(videoStreamQuery),
         variables,
     }, options).then((results) => {
-        console.log('-=*[ UPDATING VIDEO STREAM ]*=-');
+        console.log('-=*[ UPDATED VIDEO STREAM ]*=-');
         console.log(`-=*[ m3u8 : ${results.data.data.liveStream.updateStream.downloadUrl.url} ]*=-`);
         return {
             vidData,
             videoStreamData: results.data.data
         };
     }).catch((err) => {
-        console.log('ERROR -- Updated Video Stream');
-        console.log(err);
+        console.log(`ERROR -- Updated Video Stream ${err}`);
     });
 };
 
@@ -379,8 +393,7 @@ const updateVideo = function(videoId, thumbnailUrl, authToken){
         console.log(`-=*[ Thumbnail Url: ${thumbnailUrl} ]*=-`);
         return results;
     }).catch((err) => {
-        console.log('ERROR -- Updated Video');
-        console.log(err);
+        console.log(`ERROR -- Updated Video: ${err}`);
     });
 };
 
@@ -400,36 +413,43 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId){
         ACL: 'public-read',
         ContentType: 'image/png',
     };
-    // upload thumbnail
-    AWS.getS3().upload(params, (err, data) => {
-        if(err){
-            console.log(err);
-        } else {
-            console.log(data);
-            // update thumbnail on video record
-            updateVideo(videoId, data.Location, authToken).then((data) => {
-                console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
-                // delete thumbnail
-                fs.unlink(thumb, (err) => {
-                    if(err){
-                        console.log(`Error Deleting thumbnail for ${fileKey}: ${err}`);
-                    } else {
-                        // console.log(`Deleted File: ${fileKey}`);
-                    }
-                });
-                // delete thumbnail video file reference
-                fs.unlink(videoPath, (err) => {
-                    if(err){
-                        console.log(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
-                    } else {
-                        // console.log(`Deleted File: ${videoPath}`);
-                    }
-                });
-            }).catch((err) => {
-                console.log(`UPDATE VIDEO ERROR: ${err}`);
-            });
-        }
+    fs.stat(thumb, (err) => {
+       if(err === null) {
+           // upload thumbnail
+           AWS.getS3().upload(params, (err, data) => {
+               if(err){
+                   console.log(`ERROR uploading THUMBNAIL to S3: ${err}`);
+               } else {
+                   console.log(data);
+                   // update thumbnail on video record
+                   updateVideo(videoId, data.Location, authToken).then((data) => {
+                       console.log(`VIDEO UPDATED SUCCESS => ${data.data.data.updateVideo.id}`);
+                       // delete thumbnail
+                       fs.unlink(thumb, (err) => {
+                           if(err){
+                               console.log(`Error Deleting thumbnail for ${fileKey}: ${err}`);
+                           } else {
+                               // console.log(`Deleted File: ${fileKey}`);
+                           }
+                       });
+                       // delete thumbnail video file reference
+                       fs.unlink(videoPath, (err) => {
+                           if(err){
+                               console.log(`Error Deleting video reference for thumbnail: ${videoPath}: ${err}`);
+                           } else {
+                               // console.log(`Deleted File: ${videoPath}`);
+                           }
+                       });
+                   }).catch((err) => {
+                       console.log(`UPDATE VIDEO ERROR: ${err}`);
+                   });
+               }
+           });
+       } else {
+           console.log(`File not found ${err} aborting thumbnail upload`);
+       }
     });
+
 };
 /**
  * createThumbnail

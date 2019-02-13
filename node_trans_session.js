@@ -19,7 +19,7 @@ class NodeTransSession extends EventEmitter {
   }
 
   run() {
-    console.log('NODE_TRANS_SESSION!');
+    // console.log('NODE_TRANS_SESSION!');
     let vc = this.conf.args.vc == 7 ? 'copy' : 'libx264';
     let ac = this.conf.args.ac == 10 ? 'copy' : 'aac';
     let inPath = 'rtmp://127.0.0.1:' + this.conf.port + this.conf.streamPath;
