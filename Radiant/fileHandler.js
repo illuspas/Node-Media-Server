@@ -127,34 +127,33 @@ const checkFile = function (info){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     if(ext === 'm3u8'){
         uploadFile(info);
-    }
-    setTimeout((args) => {
-        fs.stat(args[0].info.path, (err, fileInfo) => {
-            if(err === null) {
-                if(fileInfo.size <= 50000 && ext !== 'm3u8') {
-                    // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                    if(streamTracker[info.path].retry <= 3){
-                        streamTracker[info.path].retry++;
-                        checkFile(info);
+    } else {
+        setTimeout((args) => {
+            fs.stat(args[0].info.path, (err, fileInfo) => {
+                if(err === null) {
+                    if(fileInfo.size <= 50000 && ext !== 'm3u8') {
+                        // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
+                        if(streamTracker[info.path].retry <= 3){
+                            streamTracker[info.path].retry++;
+                            checkFile(info);
+                        } else {
+                            uploadFile(info);
+                        }
                     } else {
-                        uploadFile(info);
+                        if(ext !== 'm3u8') {
+                            delete streamTracker[info.path];
+                            uploadFile(info);
+                        }
+                        // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
                     }
-                } else {
-                    if(ext !== 'm3u8') {
-                        delete streamTracker[info.path];
-                    }
-                    if(ext !== 'm3u8'){
-                        uploadFile(info);
-                    }
-                    // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
+                }  else {
+                    console.log(`File not found ${err}`);
                 }
-            }  else {
-                console.log(`File not found ${err}`);
-            }
-        });
-    }, 1000, [{
-        info
-    }]);
+            });
+        }, 500, [{
+            info
+        }]);
+    }
 };
 
 /**
