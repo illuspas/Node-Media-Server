@@ -69,7 +69,6 @@ class NodeTransSession extends EventEmitter {
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
-      fileHandler.end(this.conf.streamPath);
       this.emit('end');
     });
   }
