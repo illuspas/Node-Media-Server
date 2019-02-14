@@ -45,40 +45,39 @@ module.exports.watcher = (ouPath, args) => {
           path,
           conversationTopicId: args.conversationTopicId,
           authToken,
-      });
+      }, 0);
     });
 };
 
 module.exports.end = (streamPath) => {
   // check directory for files left
-    setTimeout(() => {
-        watcher.close();
-        fs.readdir(`./media${streamPath}`, (err, files) => {
-            if(err){
-                console.log('-=*[ERROR: no such file or directory ]*=-');
-            }
-            // console.log('-=*[ Cleanup remaining files ]*=-');
-            files.forEach(file => {
-                const fileC = file.split('.')[1];
-                if(fileC === 'm3u8') {
-                    // checkM3U8(`media${streamPath}/${file}`);
-                } else if(fileC === 'DS_Store'){
-                    fs.stat(file, (err) => {
-                        if(err === null) {
-                            fs.unlink(file, (err, data) => {
-                                if(err){
-                                    console.log(`ERROR: File Not Found ${err.message}`);
-                                }
-                            });
-                        } else {
-                            console.log(`File not found ${err}`);
-                        }
-                    });
-                }
-            });
-        });
-    }, 1500);
-
+  //   setTimeout(() => {
+  //       watcher.close();
+  //       fs.readdir(`./media${streamPath}`, (err, files) => {
+  //           if(err){
+  //               console.log('-=*[ERROR: no such file or directory ]*=-');
+  //           }
+  //           console.log('-=*[ Cleanup remaining files ]*=-');
+  //           files.forEach(file => {
+  //               const fileC = file.split('.')[1];
+  //               if(fileC === 'm3u8') {
+  //                   // checkM3U8(`media${streamPath}/${file}`);
+  //               } else if(fileC === 'DS_Store'){
+  //                   fs.stat(file, (err) => {
+  //                       if(err === null) {
+  //                           fs.unlink(file, (err, data) => {
+  //                               if(err){
+  //                                   console.log(`ERROR: File Not Found ${err.message}`);
+  //                               }
+  //                           });
+  //                       } else {
+  //                           console.log(`File not found ${err}`);
+  //                       }
+  //                   });
+  //               }
+  //           });
+  //       });
+  //   }, 1500);
 };
 
 /**
@@ -90,14 +89,11 @@ const checkM3U8 = (file) => {
         if(err === null) {
             readLastLines.read(file, 1).then((line) => {
                 if(line === '#EXT-X-ENDLIST\n'){
-                    console.log(`#EXT-X-ENDLIST => ${file}`);
-                    console.log(`Deleting file => ${file}`);
-                    fs.unlink(file, (err) => {
-                        if(err){
-                            console.log(`ERROR: File Not Found ${err.message}`);
-                        }
-                        delete streamTracker[file];
-                    });
+                    // console.log(`#EXT-X-ENDLIST => ${file}`);
+                    // console.log(`Deleting file => ${file}`);
+                    uploadFile({
+                        path: file,
+                    }, true);
                 } else {
                     // for debugging
                     // console.log('NOT END OF STREAM');
@@ -112,43 +108,33 @@ const checkM3U8 = (file) => {
 /**
  * checkFileAgain
  * @param info
+ * @param previousSize
  */
-const checkFile = function (info){
+const checkFile = function (info, previousSize){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     if(ext === 'm3u8'){
-        uploadFile(info);
+        uploadFile(info, false);
     } else {
-        setTimeout((args) => {
-            fs.stat(args[0].info.path, (err, fileInfo) => {
-                if(err === null) {
-                    if(fileInfo.size <= 50000) {
-                        // console.log(`-=*[ checking file: ${info.path} with size: ${fileInfo.size}: checking again in 1.5 sec ]*=-`);
-                        if(streamTracker[info.path].retry <= 4){
-                            streamTracker[info.path].retry++;
-                            checkFile(info);
-                        } else {
-                            uploadFile(info);
-                        }
-                    } else {
-                        delete streamTracker[info.path];
-                        uploadFile(info);
-                        // console.log(`-=*[ uploading file: ${info.path} with size: ${fileInfo.size} ]*=-`);
-                    }
-                }  else {
-                    console.log(`File not found ${err}`);
+        fs.stat(info.path, (err, fileInfo) => {
+            if(err === null) {
+                if(fileInfo.size === previousSize && fileInfo.size > 0) {
+                    uploadFile(info, false);
+                } else {
+                    checkFile(info, fileInfo.size);
                 }
-            });
-        }, 1000, [{
-            info
-        }]);
+            }  else {
+                console.log(`File not found ${err}`);
+            }
+        });
     }
 };
 
 /**
  * uploadFile
  * @param info
+ * @param endStream
  */
-const uploadFile = function (info){
+const uploadFile = function (info, endStream){
     const ext = info.path.replace(/^.*[\\\/]/, '').split('.')[1];
     const mimeType = ext === 'ts' ? 'video/MP2T' : 'application/x-mpegURL';
     fs.stat(info.path, (err) => {
@@ -188,21 +174,20 @@ const uploadFile = function (info){
                     } catch (e) {
                         console.log(`ERROR: ${e.message} not too big of a deal :D`);
                     }
-
+                    const m3u8 = data.Key.split('-')[0];
                     if(ext === 'ts'){
                         // upload m3u8 to keep it updated
-                        const m3u8 = data.Key.split('-')[0];
                         // console.log(`-=*[ Updating - conversationTopicId = ${info.conversationTopicId} fileKey = ${m3u8} ]*=-`);
                         uploadFile({
                             path: `${mainPath}/${m3u8}-i.m3u8`,
                             authToken: info.authToken,
                             conversationTopicId: info.conversationTopicId,
-                        });
+                        }, false);
                         // console.log(`-=*[ UPDATE: uploading file: ${mainPath}/${m3u8}-i.m3u8 ]*=-`);
                         // delete ts file
                         // console.log(`deleting file => ${info.path}`);
-                        if(info.path === `${mainPath}/${m3u8}-i1.ts`){
-                            // dont delete
+                        if(info.path === `${mainPath}/${m3u8}-i0.ts`){
+                            // dont delete we use this file for thumbnail
                         } else {
                             fs.stat(info.path, (err) => {
                                 if(err === null) {
@@ -216,9 +201,19 @@ const uploadFile = function (info){
                                 }
                             });
                         }
-                    } else if(ext === 'm3u8'){
-                        const m3u8 = data.Key.split('-')[0];
+                    } else if(ext === 'm3u8' && !endStream){
+
                         checkM3U8(`${mainPath}/${m3u8}-i.m3u8`);
+                    }
+                    // endstream we delete the m3u8 after it has been finalized
+                    if(endStream) {
+                        console.log(`STREAM END = Deleting File: ${mainPath}/${m3u8}-i.m3u8}`);
+                        fs.unlink(`${mainPath}/${m3u8}-i.m3u8`, (err) => {
+                            if(err){
+                                console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
+                            }
+                            delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
+                        });
                     }
                 }
             });
@@ -470,7 +465,7 @@ const uploadThumbnail = function(thumb, videoPath, fileKey, authToken, videoId, 
 const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
     console.log(`-=*[ Thumbnail Creation ]*=-  ${fileKey}`);
     const thumbnailPath = `media/thumbnails/${fileKey}.png`;
-    const videoPath = `${mainPath}/${fileKey}-i1.ts`;
+    const videoPath = `${mainPath}/${fileKey}-i0.ts`;
     setTimeout(() =>{
     fs.stat(videoPath, (err, data) => {
        if(err === null){
@@ -490,7 +485,6 @@ const createThumbnail = function(mainPath, fileKey, authToken, videoId, retry) {
            const ffmpegSpawn = spawn(process.env.FFMPEG_PATH, argv);
            ffmpegSpawn.on('error', (e) => {
                console.log(`Error Creating Thumbnail: ${e}`);
-               reject(e);
            });
            ffmpegSpawn.stdout.on('data', (d) => {
                // console.log(`Thumbnail: ${d}`);
