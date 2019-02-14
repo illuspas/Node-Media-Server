@@ -49,37 +49,6 @@ module.exports.watcher = (ouPath, args) => {
     });
 };
 
-module.exports.end = (streamPath) => {
-  // check directory for files left
-  //   setTimeout(() => {
-  //       watcher.close();
-  //       fs.readdir(`./media${streamPath}`, (err, files) => {
-  //           if(err){
-  //               console.log('-=*[ERROR: no such file or directory ]*=-');
-  //           }
-  //           console.log('-=*[ Cleanup remaining files ]*=-');
-  //           files.forEach(file => {
-  //               const fileC = file.split('.')[1];
-  //               if(fileC === 'm3u8') {
-  //                   // checkM3U8(`media${streamPath}/${file}`);
-  //               } else if(fileC === 'DS_Store'){
-  //                   fs.stat(file, (err) => {
-  //                       if(err === null) {
-  //                           fs.unlink(file, (err, data) => {
-  //                               if(err){
-  //                                   console.log(`ERROR: File Not Found ${err.message}`);
-  //                               }
-  //                           });
-  //                       } else {
-  //                           console.log(`File not found ${err}`);
-  //                       }
-  //                   });
-  //               }
-  //           });
-  //       });
-  //   }, 1500);
-};
-
 /**
  * checkM3U8
  * @param file
@@ -213,6 +182,7 @@ const uploadFile = function (info, endStream){
                                 console.log(`ERROR: STREAM END: File Not Found ${err.message}`);
                             }
                             delete streamTracker[`${mainPath}/${m3u8}-i.m3u8`];
+                            watcher.close();
                         });
                     }
                 }
