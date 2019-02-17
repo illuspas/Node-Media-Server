@@ -6,11 +6,9 @@ const { getStreams, getStream } = require('../controllers/streams');
 
 const router = express.Router();
 
-module.exports = nms => {
-  router.use(authCheck.bind(nms));
+router.use(authCheck);
 
-  router.get('/', getStreams.bind(nms));
-  router.get('/:app/:stream', getStream.bind(nms));
+router.get('/', getStreams);
+router.get('/:app/:stream', getStream);
 
-  return router;
-};
+module.exports = router;

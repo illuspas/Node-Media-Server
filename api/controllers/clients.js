@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 function getClients(req, res, next) {
-  const nms = this;
+  const nms = req.nms;
 
   let clients = {};
 

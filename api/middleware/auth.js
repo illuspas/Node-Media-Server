@@ -1,11 +1,11 @@
 const _ = require('lodash');
 
 function authCheck(req, res, next) {
-  if (!_.get(this, ['config', 'api'], null)) {
+  if (!_.get(req.nms, ['config', 'api'], null)) {
     return next();
   }
 
-  if (_.get(this, ['config', 'api', 'key'], null) !== req.headers.apiKey) {
+  if (_.get(req.nms, ['config', 'api', 'key'], null) !== req.headers.apiKey) {
     return res.status(401).json({ error: 'Not authorized.' });
   }
 

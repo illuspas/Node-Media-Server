@@ -6,10 +6,8 @@ const { getClients } = require('../controllers/clients');
 
 const router = express.Router();
 
-module.exports = nms => {
-  router.use(authCheck.bind(nms));
+router.use(authCheck);
 
-  router.get('/', getClients.bind(nms));
+router.get('/', getClients);
 
-  return router;
-};
+module.exports = router;
