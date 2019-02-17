@@ -249,7 +249,7 @@ class NodeRtmpSession extends EventEmitter {
         }
         message.messageLength = chunkMessageHeader.readUIntBE(3, 3);
         message.messageTypeID = chunkMessageHeader[6];
-        if (previousChunk !== null) {
+        if (previousChunk) {
           message.timestamp = previousChunk.timestamp;
           message.messageStreamID = previousChunk.messageStreamID;
           message.receivedLength = previousChunk.receivedLength;
@@ -276,7 +276,7 @@ class NodeRtmpSession extends EventEmitter {
         } else {
           message.extendedTimestampType = EXTENDED_TIMESTAMP_TYPE_NOT_USED;
         }
-        if (previousChunk !== null) {
+        if (previousChunk) {
           message.timestamp = previousChunk.timestamp;
           message.messageStreamID = previousChunk.messageStreamID;
           message.messageLength = previousChunk.messageLength;
@@ -293,7 +293,7 @@ class NodeRtmpSession extends EventEmitter {
         }
       } else if (message.formatType === 3) {
         // Type 3 (0 byte)
-        if (previousChunk !== null) {
+        if (previousChunk) {
           message.timestamp = previousChunk.timestamp;
           message.messageStreamID = previousChunk.messageStreamID;
           message.messageLength = previousChunk.messageLength;
@@ -340,7 +340,7 @@ class NodeRtmpSession extends EventEmitter {
       message.receivedLength += chunkBodySize;
       message.chunks.push(chunkBody);
       if (message.receivedLength === message.messageLength) {
-        if (message.timestampDelta !== null) {
+        if (message.timestampDelta) {
           message.timestamp += message.timestampDelta;
           if (message.timestamp > TIMESTAMP_ROUNDOFF) {
             message.timestamp %= TIMESTAMP_ROUNDOFF;
@@ -369,7 +369,7 @@ class NodeRtmpSession extends EventEmitter {
     this.onCloseStream(this.playStreamId);
     this.onCloseStream(this.publishStreamId);
 
-    if (this.pingInterval !== null) {
+    if (this.pingInterval) {
       clearImmediate(this.pingInterval);
       this.pingInterval = null;
     }
@@ -521,7 +521,7 @@ class NodeRtmpSession extends EventEmitter {
     // console.log('handleAMFDataMessage', dataMessage);
     switch (dataMessage.cmd) {
       case '@setDataFrame':
-        if (dataMessage.dataObj !== null) {
+        if (dataMessage.dataObj) {
           const opt = {
             cmd: 'onMetaData',
             cmdObj: dataMessage.dataObj
@@ -622,8 +622,8 @@ class NodeRtmpSession extends EventEmitter {
 
     const rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, rtmpBody);
-    if (this.rtmpGopCacheQueue !== null) {
-      if (this.aacSequenceHeader !== null && rtmpBody[1] === 0) {
+    if (this.rtmpGopCacheQueue) {
+      if (this.aacSequenceHeader && rtmpBody[1] === 0) {
         //skip aac sequence header
       } else {
         this.rtmpGopCacheQueue.add(rtmpMessage);
@@ -679,7 +679,7 @@ class NodeRtmpSession extends EventEmitter {
     const rtmpMessage = this.createRtmpMessage(rtmpHeader, rtmpBody);
     const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, rtmpBody);
 
-    if ((codec_id === 7 || codec_id === 12) && this.rtmpGopCacheQueue !== null) {
+    if ((codec_id === 7 || codec_id === 12) && this.rtmpGopCacheQueue) {
       if (frame_type === 1 && rtmpBody[1] === 1) {
         this.rtmpGopCacheQueue.clear();
         this.flvGopCacheQueue.clear();
@@ -863,7 +863,7 @@ class NodeRtmpSession extends EventEmitter {
     }
     this.connectCmdObj = cmdObj;
     this.appname = cmdObj.app;
-    this.objectEncoding = cmdObj.objectEncoding !== null ? cmdObj.objectEncoding : 0;
+    this.objectEncoding = cmdObj.objectEncoding ? cmdObj.objectEncoding : 0;
     this.sendWindowACK(5000000);
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
@@ -950,7 +950,7 @@ class NodeRtmpSession extends EventEmitter {
 
       this.isPlaying = true;
       //metaData
-      if (publisher.metaData !== null) {
+      if (publisher.metaData) {
         const rtmpHeader = {
           chunkStreamID: 5,
           timestamp: 0,
@@ -985,7 +985,7 @@ class NodeRtmpSession extends EventEmitter {
         this.socket.write(rtmpMessage);
       }
       //send gop cache
-      if (publisher.rtmpGopCacheQueue !== null) {
+      if (publisher.rtmpGopCacheQueue) {
         for (const rtmpMessage of publisher.rtmpGopCacheQueue) {
           rtmpMessage.writeUInt32LE(this.playStreamId, 8);
           this.socket.write(rtmpMessage);
@@ -1013,7 +1013,7 @@ class NodeRtmpSession extends EventEmitter {
     if (this.isPlaying && this.playStreamId === streamID) {
       this.sendStatusMessage(this.playStreamId, 'status', 'NetStream.Play.Stop', 'Stopped playing stream.');
       const publisherPath = this.publishers.get(this.playStreamPath);
-      if (publisherPath !== null) {
+      if (publisherPath) {
         this.sessions.get(publisherPath).players.delete(this.id);
       }
       this.isPlaying = false;

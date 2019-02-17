@@ -18,7 +18,7 @@ class NodeFlvSession extends EventEmitter {
     this.res = res;
     this.bp = new BufferPool();
     this.bp.on('error', e => {});
-    this.allow_origin = config.http.allow_origin === undefined ? '*' : config.http.allow_origin;
+    this.allow_origin = config.http.allow_origin || '*';
     this.isPublisher = false;
     this.playStreamPath = '';
     this.playArgs = null;
@@ -127,7 +127,7 @@ class NodeFlvSession extends EventEmitter {
     if (!this.isPublisher) {
       const publisherId = this.publishers.get(this.playStreamPath);
 
-      if (publisherId !== null) {
+      if (publisherId) {
         this.sessions.get(publisherId).players.delete(this.id);
         this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
@@ -184,7 +184,7 @@ class NodeFlvSession extends EventEmitter {
       FLVHeader[4] |= 0b00000001;
     }
     this.res.write(FLVHeader);
-    if (publisher.metaData !== null) {
+    if (publisher.metaData) {
       //send Metadata
       const rtmpHeader = {
         chunkStreamID: 5,
@@ -219,7 +219,7 @@ class NodeFlvSession extends EventEmitter {
       this.res.write(flvMessage);
     }
     //send gop cache
-    if (publisher.flvGopCacheQueue !== null) {
+    if (publisher.flvGopCacheQueue) {
       for (const flvMessage of publisher.flvGopCacheQueue) {
         this.res.write(flvMessage);
       }
