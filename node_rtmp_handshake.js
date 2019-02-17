@@ -12,7 +12,7 @@ const MESSAGE_FORMAT_2 = 2;
 const RTMP_SIG_SIZE = 1536;
 const SHA256DL = 32;
 
-const RandomCrud = new Buffer([
+const RandomCrud = Buffer.from([
   0xf0,
   0xee,
   0xc2,
@@ -48,10 +48,10 @@ const RandomCrud = new Buffer([
 ]);
 
 const GenuineFMSConst = 'Genuine Adobe Flash Media Server 001';
-const GenuineFMSConstCrud = Buffer.concat([new Buffer(GenuineFMSConst, 'utf8'), RandomCrud]);
+const GenuineFMSConstCrud = Buffer.concat([Buffer.from(GenuineFMSConst, 'utf8'), RandomCrud]);
 
 const GenuineFPConst = 'Genuine Adobe Flash Player 001';
-const GenuineFPConstCrud = Buffer.concat([new Buffer(GenuineFPConst, 'utf8'), RandomCrud]);
+const GenuineFPConstCrud = Buffer.concat([Buffer.from(GenuineFPConst, 'utf8'), RandomCrud]);
 
 function calcHmac(data, key) {
   var hmac = Crypto.createHmac('sha256', key);
@@ -92,7 +92,7 @@ function detectClientMessageFormat(clientsig) {
 
 function generateS1(messageFormat) {
   var randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
-  var handshakeBytes = Buffer.concat([new Buffer([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
+  var handshakeBytes = Buffer.concat([Buffer.from([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
 
   var serverDigestOffset;
   if (messageFormat === 1) {

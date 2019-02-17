@@ -685,21 +685,21 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   sendACK(size) {
-    let rtmpBuffer = new Buffer('02000000000004030000000000000000', 'hex');
+    let rtmpBuffer = Buffer.from('02000000000004030000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('windowACK: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   sendWindowACK(size) {
-    let rtmpBuffer = new Buffer('02000000000004050000000000000000', 'hex');
+    let rtmpBuffer = Buffer.from('02000000000004050000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('windowACK: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   setPeerBandwidth(size, type) {
-    let rtmpBuffer = new Buffer('0200000000000506000000000000000000', 'hex');
+    let rtmpBuffer = Buffer.from('0200000000000506000000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     rtmpBuffer[16] = type;
     // //console.log('setPeerBandwidth: '+rtmpBuffer.hex());
@@ -707,14 +707,14 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   setChunkSize(size) {
-    let rtmpBuffer = new Buffer('02000000000004010000000000000000', 'hex');
+    let rtmpBuffer = Buffer.from('02000000000004010000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('setChunkSize: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   sendStreamStatus(st, id) {
-    let rtmpBuffer = new Buffer('020000000000060400000000000000000000', 'hex');
+    let rtmpBuffer = Buffer.from('020000000000060400000000000000000000', 'hex');
     rtmpBuffer.writeUInt16BE(st, 12);
     rtmpBuffer.writeUInt32BE(id, 14);
     this.socket.write(rtmpBuffer);
@@ -769,7 +769,7 @@ class NodeRtmpSession extends EventEmitter {
       messageTypeID: 0x4,
       messageStreamID: 0
     };
-    let rtmpBody = new Buffer([
+    let rtmpBody = Buffer.from([
       0,
       6,
       (currentTimestamp >> 24) & 0xff,
