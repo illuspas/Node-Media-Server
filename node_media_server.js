@@ -30,8 +30,10 @@ class NodeMediaServer {
     if (this.config.http) {
       this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
 
-      this.nhs.expressApp.use(req => {
+      this.nhs.expressApp.use((req, res, next) => {
         req.nms = this;
+
+        next();
       });
 
       this.nhs.expressApp.use('/api/streams', streams);
