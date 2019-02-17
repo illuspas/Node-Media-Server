@@ -4,7 +4,9 @@
   "description": "A Node.js implementation of RTMP Server",
   "main": "node_media_server.js",
   "scripts": {
-    "test": "node app.js"
+    "lint": "prettier --list-different \"**/*.{ts,js,json,html,css,scss,md}\"",
+    "lint:fix": "prettier --write \"**/*.{ts,js,json,html,css,scss,md}\"",
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -26,5 +28,8 @@
     "express": "^4.15.4",
     "lodash": "^4.17.4",
     "ws": "^3.1.0"
+  },
+  "devDependencies": {
+    "prettier": "^1.16.4"
   }
 }
