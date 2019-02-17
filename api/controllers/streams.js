@@ -5,7 +5,7 @@ function getStreams(req, res, next) {
 
   let stats = {};
 
-  nms.sessions.forEach(function(session, id) {
+  nms.sessions.forEach((session, id) => {
     if (session.isStarting) {
       let regRes = /\/(.*)\/(.*)/gi.exec(session.publishStreamPath || session.playStreamPath);
 

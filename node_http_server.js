@@ -26,6 +26,7 @@ class NodeHttpServer {
       res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
       res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'range');
+
       res.end();
     });
 
@@ -58,6 +59,7 @@ class NodeHttpServer {
     this.wsServer.on('listening', () => {
       console.log(`Node Media WebSocket Server started on port: ${this.port}`);
     });
+
     this.wsServer.on('error', e => {
       console.error(`Node Media WebSocket Server ${e}`);
     });
