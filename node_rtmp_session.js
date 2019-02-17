@@ -606,7 +606,7 @@ class NodeRtmpSession extends EventEmitter {
       if (sound_format === 10) {
         //cache aac sequence header
         if (rtmpBody[1] === 0) {
-          this.aacSequenceHeader = Buffer.from(rtmpBody);
+          this.aacSequenceHeader = new Buffer(rtmpBody);
           this.isFirstAudioReceived = true;
           const info = AAC.readAudioSpecificConfig(this.aacSequenceHeader);
           this.audioProfileName = AAC.getProfileName(info);
@@ -664,7 +664,7 @@ class NodeRtmpSession extends EventEmitter {
       if (codec_id === 7 || codec_id === 12) {
         //cache avc sequence header
         if (frame_type === 1 && rtmpBody[1] === 0) {
-          this.avcSequenceHeader = Buffer.from(rtmpBody);
+          this.avcSequenceHeader = new Buffer(rtmpBody);
           this.isFirstVideoReceived = true;
           this.rtmpGopCacheQueue = this.gopCacheEnable ? new Set() : null;
           this.flvGopCacheQueue = this.gopCacheEnable ? new Set() : null;
@@ -706,21 +706,21 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   sendACK(size) {
-    const rtmpBuffer = Buffer.from('02000000000004030000000000000000', 'hex');
+    const rtmpBuffer = new Buffer('02000000000004030000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('windowACK: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   sendWindowACK(size) {
-    const rtmpBuffer = Buffer.from('02000000000004050000000000000000', 'hex');
+    const rtmpBuffer = new Buffer('02000000000004050000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('windowACK: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   setPeerBandwidth(size, type) {
-    const rtmpBuffer = Buffer.from('0200000000000506000000000000000000', 'hex');
+    const rtmpBuffer = new Buffer('0200000000000506000000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     rtmpBuffer[16] = type;
     // //console.log('setPeerBandwidth: '+rtmpBuffer.hex());
@@ -728,14 +728,14 @@ class NodeRtmpSession extends EventEmitter {
   }
 
   setChunkSize(size) {
-    const rtmpBuffer = Buffer.from('02000000000004010000000000000000', 'hex');
+    const rtmpBuffer = new Buffer('02000000000004010000000000000000', 'hex');
     rtmpBuffer.writeUInt32BE(size, 12);
     // //console.log('setChunkSize: '+rtmpBuffer.hex());
     this.socket.write(rtmpBuffer);
   }
 
   sendStreamStatus(st, id) {
-    const rtmpBuffer = Buffer.from('020000000000060400000000000000000000', 'hex');
+    const rtmpBuffer = new Buffer('020000000000060400000000000000000000', 'hex');
     rtmpBuffer.writeUInt16BE(st, 12);
     rtmpBuffer.writeUInt32BE(id, 14);
     this.socket.write(rtmpBuffer);
@@ -790,7 +790,7 @@ class NodeRtmpSession extends EventEmitter {
       messageTypeID: 0x4,
       messageStreamID: 0
     };
-    const rtmpBody = Buffer.from([
+    const rtmpBody = new Buffer([
       0,
       6,
       (currentTimestamp >> 24) & 0xff,
