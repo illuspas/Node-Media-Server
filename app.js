@@ -14,8 +14,8 @@ const config = {
   },
   https: {
     port: 8443,
-    key:'./privatekey.pem',
-    cert:'./certificate.pem',
+    key: './privatekey.pem',
+    cert: './certificate.pem'
   },
   auth: {
     play: false,
@@ -28,8 +28,7 @@ const config = {
   }
 };
 
-
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {
@@ -73,4 +72,3 @@ nms.on('postPlay', (id, StreamPath, args) => {
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
-

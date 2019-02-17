@@ -7,11 +7,11 @@
 const Readable = require('stream').Readable;
 
 class BufferPool extends Readable {
-  constructor (options) {
+  constructor(options) {
     super(options);
   }
 
-  init (gFun) {
+  init(gFun) {
     this.readBytes = 0;
     this.poolBytes = 0;
     this.needBytes = 0;
@@ -23,7 +23,7 @@ class BufferPool extends Readable {
     this.gFun.next(true);
   }
 
-  push (buf) {
+  push(buf) {
     super.push(buf);
     this.poolBytes += buf.length;
     this.readBytes += buf.length;
@@ -32,16 +32,14 @@ class BufferPool extends Readable {
     }
   }
 
-  _read(size) {
+  _read(size) {}
 
-  }
-
-  read (size) {
+  read(size) {
     this.poolBytes -= size;
     return super.read(size);
   }
 
-  need (size) {
+  need(size) {
     let ret = this.poolBytes < size;
     if (ret) {
       this.needBytes = size;
@@ -50,4 +48,4 @@ class BufferPool extends Readable {
   }
 }
 
-module.exports = BufferPool
+module.exports = BufferPool;

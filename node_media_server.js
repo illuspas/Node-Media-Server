@@ -31,7 +31,6 @@ class NodeMediaServer {
 
       this.nhs.expressApp.use('/api/streams', channels(this));
     }
-
   }
 
   on(eventName, listener) {
@@ -43,4 +42,4 @@ class NodeMediaServer {
   }
 }
 
-module.exports = NodeMediaServer
+module.exports = NodeMediaServer;

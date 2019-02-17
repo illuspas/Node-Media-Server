@@ -41,12 +41,12 @@ class NodeHttpServer {
       }
     });
     this.expressApp.use(Express.static(__dirname + '/public'));
-    
+
     this.httpServer = Http.createServer(this.expressApp);
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
@@ -64,7 +64,7 @@ class NodeHttpServer {
       console.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
-    this.httpServer.on('error', (e) => {
+    this.httpServer.on('error', e => {
       console.error(`Node Media Http Server ${e}`);
     });
 
@@ -78,7 +78,7 @@ class NodeHttpServer {
     this.wsServer.on('listening', () => {
       console.log(`Node Media WebSocket Server started on port: ${this.port}`);
     });
-    this.wsServer.on('error', (e) => {
+    this.wsServer.on('error', e => {
       console.error(`Node Media WebSocket Server ${e}`);
     });
 
@@ -87,7 +87,7 @@ class NodeHttpServer {
         console.log(`Node Media Https Server started on port: ${this.sport}`);
       });
 
-      this.httpsServer.on('error', (e) => {
+      this.httpsServer.on('error', e => {
         console.error(`Node Media Https Server ${e}`);
       });
 
@@ -101,7 +101,7 @@ class NodeHttpServer {
       this.wssServer.on('listening', () => {
         console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
       });
-      this.wssServer.on('error', (e) => {
+      this.wssServer.on('error', e => {
         console.error(`Node Media WebSocketSecure Server ${e}`);
       });
     }
@@ -119,4 +119,4 @@ class NodeHttpServer {
   }
 }
 
-module.exports = NodeHttpServer
+module.exports = NodeHttpServer;

@@ -5,7 +5,7 @@ function getStreams(req, res, next) {
 
   let stats = {};
 
-  nms.sessions.forEach(function (session, id) {
+  nms.sessions.forEach(function(session, id) {
     if (session.isStarting) {
       let regRes = /\/(.*)\/(.*)/gi.exec(session.publishStreamPath || session.playStreamPath);
 
@@ -29,17 +29,23 @@ function getStreams(req, res, next) {
             connectCreated: session.connectTime,
             bytes: session.socket.bytesRead,
             ip: session.socket.remoteAddress,
-            audio: session.audioCodec > 0 ? {
-              codec: session.audioCodecName,
-              profile: session.audioProfileName,
-              samplerate: session.audioSamplerate,
-              channels: session.audioChannels
-            } : null,
-            video: session.videoCodec > 0 ? {
-              codec: session.videoCodecName,
-              size: session.videoSize,
-              fps: session.videoFps
-            } : null,
+            audio:
+              session.audioCodec > 0
+                ? {
+                    codec: session.audioCodecName,
+                    profile: session.audioProfileName,
+                    samplerate: session.audioSamplerate,
+                    channels: session.audioChannels
+                  }
+                : null,
+            video:
+              session.videoCodec > 0
+                ? {
+                    codec: session.videoCodecName,
+                    size: session.videoSize,
+                    fps: session.videoFps
+                  }
+                : null
           });
 
           break;
@@ -99,11 +105,14 @@ function getStream(req, res, next) {
   let publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
 
   streamStats.isLive = !!publisherSession;
-  streamStats.viewers = _.filter(Array.from(nms.sessions.values()), (session) => {
+  streamStats.viewers = _.filter(Array.from(nms.sessions.values()), session => {
     return session.playStreamPath === publishStreamPath;
   }).length;
   streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
-  streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
+  streamStats.bitrate =
+    streamStats.duration > 0
+      ? Math.ceil((_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8) / streamStats.duration / 1024)
+      : 0;
   streamStats.startTime = streamStats.isLive ? publisherSession.connectTime : null;
 
   res.json(streamStats);
