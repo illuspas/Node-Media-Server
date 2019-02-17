@@ -21,7 +21,8 @@ var nms = new NodeMediaServer(config);
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
+
+  // const session = nms.getSession(id);
   // session.reject();
 });
 
@@ -35,7 +36,8 @@ nms.on('doneConnect', (id, args) => {
 
 nms.on('prePublish', (id, StreamPath, args) => {
   console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
+
+  // const session = nms.getSession(id);
   // session.reject();
 });
 
@@ -49,7 +51,8 @@ nms.on('donePublish', (id, StreamPath, args) => {
 
 nms.on('prePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on prePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  // let session = nms.getSession(id);
+
+  // const session = nms.getSession(id);
   // session.reject();
 });
 

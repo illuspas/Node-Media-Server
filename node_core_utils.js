@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
+
 const EventEmitter = require('events');
 
 function generateNewSessionID(sessions) {

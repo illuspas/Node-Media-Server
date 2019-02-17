@@ -1,4 +1,5 @@
 const Bitop = require('bitop');
+
 const AAC_SAMPLE_RATE = [
   96000,
   88200,
