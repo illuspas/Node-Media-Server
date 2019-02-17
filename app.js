@@ -12,14 +12,12 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
-  apiAuth: {
-    access: false,
-    secret: 'nodemedia2017apikey'
+  api: {
+    key: 'nodemedia2017apikey'
   }
 };
 
 var nms = new NodeMediaServer(config);
-nms.run();
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
@@ -62,3 +60,5 @@ nms.on('postPlay', (id, StreamPath, args) => {
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
+
+nms.run();
