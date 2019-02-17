@@ -144,19 +144,9 @@ class NodeFlvSession extends EventEmitter {
 
   onPlay() {
     this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+
     if (!this.isStarting) {
       return;
-    }
-    if (this.config.auth !== undefined && this.config.auth.play) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
-      if (!results) {
-        console.log(
-          `[${this.TAG}] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`
-        );
-        this.res.statusCode = 401;
-        this.res.end();
-        return;
-      }
     }
 
     if (!this.publishers.has(this.playStreamPath)) {

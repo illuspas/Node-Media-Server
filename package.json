@@ -8,21 +8,6 @@
     "lint:fix": "prettier --write \"**/*.{ts,js,json,html,css,scss,md}\"",
     "start": "node app.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/illuspas/Node-Media-Server.git"
-  },
-  "keywords": [
-    "rtmp",
-    "flv",
-    "server"
-  ],
-  "author": "Mingliang Chen",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/illuspas/Node-Media-Server/issues"
-  },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
     "bitop": "^0.0.1",
     "express": "^4.15.4",

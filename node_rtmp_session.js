@@ -858,25 +858,9 @@ class NodeRtmpSession extends EventEmitter {
 
   onPublish() {
     this.nodeEvent.emit('prePublish', this.id, this.publishStreamPath, this.publishArgs);
+
     if (!this.isStarting) {
       return;
-    }
-    if (this.config.auth !== undefined && this.config.auth.publish) {
-      let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
-      if (!results) {
-        console.log(
-          `[rtmp publish] Unauthorized. ID=${this.id} streamPath=${this.publishStreamPath} sign=${
-            this.publishArgs.sign
-          }`
-        );
-        this.sendStatusMessage(
-          this.publishStreamId,
-          'error',
-          'NetStream.publish.Unauthorized',
-          'Authorization required.'
-        );
-        return;
-      }
     }
 
     if (this.publishers.has(this.publishStreamPath)) {
@@ -914,18 +898,9 @@ class NodeRtmpSession extends EventEmitter {
 
   onPlay() {
     this.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+
     if (!this.isStarting) {
       return;
-    }
-    if (this.config.auth !== undefined && this.config.auth.play) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
-      if (!results) {
-        console.log(
-          `[rtmp play] Unauthorized. ID=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`
-        );
-        this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.play.Unauthorized', 'Authorization required.');
-        return;
-      }
     }
 
     if (this.isPlaying) {

@@ -12,11 +12,6 @@ const config = {
     port: 8000,
     allow_origin: '*'
   },
-  auth: {
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
-  },
   apiAuth: {
     access: false,
     secret: 'nodemedia2017apikey'
