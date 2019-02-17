@@ -9,7 +9,9 @@ function getStreams(req, res, next) {
     if (session.isStarting) {
       const regRes = /\/(.*)\/(.*)/gi.exec(session.publishStreamPath || session.playStreamPath);
 
-      if (regRes === null) return;
+      if (regRes === null) {
+        return;
+      }
 
       const [app, stream] = _.slice(regRes, 1);
 

@@ -14,8 +14,8 @@ class NodeRtmpServer {
     this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
 
     this.tcpServer = Net.createServer(socket => {
-      let id = NodeCoreUtils.generateNewSessionID(sessions);
-      let session = new NodeRtmpSession(config, socket);
+      const id = NodeCoreUtils.generateNewSessionID(sessions);
+      const session = new NodeRtmpSession(config, socket);
       sessions.set(id, session);
       session.id = id;
       session.sessions = sessions;

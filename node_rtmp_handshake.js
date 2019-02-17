@@ -52,28 +52,28 @@ const GenuineFMSConst = 'Genuine Adobe Flash Media Server 001';
 const GenuineFMSConstCrud = Buffer.concat([Buffer.from(GenuineFMSConst, 'utf8'), RandomCrud]);
 
 const GenuineFPConst = 'Genuine Adobe Flash Player 001';
-const GenuineFPConstCrud = Buffer.concat([Buffer.from(GenuineFPConst, 'utf8'), RandomCrud]);
+const _GenuineFPConstCrud = Buffer.concat([Buffer.from(GenuineFPConst, 'utf8'), RandomCrud]);
 
 function calcHmac(data, key) {
-  var hmac = Crypto.createHmac('sha256', key);
+  const hmac = Crypto.createHmac('sha256', key);
   hmac.update(data);
   return hmac.digest();
 }
 
 function GetClientGenuineConstDigestOffset(buf) {
-  var offset = buf[0] + buf[1] + buf[2] + buf[3];
+  let offset = buf[0] + buf[1] + buf[2] + buf[3];
   offset = (offset % 728) + 12;
   return offset;
 }
 
 function GetServerGenuineConstDigestOffset(buf) {
-  var offset = buf[0] + buf[1] + buf[2] + buf[3];
+  let offset = buf[0] + buf[1] + buf[2] + buf[3];
   offset = (offset % 728) + 776;
   return offset;
 }
 
 function detectClientMessageFormat(clientsig) {
-  var computedSignature, msg, providedSignature, sdl;
+  let computedSignature, msg, providedSignature, sdl;
   sdl = GetServerGenuineConstDigestOffset(clientsig.slice(772, 776));
   msg = Buffer.concat([clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)], 1504);
   computedSignature = calcHmac(msg, GenuineFPConst);
@@ -92,47 +92,47 @@ function detectClientMessageFormat(clientsig) {
 }
 
 function generateS1(messageFormat) {
-  var randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
-  var handshakeBytes = Buffer.concat([Buffer.from([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
+  const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
+  const handshakeBytes = Buffer.concat([Buffer.from([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
 
-  var serverDigestOffset;
+  let serverDigestOffset;
   if (messageFormat === 1) {
     serverDigestOffset = GetClientGenuineConstDigestOffset(handshakeBytes.slice(8, 12));
   } else {
     serverDigestOffset = GetServerGenuineConstDigestOffset(handshakeBytes.slice(772, 776));
   }
 
-  msg = Buffer.concat(
+  const msg = Buffer.concat(
     [handshakeBytes.slice(0, serverDigestOffset), handshakeBytes.slice(serverDigestOffset + SHA256DL)],
     RTMP_SIG_SIZE - SHA256DL
   );
-  hash = calcHmac(msg, GenuineFMSConst);
+  const hash = calcHmac(msg, GenuineFMSConst);
   hash.copy(handshakeBytes, serverDigestOffset, 0, 32);
   return handshakeBytes;
 }
 
 function generateS2(messageFormat, clientsig, callback) {
-  var randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 32);
-  var challengeKeyOffset;
+  const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 32);
+  let challengeKeyOffset;
   if (messageFormat === 1) {
     challengeKeyOffset = GetClientGenuineConstDigestOffset(clientsig.slice(8, 12));
   } else {
     challengeKeyOffset = GetServerGenuineConstDigestOffset(clientsig.slice(772, 776));
   }
-  var challengeKey = clientsig.slice(challengeKeyOffset, challengeKeyOffset + 32);
-  var hash = calcHmac(challengeKey, GenuineFMSConstCrud);
-  var signature = calcHmac(randomBytes, hash);
-  var s2Bytes = Buffer.concat([randomBytes, signature], RTMP_SIG_SIZE);
+  const challengeKey = clientsig.slice(challengeKeyOffset, challengeKeyOffset + 32);
+  const hash = calcHmac(challengeKey, GenuineFMSConstCrud);
+  const signature = calcHmac(randomBytes, hash);
+  const s2Bytes = Buffer.concat([randomBytes, signature], RTMP_SIG_SIZE);
   return s2Bytes;
 }
 
 function generateS0S1S2(clientsig) {
-  var clientType = clientsig.slice(0, 1);
+  const clientType = clientsig.slice(0, 1);
   // console.log("[rtmp handshake] client type: " + clientType);
-  var clientsig = clientsig.slice(1);
+  clientsig = clientsig.slice(1);
 
-  var messageFormat = detectClientMessageFormat(clientsig);
-  var allBytes;
+  const messageFormat = detectClientMessageFormat(clientsig);
+  let allBytes;
   if (messageFormat === MESSAGE_FORMAT_0) {
     //    console.log('[rtmp handshake] using simple handshake.');
     allBytes = Buffer.concat([clientType, clientsig, clientsig]);

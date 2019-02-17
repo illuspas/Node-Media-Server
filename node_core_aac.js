@@ -30,12 +30,12 @@ function getObjectType(bitop) {
 
 function getSampleRate(bitop, info) {
   info.sampling_index = bitop.read(4);
-  return info.sampling_index == 0x0f ? bitop.read(24) : AAC_SAMPLE_RATE[info.sampling_index];
+  return info.sampling_index === 0x0f ? bitop.read(24) : AAC_SAMPLE_RATE[info.sampling_index];
 }
 
 function readAudioSpecificConfig(aacSequenceHeader) {
-  let info = {};
-  let bitop = new Bitop(aacSequenceHeader);
+  const info = {};
+  const bitop = new Bitop(aacSequenceHeader);
   bitop.read(16);
   info.object_type = getObjectType(bitop);
   info.sample_rate = getSampleRate(bitop, info);
@@ -45,8 +45,8 @@ function readAudioSpecificConfig(aacSequenceHeader) {
   }
   info.sbr = -1;
   info.ps = -1;
-  if (info.object_type == 5 || info.object_type == 29) {
-    if (info.object_type == 29) {
+  if (info.object_type === 5 || info.object_type === 29) {
+    if (info.object_type === 29) {
       info.ps = 1;
     }
     info.ext_object_type = 5;

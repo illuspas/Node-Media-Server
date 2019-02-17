@@ -11,7 +11,7 @@ function generateNewSessionID(sessions) {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWKYZ0123456789';
   const numPossible = possible.length;
   do {
-    for (var i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {
       SessionID += possible.charAt((Math.random() * numPossible) | 0);
     }
   } while (sessions.has(SessionID));

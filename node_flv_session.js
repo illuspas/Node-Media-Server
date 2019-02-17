@@ -7,7 +7,6 @@
 const EventEmitter = require('events');
 const URL = require('url');
 
-const AMF = require('./node_core_amf');
 const BufferPool = require('./node_core_bufferpool');
 const NodeCoreUtils = require('./node_core_utils');
 
@@ -19,7 +18,7 @@ class NodeFlvSession extends EventEmitter {
     this.res = res;
     this.bp = new BufferPool();
     this.bp.on('error', e => {});
-    this.allow_origin = config.http.allow_origin == undefined ? '*' : config.http.allow_origin;
+    this.allow_origin = config.http.allow_origin === undefined ? '*' : config.http.allow_origin;
     this.isPublisher = false;
     this.playStreamPath = '';
     this.playArgs = null;
@@ -45,10 +44,10 @@ class NodeFlvSession extends EventEmitter {
   }
 
   run() {
-    let method = this.req.method;
-    let urlInfo = URL.parse(this.req.url, true);
-    let streamPath = urlInfo.pathname.split('.')[0];
-    let format = urlInfo.pathname.split('.')[1];
+    const method = this.req.method;
+    const urlInfo = URL.parse(this.req.url, true);
+    const streamPath = urlInfo.pathname.split('.')[0];
+    const format = urlInfo.pathname.split('.')[1];
     this.connectCmdObj = { method, streamPath, query: urlInfo.query };
     this.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
 
@@ -57,31 +56,37 @@ class NodeFlvSession extends EventEmitter {
 
     this.connectTime = new Date();
 
-    if (format != 'flv') {
+    if (format !== 'flv') {
       console.log(`[${this.TAG}] Unsupported format=${format}`);
       this.res.statusCode = 403;
       this.res.end();
       return;
     }
-    this.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
-    if (method == 'GET') {
-      //Play
-      this.playStreamPath = streamPath;
-      this.playArgs = urlInfo.query;
-      console.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
-      this.emit('play');
-    } else if (method == 'POST') {
-      //Publish
 
-      console.log(`[${this.TAG}] Unsupported method=` + method);
-      this.res.statusCode = 405;
-      this.res.end();
-      return;
-    } else {
-      console.log(`[${this.TAG}] Unsupported method=` + method);
-      this.res.statusCode = 405;
-      this.res.end();
-      return;
+    this.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
+
+    switch (method) {
+      case 'GET': {
+        //Play
+        this.playStreamPath = streamPath;
+        this.playArgs = urlInfo.query;
+        console.log(`[${this.TAG} play] play stream ` + this.playStreamPath);
+        this.emit('play');
+        return;
+      }
+      case 'POST': {
+        //Publish
+        console.log(`[${this.TAG}] Unsupported method=` + method);
+        this.res.statusCode = 405;
+        this.res.end();
+        return;
+      }
+      default: {
+        console.log(`[${this.TAG}] Unsupported method=` + method);
+        this.res.statusCode = 405;
+        this.res.end();
+        return;
+      }
     }
   }
 
@@ -112,19 +117,22 @@ class NodeFlvSession extends EventEmitter {
     console.log(`[${this.TAG} message parser] start`);
     while (this.isStarting) {
       if (this.bp.need(9)) {
-        if (yield) break;
+        if (yield) {
+          break;
+        }
       }
     }
 
     console.log(`[${this.TAG} message parser] done`);
-    if (this.isPublisher) {
-    } else {
-      let publisherId = this.publishers.get(this.playStreamPath);
-      if (publisherId != null) {
+    if (!this.isPublisher) {
+      const publisherId = this.publishers.get(this.playStreamPath);
+
+      if (publisherId !== null) {
         this.sessions.get(publisherId).players.delete(this.id);
         this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
     }
+
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
     this.res.end();
     this.idlePlayers.delete(this.id);
@@ -156,9 +164,9 @@ class NodeFlvSession extends EventEmitter {
       return;
     }
 
-    let publisherId = this.publishers.get(this.playStreamPath);
-    let publisher = this.sessions.get(publisherId);
-    let players = publisher.players;
+    const publisherId = this.publishers.get(this.playStreamPath);
+    const publisher = this.sessions.get(publisherId);
+    const players = publisher.players;
     players.add(this.id);
 
     if (this.res.setHeader !== undefined) {
@@ -167,7 +175,7 @@ class NodeFlvSession extends EventEmitter {
     }
 
     //send FLV header
-    let FLVHeader = Buffer.from([0x46, 0x4c, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    const FLVHeader = Buffer.from([0x46, 0x4c, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     if (publisher.isFirstAudioReceived) {
       FLVHeader[4] |= 0b00000100;
     }
@@ -176,43 +184,43 @@ class NodeFlvSession extends EventEmitter {
       FLVHeader[4] |= 0b00000001;
     }
     this.res.write(FLVHeader);
-    if (publisher.metaData != null) {
+    if (publisher.metaData !== null) {
       //send Metadata
-      let rtmpHeader = {
+      const rtmpHeader = {
         chunkStreamID: 5,
         timestamp: 0,
         messageTypeID: 0x12,
         messageStreamID: 1
       };
 
-      let metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.metaData);
+      const metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.metaData);
       this.res.write(metaDataFlvMessage);
     }
     //send aacSequenceHeader
-    if (publisher.audioCodec == 10) {
-      let rtmpHeader = {
+    if (publisher.audioCodec === 10) {
+      const rtmpHeader = {
         chunkStreamID: 4,
         timestamp: 0,
         messageTypeID: 0x08,
         messageStreamID: 1
       };
-      let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
+      const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
       this.res.write(flvMessage);
     }
     //send avcSequenceHeader
-    if (publisher.videoCodec == 7) {
-      let rtmpHeader = {
+    if (publisher.videoCodec === 7) {
+      const rtmpHeader = {
         chunkStreamID: 6,
         timestamp: 0,
         messageTypeID: 0x09,
         messageStreamID: 1
       };
-      let flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
+      const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
       this.res.write(flvMessage);
     }
     //send gop cache
-    if (publisher.flvGopCacheQueue != null) {
-      for (let flvMessage of publisher.flvGopCacheQueue) {
+    if (publisher.flvGopCacheQueue !== null) {
+      for (const flvMessage of publisher.flvGopCacheQueue) {
         this.res.write(flvMessage);
       }
     }
@@ -223,7 +231,7 @@ class NodeFlvSession extends EventEmitter {
   onPublish() {}
 
   static createFlvMessage(rtmpHeader, rtmpBody) {
-    let FLVTagHeader = Buffer.alloc(11);
+    const FLVTagHeader = Buffer.alloc(11);
     FLVTagHeader[0] = rtmpHeader.messageTypeID;
     FLVTagHeader.writeUIntBE(rtmpBody.length, 1, 3);
     FLVTagHeader[4] = (rtmpHeader.timestamp >> 16) & 0xff;
@@ -231,7 +239,7 @@ class NodeFlvSession extends EventEmitter {
     FLVTagHeader[6] = rtmpHeader.timestamp & 0xff;
     FLVTagHeader[7] = (rtmpHeader.timestamp >> 24) & 0xff;
     FLVTagHeader.writeUIntBE(0, 8, 3);
-    let PreviousTagSizeN = Buffer.alloc(4);
+    const PreviousTagSizeN = Buffer.alloc(4);
     PreviousTagSizeN.writeUInt32BE(11 + rtmpBody.length);
     return Buffer.concat([FLVTagHeader, rtmpBody, PreviousTagSizeN]);
   }

@@ -17,7 +17,7 @@ const config = {
   }
 };
 
-var nms = new NodeMediaServer(config);
+const nms = new NodeMediaServer(config);
 
 nms.on('preConnect', (id, args) => {
   console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);

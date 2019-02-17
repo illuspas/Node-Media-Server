@@ -40,7 +40,7 @@ class BufferPool extends Readable {
   }
 
   need(size) {
-    let ret = this.poolBytes < size;
+    const ret = this.poolBytes < size;
     if (ret) {
       this.needBytes = size;
     }
