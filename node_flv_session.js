@@ -201,11 +201,7 @@ class NodeFlvSession extends EventEmitter {
         messageStreamID: 1
       };
 
-      const metaData = AMF.decodeAmf0Data(publisher.metaData);
-
-      metaData.cmdObj.subtitlesOffset = publisher.subtitlesOffset;
-
-      let metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, AMF.encodeAmf0Data(metaData));
+      let metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.metaData);
       this.res.write(metaDataFlvMessage);
     }
     //send aacSequenceHeader
