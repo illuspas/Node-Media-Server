@@ -4,16 +4,13 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 //
 
-const Fs = require('fs');
 const Http = require('http');
-const Https = require('https');
 const WebSocket = require('ws');
 const Express = require('express');
 const NodeCoreUtils = require('./node_core_utils');
 const NodeFlvSession = require('./node_flv_session');
 
 const HTTP_PORT = 80;
-const HTTPS_PORT = 443;
 
 class NodeHttpServer {
   constructor(config, sessions, publishers, idlePlayers) {
@@ -25,29 +22,20 @@ class NodeHttpServer {
 
     this.expressApp = Express();
 
-    this.expressApp.all('*.flv', (req, res, next) => {
-      if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'range');
-        res.end();
-      } else {
-        req.nmsConnectionType = 'http';
+    this.expressApp.options('*.flv', (req, res, next) => {
+      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'range');
+      res.end();
+    });
 
-        this.onConnect(req, res);
-      }
+    this.expressApp.get('*.flv', (req, res, next) => {
+      req.nmsConnectionType = 'http';
+
+      this.onConnect(req, res);
     });
 
     this.httpServer = Http.createServer(this.expressApp);
-
-    if (this.config.https) {
-      let options = {
-        key: Fs.readFileSync(this.config.https.key),
-        cert: Fs.readFileSync(this.config.https.cert)
-      };
-      this.sport = config.https.port ? config.https.port : HTTPS_PORT;
-      this.httpsServer = Https.createServer(options, this.expressApp);
-    }
   }
 
   run() {
@@ -63,6 +51,7 @@ class NodeHttpServer {
 
     this.wsServer.on('connection', (ws, req) => {
       req.nmsConnectionType = 'ws';
+
       this.onConnect(req, ws);
     });
 
@@ -72,30 +61,6 @@ class NodeHttpServer {
     this.wsServer.on('error', e => {
       console.error(`Node Media WebSocket Server ${e}`);
     });
-
-    if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, () => {
-        console.log(`Node Media Https Server started on port: ${this.sport}`);
-      });
-
-      this.httpsServer.on('error', e => {
-        console.error(`Node Media Https Server ${e}`);
-      });
-
-      this.wssServer = new WebSocket.Server({ server: this.httpsServer });
-
-      this.wssServer.on('connection', (ws, req) => {
-        req.nmsConnectionType = 'ws';
-        this.onConnect(req, ws);
-      });
-
-      this.wssServer.on('listening', () => {
-        console.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
-      });
-      this.wssServer.on('error', e => {
-        console.error(`Node Media WebSocketSecure Server ${e}`);
-      });
-    }
   }
 
   onConnect(req, res) {
