@@ -169,7 +169,7 @@ class NodeFlvSession extends EventEmitter {
     const players = publisher.players;
     players.add(this.id);
 
-    if (this.res.setHeader !== undefined) {
+    if (this.res.setHeader) {
       this.res.setHeader('Content-Type', 'video/x-flv');
       this.res.setHeader('Access-Control-Allow-Origin', this.allow_origin);
     }
