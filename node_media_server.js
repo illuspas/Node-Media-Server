@@ -8,8 +8,8 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeCoreUtils = require('./node_core_utils');
 
+const authCheck = require('./api/middleware/auth');
 const streams = require('./api/routes/streams');
-const clients = require('./api/routes/clients');
 
 class NodeMediaServer {
   constructor(config) {
@@ -36,8 +36,9 @@ class NodeMediaServer {
         next();
       });
 
+      this.nhs.expressApp.use(authCheck);
+
       this.nhs.expressApp.use('/api/streams', streams);
-      this.nhs.expressApp.use('/api/clients', clients);
 
       this.nhs.run();
     }

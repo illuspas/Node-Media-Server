@@ -13,7 +13,7 @@ const config = {
     allow_origin: '*'
   },
   api: {
-    key: 'nodemedia2017apikey'
+    token: 'nodemedia2017apikey'
   }
 };
 

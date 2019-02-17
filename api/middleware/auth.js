@@ -5,7 +5,7 @@ function authCheck(req, res, next) {
     return next();
   }
 
-  if (_.get(req.nms, ['config', 'api', 'key'], null) !== req.headers.apiKey) {
+  if (_.get(req.nms, ['config', 'api', 'token'], null) !== req.headers.token) {
     return res.status(401).json({ error: 'Not authorized.' });
   }
 

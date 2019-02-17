@@ -47,7 +47,8 @@ function getStreams(req, res, next) {
                     size: session.videoSize,
                     fps: session.videoFps
                   }
-                : null
+                : null,
+            userId: session.userId || null
           });
 
           break;
@@ -62,7 +63,8 @@ function getStreams(req, res, next) {
                 connectCreated: session.connectTime,
                 bytes: session.socket.bytesWritten,
                 ip: session.socket.remoteAddress,
-                protocol: 'rtmp'
+                protocol: 'rtmp',
+                userId: session.userId || null
               });
 
               break;
@@ -75,7 +77,8 @@ function getStreams(req, res, next) {
                 connectCreated: session.connectTime,
                 bytes: session.req.connection.bytesWritten,
                 ip: session.req.connection.remoteAddress,
-                protocol: session.TAG === 'websocket-flv' ? 'ws' : 'http'
+                protocol: session.TAG === 'websocket-flv' ? 'ws' : 'http',
+                userId: session.userId || null
               });
 
               break;
@@ -98,17 +101,23 @@ function getStream(req, res, next) {
 
   const publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
 
+  const isLive = !!publisherSession;
+
+  const viewers = _.filter(Array.from(nms.sessions.values()), session => {
+    return session.playStreamPath === publishStreamPath;
+  }).length;
+
+  const duration = isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
+
+  const bitrate =
+    duration > 0 ? Math.ceil((_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8) / duration / 1024) : 0;
+
   const streamStats = {
-    isLive: !!publisherSession,
-    viewers: _.filter(Array.from(nms.sessions.values()), session => {
-      return session.playStreamPath === publishStreamPath;
-    }).length,
-    duration: streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0,
-    bitrate:
-      streamStats.duration > 0
-        ? Math.ceil((_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8) / streamStats.duration / 1024)
-        : 0,
-    startTime: streamStats.isLive ? publisherSession.connectTime : null
+    isLive,
+    viewers,
+    duration,
+    bitrate,
+    startTime: isLive ? publisherSession.connectTime : null
   };
 
   res.json(streamStats);
