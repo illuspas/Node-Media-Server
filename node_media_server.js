@@ -14,9 +14,9 @@ const clients = require('./api/routes/clients');
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
-    this.sessions = new Map();
-    this.publishers = new Map();
-    this.idlePlayers = new Set();
+    this.sessions = new WeakMap();
+    this.publishers = new WeakMap();
+    this.idlePlayers = new WeakSet();
     this.nodeEvent = NodeCoreUtils.nodeEvent;
   }
 
