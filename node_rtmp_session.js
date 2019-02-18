@@ -128,6 +128,22 @@ class NodeRtmpSession extends EventEmitter {
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('close', this.onSocketClose.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
+
+    this.socket.setTimeout(20000);
+
+    this.socket.on('timeout', () => {
+      console.log('timeout', this.id);
+
+      try {
+        const socket = this.socket;
+
+        this.stop();
+
+        socket.destroy();
+      } catch (e) {
+        console.error(e);
+      }
+    });
   }
 
   run() {
