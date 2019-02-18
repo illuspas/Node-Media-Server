@@ -123,7 +123,7 @@ function amf3decUndefined() {
  * @returns {Buffer}
  */
 function amf3encUndefined() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x00);
   return buf;
 }
@@ -141,7 +141,7 @@ function amf3decNull() {
  * @returns {Buffer}
  */
 function amf3encNull() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x01);
   return buf;
 }
@@ -159,7 +159,7 @@ function amf3decFalse() {
  * @returns {Buffer}
  */
 function amf3encFalse() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x02);
   return buf;
 }
@@ -177,7 +177,7 @@ function amf3decTrue() {
  * @returns {Buffer}
  */
 function amf3encTrue() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x03);
   return buf;
 }
@@ -267,7 +267,7 @@ function amf3decInteger(buf) {
  * @returns {Buffer}
  */
 function amf3encInteger(num) {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x4, 0);
   return Buffer.concat([buf, amf3encUI29(num & 0x3fffffff)]); // This AND will auto convert the sign bit!
 }
@@ -294,7 +294,7 @@ function amf3decString(buf) {
  */
 function amf3encString(str) {
   const sLen = amf3encUI29(str.length << 1);
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x6, 0);
   return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
 }
@@ -321,7 +321,7 @@ function amf3decXmlDoc(buf) {
  */
 function amf3encXmlDoc(str) {
   const sLen = amf3encUI29(str.length << 1);
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x7, 0);
   return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
 }
@@ -348,7 +348,7 @@ function amf3decXml(buf) {
  */
 function amf3encXml(str) {
   const sLen = amf3encUI29(str.length << 1);
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x0b, 0);
   return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
 }
@@ -375,7 +375,7 @@ function amf3decByteArray(buf) {
  */
 function amf3encByteArray(str) {
   const sLen = amf3encUI29(str.length << 1);
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x0c, 0);
   return Buffer.concat([buf, sLen, typeof str === 'string' ? new Buffer(str, 'binary') : str]);
 }
@@ -395,7 +395,7 @@ function amf3decDouble(buf) {
  * @returns {Buffer}
  */
 function amf3encDouble(num) {
-  const buf = new Buffer(9);
+  const buf = Buffer.alloc(9);
   buf.writeUInt8(0x05, 0);
   buf.writeDoubleBE(num, 1);
   return buf;
@@ -419,9 +419,9 @@ function amf3decDate(buf) {
  * @returns {Buffer}
  */
 function amf3encDate(ts) {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x8, 0);
-  const tsBuf = new Buffer(8);
+  const tsBuf = Buffer.alloc(8);
   tsBuf.writeDoubleBE(ts, 0);
   return Buffer.concat([buf, amf3encUI29(1), tsBuf]); // We always do 1
 }
@@ -480,7 +480,7 @@ function amf0decNumber(buf) {
  * @returns {Buffer}
  */
 function amf0encNumber(num) {
-  const buf = new Buffer(9);
+  const buf = Buffer.alloc(9);
   buf.writeUInt8(0x00, 0);
   buf.writeDoubleBE(num, 1);
   return buf;
@@ -501,7 +501,7 @@ function amf0decBool(buf) {
  * @returns {Buffer}
  */
 function amf0encBool(num) {
-  const buf = new Buffer(2);
+  const buf = Buffer.alloc(2);
   buf.writeUInt8(0x01, 0);
   buf.writeUInt8(num ? 1 : 0, 1);
   return buf;
@@ -520,7 +520,7 @@ function amf0decNull() {
  * @returns {Buffer}
  */
 function amf0encNull() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x05, 0);
   return buf;
 }
@@ -538,7 +538,7 @@ function amf0decUndefined() {
  * @returns {Buffer}
  */
 function amf0encUndefined() {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x06, 0);
   return buf;
 }
@@ -560,7 +560,7 @@ function amf0decDate(buf) {
  * @returns {Buffer}
  */
 function amf0encDate(ts) {
-  const buf = new Buffer(11);
+  const buf = Buffer.alloc(11);
   buf.writeUInt8(0x0b, 0);
   buf.writeInt16BE(0, 1);
   buf.writeDoubleBE(ts, 3);
@@ -608,13 +608,13 @@ function amf0encObject(o) {
     return;
   }
 
-  let data = new Buffer(1);
+  let data = Buffer.alloc(1);
   data.writeUInt8(0x03, 0); // Type object
   let k;
   for (k in o) {
     data = Buffer.concat([data, amf0encUString(k), amf0EncodeOne(o[k])]);
   }
-  const termCode = new Buffer(1);
+  const termCode = Buffer.alloc(1);
   termCode.writeUInt8(0x09, 0);
   return Buffer.concat([data, amf0encUString(''), termCode]);
 }
@@ -635,7 +635,7 @@ function amf0decRef(buf) {
  * @returns {Buffer}
  */
 function amf0encRef(index) {
-  const buf = new Buffer(3);
+  const buf = Buffer.alloc(3);
   buf.writeUInt8(0x07, 0);
   buf.writeUInt16BE(index, 1);
   return buf;
@@ -668,7 +668,7 @@ function amf0decUString(buf) {
  */
 function amf0encUString(s) {
   const data = new Buffer(s, 'utf8');
-  const sLen = new Buffer(2);
+  const sLen = Buffer.alloc(2);
   sLen.writeUInt16BE(data.length, 0);
   return Buffer.concat([sLen, data]);
 }
@@ -679,7 +679,7 @@ function amf0encUString(s) {
  * @returns {Buffer}
  */
 function amf0encString(str) {
-  const buf = new Buffer(3);
+  const buf = Buffer.alloc(3);
   buf.writeUInt8(0x02, 0);
   buf.writeUInt16BE(str.length, 1);
   return Buffer.concat([buf, new Buffer(str, 'utf8')]);
@@ -701,7 +701,7 @@ function amf0decLongString(buf) {
  * @returns {Buffer}
  */
 function amf0encLongString(str) {
-  const buf = new Buffer(5);
+  const buf = Buffer.alloc(5);
   buf.writeUInt8(0x0c, 0);
   buf.writeUInt32BE(str.length, 1);
   return Buffer.concat([buf, new Buffer(str, 'utf8')]);
@@ -729,7 +729,7 @@ function amf0encArray(a) {
     l = Object.keys(a).length;
   }
   console.log('Array encode', l, a);
-  const buf = new Buffer(5);
+  const buf = Buffer.alloc(5);
   buf.writeUInt8(8, 0);
   buf.writeUInt32BE(l, 1);
   const data = amf0encObject(a);
@@ -742,7 +742,7 @@ function amf0encArray(a) {
  * @returns {Buffer}
  */
 function amf0cnvArray2Object(aData) {
-  const buf = new Buffer(1);
+  const buf = Buffer.alloc(1);
   buf.writeUInt8(0x3, 0); // Object id
   return Buffer.concat([buf, aData.slice(5)]);
 }
@@ -753,7 +753,7 @@ function amf0cnvArray2Object(aData) {
  * @returns {Buffer}
  */
 function amf0cnvObject2Array(oData) {
-  const buf = new Buffer(5);
+  const buf = Buffer.alloc(5);
   const o = amf0decObject(oData);
   const l = Object.keys(o).length;
   buf.writeUInt32BE(l, 1);
@@ -777,7 +777,7 @@ function amf0decXmlDoc(buf) {
  */
 function amf0encXmlDoc(str) {
   // Essentially it is the same as string
-  const buf = new Buffer(3);
+  const buf = Buffer.alloc(3);
   buf.writeUInt8(0x0f, 0);
   buf.writeUInt16BE(str.length, 1);
   return Buffer.concat([buf, new Buffer(str, 'utf8')]);
@@ -806,7 +806,7 @@ function amf0decSArray(buf) {
  */
 function amf0encSArray(a) {
   console.log('Do strict array!');
-  let buf = new Buffer(5);
+  let buf = Buffer.alloc(5);
   buf.writeUInt8(0x0a, 0);
   buf.writeUInt32BE(a.length, 1);
   let i;
@@ -957,7 +957,7 @@ function amf3EncodeOne(o) {
  * @returns {Buffer}
  */
 function amf3Encode(a) {
-  let buf = new Buffer(0);
+  let buf = Buffer.alloc(0);
   a.forEach(o => {
     buf = Buffer.concat([buf, amf3EncodeOne(o)]);
   });
@@ -970,7 +970,7 @@ function amf3Encode(a) {
  * @returns {Buffer}
  */
 function amf0Encode(a) {
-  let buf = new Buffer(0);
+  let buf = Buffer.alloc(0);
   a.forEach(o => {
     buf = Buffer.concat([buf, amf0EncodeOne(o)]);
   });
