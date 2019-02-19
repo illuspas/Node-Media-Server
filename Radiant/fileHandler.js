@@ -204,7 +204,7 @@ const query = gql`
                 video{
                     id
                 }
-                videoHLSStreamUpload{
+                videoHLSStreamUpload(sendSubscriptionEvent: false){
                     id
                     segments{
                         id
@@ -312,10 +312,10 @@ const updateVideoStream = function(vidData, key, mainPath, authToken) {
 };
 
 const updateVideoQuery = gql`
-    mutation updateVideo($id: ID!, $thumbnail: String!){
+    mutation updateVideo($id: ID!, $thumbnailUrl: String!){
         updateVideo(input:{
             id:$id
-            thumbnailUrl:$thumbnail
+            thumbnailUrl:$thumbnailUrl
         }){
             id
             thumbnailUrl
@@ -340,7 +340,7 @@ const updateVideo = function(videoId, thumbnailUrl, authToken){
     };
     const variables = {
         id: videoId,
-        thumbnail: thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,
     };
     let endpoint = radiantBackendEndpoints[process.env.ENV];
 
