@@ -3,13 +3,11 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const URL = require('url');
-const AMF = require('./node_core_amf');
-const Logger = require('./node_core_logger');
-const context = require('./node_core_ctx');
-const NodeCoreUtils = require('./node_core_utils');
-
-
+const URL = require("url");
+const AMF = require("./node_core_amf");
+const Logger = require("./node_core_logger");
+const context = require("./node_core_ctx");
+const NodeCoreUtils = require("./node_core_utils");
 
 const FlvPacket = {
   create: (payload = null, type = 0, time = 0) => {
@@ -17,10 +15,10 @@ const FlvPacket = {
       header: {
         length: payload ? payload.length : 0,
         timestamp: time,
-        type: type,
+        type: type
       },
       payload: payload
-    }
+    };
   }
 };
 
@@ -32,55 +30,57 @@ class NodeFlvSession {
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = this.req.socket.remoteAddress;
 
-    this.playStreamPath = '';
+    this.playStreamPath = "";
     this.playArgs = null;
 
     this.isStarting = false;
     this.isPlaying = false;
     this.isIdling = false;
 
-    if (this.req.nmsConnectionType === 'ws') {
-      this.res.on('close', this.onReqClose.bind(this));
-      this.res.on('error', this.onReqError.bind(this));
+    if (this.req.nmsConnectionType === "ws") {
+      this.res.cork = this.res.socket.cork.bind(this.res.socket);
+      this.res.uncork = this.res.socket.uncork.bind(this.res.socket);
+      this.res.on("close", this.onReqClose.bind(this));
+      this.res.on("error", this.onReqError.bind(this));
       this.res.write = this.res.send;
       this.res.end = this.res.close;
-      this.TAG = 'websocket-flv'
+      this.TAG = "websocket-flv";
     } else {
-      this.req.socket.on('close', this.onReqClose.bind(this));
-      this.req.on('error', this.onReqError.bind(this));
-      this.TAG = 'http-flv'
+      this.res.cork = this.res.socket.cork.bind(this.res.socket);
+      this.res.uncork = this.res.socket.uncork.bind(this.res.socket);
+      this.req.socket.on("close", this.onReqClose.bind(this));
+      this.req.on("error", this.onReqError.bind(this));
+      this.TAG = "http-flv";
     }
 
+    this.numPlayCache = 0;
     context.sessions.set(this.id, this);
   }
 
   run() {
     let method = this.req.method;
     let urlInfo = URL.parse(this.req.url, true);
-    let streamPath = urlInfo.pathname.split('.')[0];
-    this.connectCmdObj = { ip: this.ip, method, streamPath, query: urlInfo.query, };
+    let streamPath = urlInfo.pathname.split(".")[0];
+    this.connectCmdObj = { ip: this.ip, method, streamPath, query: urlInfo.query };
     this.connectTime = new Date();
     this.isStarting = true;
     Logger.log(`[${this.TAG} connect] id=${this.id} ip=${this.ip} args=${JSON.stringify(urlInfo.query)}`);
-    context.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit("preConnect", this.id, this.connectCmdObj);
     if (!this.isStarting) {
       this.stop();
       return;
     }
-    context.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
+    context.nodeEvent.emit("postConnect", this.id, this.connectCmdObj);
 
-    if (method === 'GET') {
+    if (method === "GET") {
       this.playStreamPath = streamPath;
       this.playArgs = urlInfo.query;
-
 
       this.onPlay();
     } else {
       this.stop();
     }
-
   }
-
 
   stop() {
     if (this.isStarting) {
@@ -88,17 +88,16 @@ class NodeFlvSession {
       let publisherId = context.publishers.get(this.playStreamPath);
       if (publisherId != null) {
         context.sessions.get(publisherId).players.delete(this.id);
-        context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+        context.nodeEvent.emit("donePlay", this.id, this.playStreamPath, this.playArgs);
       }
       Logger.log(`[${this.TAG} play] Close stream. id=${this.id} streamPath=${this.playStreamPath}`);
       Logger.log(`[${this.TAG} disconnect] id=${this.id}`);
-      context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
+      context.nodeEvent.emit("doneConnect", this.id, this.connectCmdObj);
       this.res.end();
       context.idlePlayers.delete(this.id);
       context.sessions.delete(this.id);
     }
   }
-
 
   onReqClose() {
     this.stop();
@@ -114,7 +113,7 @@ class NodeFlvSession {
   }
 
   onPlay() {
-    context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit("prePlay", this.id, this.playStreamPath, this.playArgs);
     if (!this.isStarting) {
       return;
     }
@@ -144,8 +143,8 @@ class NodeFlvSession {
     let players = publisher.players;
     players.add(this.id);
 
-    //send FLV header 
-    let FLVHeader = Buffer.from([0x46, 0x4C, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    //send FLV header
+    let FLVHeader = Buffer.from([0x46, 0x4c, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     if (publisher.isFirstAudioReceived) {
       FLVHeader[4] |= 0b00000100;
     }
@@ -155,7 +154,7 @@ class NodeFlvSession {
     }
     this.res.write(FLVHeader);
 
-    //send Metadata 
+    //send Metadata
     if (publisher.metaData != null) {
       let packet = FlvPacket.create(publisher.metaData, 18);
       let tag = NodeFlvSession.createFlvTag(packet);
@@ -186,7 +185,7 @@ class NodeFlvSession {
     this.isIdling = false;
     this.isPlaying = true;
     Logger.log(`[${this.TAG} play] Join stream. id=${this.id} streamPath=${this.playStreamPath} `);
-    context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit("postPlay", this.id, this.playStreamPath, this.playArgs);
   }
 
   static createFlvTag(packet) {
@@ -194,16 +193,15 @@ class NodeFlvSession {
     let tagBuffer = Buffer.alloc(PreviousTagSize + 4);
     tagBuffer[0] = packet.header.type;
     tagBuffer.writeUIntBE(packet.header.length, 1, 3);
-    tagBuffer[4] = (packet.header.timestamp >> 16) & 0xFF;
-    tagBuffer[5] = (packet.header.timestamp >> 8) & 0xFF;
-    tagBuffer[6] = packet.header.timestamp & 0xFF;
-    tagBuffer[7] = (packet.header.timestamp >> 24) & 0xFF;
+    tagBuffer[4] = (packet.header.timestamp >> 16) & 0xff;
+    tagBuffer[5] = (packet.header.timestamp >> 8) & 0xff;
+    tagBuffer[6] = packet.header.timestamp & 0xff;
+    tagBuffer[7] = (packet.header.timestamp >> 24) & 0xff;
     tagBuffer.writeUIntBE(0, 8, 3);
     tagBuffer.writeUInt32BE(PreviousTagSize, PreviousTagSize);
     packet.payload.copy(tagBuffer, 11, 0, packet.header.length);
-    return tagBuffer
+    return tagBuffer;
   }
-
 }
 
 module.exports = NodeFlvSession;
