@@ -38,8 +38,8 @@ class NodeFlvSession {
     this.isIdling = false;
 
     if (this.req.nmsConnectionType === "ws") {
-      this.res.cork = this.res.socket.cork.bind(this.res.socket);
-      this.res.uncork = this.res.socket.uncork.bind(this.res.socket);
+      this.res.cork = this.res._socket.cork.bind(this.res._socket);
+      this.res.uncork = this.res._socket.uncork.bind(this.res._socket);
       this.res.on("close", this.onReqClose.bind(this));
       this.res.on("error", this.onReqError.bind(this));
       this.res.write = this.res.send;
