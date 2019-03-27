@@ -670,8 +670,12 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 ## React-Native SDK
 https://github.com/NodeMedia/react-native-nodemediaclient
 
-## FFmpeg-hw-win32
-https://github.com/illuspas/ffmpeg-hw-win32
+## NodePlayer.js HTML5 live player
+* Implemented with asm.js
+* http-flv/ws-flv
+* H.264/H.265 + AAC/Nellymoser/G.711 decoder
+* Ultra low latency (Support for iOS safari browser)
+http://www.nodemedia.cn/products/node-media-player
 
 ## Windows browser plugin(ActiveX/NPAPI)
 * H.264/H.265+AAC rtmp publisher
@@ -680,16 +684,8 @@ https://github.com/illuspas/ffmpeg-hw-win32
 * Ultra low latency rtmp/rtsp/http live player
 * Only 6MB installation package
 
-http://www.nodemedia.cn/products/node-media-client/win/
+http://www.nodemedia.cn/products/node-media-client/win
 
 # Thanks
-* smicroz edopachecod@***.com
-* 熊科辉
-* Ken Lee
-* Anonymous 	kasra.shahram@***.com
-* Erik Herz erikherz68@***.com
-* Javier Gomez javiergomezmora@***.com
-* trustfarm
-* Anonymous
-* leeoxiang leeoxiang@***.com
-* Aaron Turner (@torch2424) torch2424@***.com
+strive, 树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+Thank you for your support.
