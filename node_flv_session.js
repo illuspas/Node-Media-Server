@@ -30,6 +30,7 @@ class NodeFlvSession {
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = this.req.socket.remoteAddress;
 
+    this.playAuthPath = "";
     this.playStreamPath = "";
     this.playArgs = null;
 
@@ -60,8 +61,9 @@ class NodeFlvSession {
   run() {
     let method = this.req.method;
     let urlInfo = URL.parse(this.req.url, true);
-    let streamPath = urlInfo.pathname.split(".")[0];
-    this.connectCmdObj = { ip: this.ip, method, streamPath, query: urlInfo.query };
+    this.playAuthPath = urlInfo.pathname;
+    this.playStreamPath = urlInfo.pathname.split(".")[0];
+    this.connectCmdObj = { ip: this.ip, method, streamPath: this.playStreamPath, query: urlInfo.query };
     this.connectTime = new Date();
     this.isStarting = true;
     Logger.log(`[${this.TAG} connect] id=${this.id} ip=${this.ip} args=${JSON.stringify(urlInfo.query)}`);
@@ -73,7 +75,6 @@ class NodeFlvSession {
     context.nodeEvent.emit("postConnect", this.id, this.connectCmdObj);
 
     if (method === "GET") {
-      this.playStreamPath = streamPath;
       this.playArgs = urlInfo.query;
 
       this.onPlay();
@@ -118,9 +119,9 @@ class NodeFlvSession {
       return;
     }
     if (this.config.auth !== undefined && this.config.auth.play) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
+      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playAuthPath, this.config.auth.secret);
       if (!results) {
-        Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+        Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${this.playAuthPath} sign=${this.playArgs.sign}`);
         this.res.statusCode = 403;
         this.res.end();
         return;
