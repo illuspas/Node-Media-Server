@@ -18,6 +18,7 @@ const HTTP_WEBROOT = './public';
 const HTTP_MEDIAROOT = './media';
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
+const NodeCoreUtils = require("./node_core_utils");
 
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
@@ -50,20 +51,32 @@ class NodeHttpServer {
       }
     });
 
-    app.use(Express.static(this.webroot));
-    app.use(Express.static(this.mediaroot));
-
     if (this.config.auth && this.config.auth.api) {
       app.use('/api/*', basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
 
+    if (this.config.auth !== undefined && this.config.auth.play) {
+      app.use((req, res, next) => {
+        const results = NodeCoreUtils.verifyAuth(req.query.sign, req.path, this.config.auth.secret);
+        if (!results) {
+          Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${req.path} sign=${req.query.sign}`);
+          res.statusCode = 403;
+          res.end();
+          return;
+        }
+        next();
+      });
+    }
+    app.use(Express.static(this.webroot));
+    app.use(Express.static(this.mediaroot));
+
     this.httpServer = Http.createServer(app);
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
