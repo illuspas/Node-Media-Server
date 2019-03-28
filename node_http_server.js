@@ -58,7 +58,7 @@ class NodeHttpServer {
     app.use('/api/server', serverRoute(context));
 
     if (this.config.auth !== undefined && this.config.auth.play) {
-      app.use((req, res, next) => {
+      app.use(/^\/(?!api\/).*/, (req, res, next) => {
         const results = NodeCoreUtils.verifyAuth(req.query.sign, req.path, this.config.auth.secret);
         if (!results) {
           Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${req.path} sign=${req.query.sign}`);
