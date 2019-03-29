@@ -597,13 +597,7 @@ https://github.com/illuspas/ffmpeg-hw-win32
 http://www.nodemedia.cn/products/node-media-client/win/
 
 # 感谢
-* 熊科辉
-* Ken Lee
-* Anonymous 	kasra.shahram@***.com
-* Erik Herz erikherz68@***.com
-* Javier Gomez javiergomezmora@***.com
-* trustfarm
-* Anonymous
-* leeoxiang leeoxiang@***.com
-* Aaron Turner (@torch2424) torch2424@***.com
+strive, 树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+
+感谢你们的大力支持！
 
