@@ -4,13 +4,12 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
-const Logger = require('./node_core_logger');
 const Https = require('https');
+const Logger = require('./node_core_logger');
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
-const NodeIpcServer = require('./node_ipc_server');
 const context = require('./node_core_ctx');
 const Package = require("./package.json");
 
@@ -48,11 +47,6 @@ class NodeMediaServer {
         this.nls = new NodeRelayServer(this.config);
         this.nls.run();
       }
-    }
-
-    if (this.config.cluster) {
-      this.nis = new NodeIpcServer(this.config);
-      this.nis.run();
     }
 
     process.on('uncaughtException', function (err) {
