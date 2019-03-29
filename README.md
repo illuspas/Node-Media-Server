@@ -32,7 +32,6 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 # Todo 
 - [x] support record stream 
 - [x] support transcode
-- [x] support cluster
 - [x] support low latency hls
 - [x] server and streams status
 - [ ] server monitor frontend
@@ -58,21 +57,18 @@ git clone https://github.com/illuspas/Node-Media-Server
 npm i
 node app.js
 ```
->Run with Multicore mode 
-```
-node cluster.js
-```
 
 ## npm version (recommended)
-### Singlecore mode
+
 ```bash
 mkdir nms
 cd nms
 npm install node-media-server
+vi app.js
 ```
 
 ```js
-const { NodeMediaServer } = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -90,37 +86,10 @@ const config = {
 
 var nms = new NodeMediaServer(config)
 nms.run();
-
 ```
-### Multicore cluster mode
+
 ```bash
-mkdir nms
-cd nms
-npm install node-media-server
-```
-
-```js
-const { NodeMediaCluster } = require('node-media-server');
-const numCPUs = require('os').cpus().length;
-const config = {
-  rtmp: {
-    port: 1935,
-    chunk_size: 60000,
-    gop_cache: true,
-    ping: 30,
-    ping_timeout: 60
-  },
-  http: {
-    port: 8000,
-    allow_origin: '*'
-  },
-  cluster: {
-    num: numCPUs
-  }
-};
-
-var nmcs = new NodeMediaCluster(config)
-nmcs.run();
+node app.js
 ```
 
 # Publishing live streams
@@ -222,7 +191,7 @@ Modifying the logging type is easy - just add a new value `logType` in the confi
 By default, this is set to show errors and generic info internally (setting 2).
 
 ```js
-const {NodeMediaServer} = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   logType: 3,
@@ -349,7 +318,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## Config https
 ```js
-const {NodeMediaServer} = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -522,7 +491,7 @@ http://localhost:8000/api/streams
 
 # Remux to HLS/DASH live stream
 ```js
-const {NodeMediaServer} = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -557,7 +526,7 @@ nms.run();
 
 # Record to MP4
 ```JS
-const {NodeMediaServer} = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
