@@ -30,7 +30,6 @@
 # Todo 
 - [x] 支持录制为MP4回放
 - [x] 支持实时转码
-- [x] 支持多核模式
 - [x] 支持低延迟HLS/DASH
 - [x] 支持服务器和流媒体信息统计
 - [ ] 服务器和流媒体信息统计的前端样式
@@ -60,15 +59,15 @@ node app.js
 node cluster.js
 ```
 ## npm 版本(推荐)
-### 单核模式
 ```bash
 mkdir nms
 cd nms
 npm install node-media-server
+vi app.js
 ```
 
 ```js
-const { NodeMediaServer } = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -86,37 +85,6 @@ const config = {
 
 var nms = new NodeMediaServer(config)
 nms.run();
-```
-
-### 多核模式
-```bash
-mkdir nms
-cd nms
-npm install node-media-server
-```
-
-```js
-const { NodeMediaCluster } = require('node-media-server');
-const numCPUs = require('os').cpus().length;
-const config = {
-  rtmp: {
-    port: 1935,
-    chunk_size: 60000,
-    gop_cache: true,
-    ping: 30,
-    ping_timeout: 60
-  },
-  http: {
-    port: 8000,
-    allow_origin: '*'
-  },
-  cluster: {
-    num: numCPUs
-  }
-};
-
-var nmcs = new NodeMediaCluster(config)
-nmcs.run();
 ```
 
 # 直播发布
@@ -154,7 +122,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## 使用 flv.js 播放 http-flv 流格式
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.4.0/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -173,7 +141,7 @@ ffplay http://localhost:8000/live/STREAM_NAME.flv
 ## 使用 flv.js 播放 websocket-flv 流格式
 
 ```html
-<script src="https://cdn.bootcss.com/flv.js/1.3.3/flv.min.js"></script>
+<script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {
@@ -296,7 +264,7 @@ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.p
 
 ## 配置 https支持
 ```js
-const { NodeMediaServer } = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -470,7 +438,7 @@ http://localhost:8000/api/streams
 # 转 HLS/DASH 直播流
 
 ```js
-const { NodeMediaServer } = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
@@ -506,7 +474,7 @@ nms.run();
 # 直播录制为MP4文件
 
 ```JS
-const { NodeMediaServer } = require('node-media-server');
+const NodeMediaServer = require('node-media-server');
 
 const config = {
   rtmp: {
