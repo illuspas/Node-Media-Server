@@ -1034,11 +1034,7 @@ class NodeRtmpSession {
           context.idlePlayers.delete(idlePlayerId);
         }
       }
-      setTimeout(() => {
-        this.publishArgs.ac = this.audioCodec;
-        this.publishArgs.vc = this.videoCodec;
-        context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
-      }, 1000); //TODO 只提交事件,不传音视频参数,由转码器自行分析
+      context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
     }
   }
 
