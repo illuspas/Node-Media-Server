@@ -584,8 +584,11 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 ## React-Native SDK
 https://github.com/NodeMedia/react-native-nodemediaclient
 
-## FFmpeg-hw-win32
-https://github.com/illuspas/ffmpeg-hw-win32
+## NodePlayer.js HTML5 live player
+* 使用 asm.js 实现
+* http-flv/ws-flv 协议
+* H.264/H.265 + AAC/Nellymoser/G.711 解码器
+* 超低延迟，自动消累积延迟 (支持 iOS safari 浏览器)
 
 ## Windows 浏览器插件(ActiveX/NPAPI)
 * H.264/H.265+AAC rtmp 推流器
