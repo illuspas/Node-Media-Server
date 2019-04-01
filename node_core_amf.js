@@ -549,7 +549,7 @@ function amf0decObject(buf) { // TODO: Implement references!
     let prop = amf0decUString(iBuf);
     // Logger.debug('Got field for property', prop);
     len += prop.len;
-    if(iBuf.length < prop.len) {
+    if (iBuf.length < prop.len) {
       break;
     }
     if (iBuf.slice(prop.len).readUInt8(0) == 0x09) {
@@ -945,6 +945,7 @@ const rtmpCmdCode = {
   "getMovLen": ["transId", "cmdObj", "streamId"],
   "FCPublish": ["transId", "cmdObj", "streamName"],
   "FCUnpublish": ["transId", "cmdObj", "streamName"],
+  "FCSubscribe": ["transId", "cmdObj", "streamName"],
   "onFCPublish": ["transId", "cmdObj", "info"],
   "connect": ["transId", "cmdObj", "args"],
   "call": ["transId", "cmdObj", "args"],
@@ -978,15 +979,15 @@ function decodeAmf0Data(dbuf) {
   let resp = {};
 
   let cmd = amf0DecodeOne(buffer);
-  if(cmd) {
+  if (cmd) {
     resp.cmd = cmd.value;
     buffer = buffer.slice(cmd.len);
-  
+
     if (rtmpDataCode[cmd.value]) {
       rtmpDataCode[cmd.value].forEach(function (n) {
         if (buffer.length > 0) {
           let r = amf0DecodeOne(buffer);
-          if(r) {
+          if (r) {
             buffer = buffer.slice(r.len);
             resp[n] = r.value;
           }
