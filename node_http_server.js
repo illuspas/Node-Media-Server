@@ -58,13 +58,15 @@ class NodeHttpServer {
     app.use('/api/server', serverRoute(context));
 
     if (this.config.auth !== undefined && this.config.auth.play) {
-      app.use(/^\/(?!api\/).*/, (req, res, next) => {
-        const results = NodeCoreUtils.verifyAuth(req.query.sign, req.path, this.config.auth.secret);
-        if (!results) {
-          Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${req.path} sign=${req.query.sign}`);
-          res.statusCode = 403;
-          res.end();
-          return;
+      app.use((req, res, next) => {
+        if (!req.url.startsWith('/api')) {
+          const results = NodeCoreUtils.verifyAuth(req.query.sign, req.path, this.config.auth.secret);
+          if (!results) {
+            Logger.log(`[http-static play] Unauthorized. streamPath=${req.path} sign=${req.query.sign}`);
+            res.statusCode = 403;
+            res.end();
+            return;
+          }
         }
         next();
       });
