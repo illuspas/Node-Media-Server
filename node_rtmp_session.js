@@ -214,6 +214,12 @@ class NodeRtmpSession {
     this.stop();
   }
 
+  flush() {
+    if (this.numPlayCache > 0) {
+      this.res.uncork();
+    }
+  }
+
   onSocketClose() {
     // Logger.log('onSocketClose');
     this.stop();
@@ -1220,22 +1226,23 @@ class NodeRtmpSession {
         }
 
         for (let playerId of this.players) {
-          let player = context.sessions.get(playerId);
-          if (player instanceof NodeRtmpSession) {
-            player.sendStatusMessage(player.playStreamId, "status", "NetStream.Play.UnpublishNotify", "stream is now unpublished.");
+          let playerSession = context.sessions.get(playerId);
+          if (playerSession instanceof NodeRtmpSession) {
+            playerSession.sendStatusMessage(playerSession.playStreamId, "status", "NetStream.Play.UnpublishNotify", "stream is now unpublished.");
+            playerSession.flush();
           } else {
-            player.stop();
+            playerSession.stop();
           }
         }
 
         //let the players to idlePlayers
         for (let playerId of this.players) {
-          let player = context.sessions.get(playerId);
+          let playerSession = context.sessions.get(playerId);
           context.idlePlayers.add(playerId);
-          player.isPlaying = false;
-          player.isIdling = true;
-          if (player instanceof NodeRtmpSession) {
-            player.sendStreamStatus(STREAM_EOF, player.playStreamId);
+          playerSession.isPlaying = false;
+          playerSession.isIdling = true;
+          if (playerSession instanceof NodeRtmpSession) {
+            playerSession.sendStreamStatus(STREAM_EOF, playerSession.playStreamId);
           }
         }
 
