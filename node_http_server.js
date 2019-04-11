@@ -10,6 +10,7 @@ const Http = require('http');
 const Https = require('https');
 const WebSocket = require('ws');
 const Express = require('express');
+const bodyParser = require('body-parser');
 const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
@@ -21,6 +22,7 @@ const context = require('./node_core_ctx');
 
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
+const relayRoute = require('./api/routes/relay');
 
 class NodeHttpServer {
   constructor(config) {
@@ -31,7 +33,7 @@ class NodeHttpServer {
 
     let app = Express();
 
-    app.all(['/api/*','*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4', '*.flv'], (req, res, next) => {
+    app.all(['/api/*', '*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4', '*.flv'], (req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
       next();
     });
@@ -50,6 +52,8 @@ class NodeHttpServer {
       }
     });
 
+    app.use(bodyParser.urlencoded({ extended: true }));
+
     app.use(Express.static(this.webroot));
     app.use(Express.static(this.mediaroot));
 
@@ -58,6 +62,7 @@ class NodeHttpServer {
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
+    app.use('/api/relay', relayRoute(context));
 
     this.httpServer = Http.createServer(app);
 
@@ -167,4 +172,4 @@ class NodeHttpServer {
   }
 }
 
-module.exports = NodeHttpServer
+module.exports = NodeHttpServer;
