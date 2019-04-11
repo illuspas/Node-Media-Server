@@ -25,20 +25,7 @@
  - 支持RTMP直播流转HLS,DASH直播流
  - 支持RTMP直播流录制为MP4文件并开启faststart
  - 支持RTMP/RTSP中继
- - 支持多核集群模式
-
-# Todo 
-- [x] 支持录制为MP4回放
-- [x] 支持实时转码
-- [x] 支持低延迟HLS/DASH
-- [x] 支持服务器和流媒体信息统计
-- [ ] 服务器和流媒体信息统计的前端样式
-- [x] on_connect/on_publish/on_play/on_done 事件回调
-- [ ] 多分辨率转码
-- [ ] 硬件加速转码
-- [X] Rtmp/Rtsp 中继
-- [ ] 管理面板
-- [ ] 不依赖ffmpeg的零延迟rtmp/rtsp中继 
+ - 支持API控制中继
 
 # 用法 
 ## docker 版本
