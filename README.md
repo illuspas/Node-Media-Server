@@ -15,34 +15,18 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 
 # Features
  - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER
+ - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711
  - Support GOP cache
  - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
  - Support remux to HLS/DASH/MP4
- - Support remux to HLS/DASH/MP4 automatic transcoding to aac
  - Support xycdn style authentication
  - Support event callback
  - Support https/wss
  - Support Server Monitor
  - Support Rtsp/Rtmp relay
- - Support multicore cluster mode
- 
- 
-# Todo 
-- [x] support record stream 
-- [x] support transcode
-- [x] support low latency hls
-- [x] server and streams status
-- [ ] server monitor frontend
-- [x] on_connect/on_publish/on_play/on_done event callback
-- [ ] multi resolution transcoding 
-- [ ] hardware acceleration transcoding. 
-- [x] rtmp/rtsp relay with ffmpeg
-- [ ] admin panel
-- [ ] zerolatency rtmp/rtsp relay without ffmpeg
-- [ ] support webrtc 
- 
+ - Support api control relay
+  
 # Usage 
 ## docker version (only_linux_x64)
 ```bash
