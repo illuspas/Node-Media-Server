@@ -5,7 +5,7 @@
 //
 
 const OS = require('os');
-
+const Package = require("../../package.json");
 function cpuAverage() {
 
   //Initialise sum of idle and time of cores and fetch CPU info
@@ -56,7 +56,7 @@ function getSessionsInfo(sessions) {
     ws: 0,
   };
 
-  for(let session of sessions.values()) {
+  for (let session of sessions.values()) {
     let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
     info.inbytes += socket.bytesRead;
     info.outbytes += socket.bytesWritten;
@@ -106,6 +106,7 @@ function getInfo(req, res, next) {
         http: sinfo.http,
         ws: sinfo.ws
       },
+      version: Package.version
     };
     res.json(info);
   });

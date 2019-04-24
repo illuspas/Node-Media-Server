@@ -10,7 +10,6 @@ const config = {
   },
   http: {
     port: 8000,
-    webroot: './public',
     mediaroot: './media',
     allow_origin: '*'
   },

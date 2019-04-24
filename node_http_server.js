@@ -6,6 +6,7 @@
 
 
 const Fs = require('fs');
+const path = require('path');
 const Http = require('http');
 const Https = require('https');
 const WebSocket = require('ws');
@@ -15,7 +16,6 @@ const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
-const HTTP_WEBROOT = './public';
 const HTTP_MEDIAROOT = './media';
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
@@ -26,43 +26,43 @@ const relayRoute = require('./api/routes/relay');
 
 class NodeHttpServer {
   constructor(config) {
-    this.port = config.http.port = config.http.port ? config.http.port : HTTP_PORT;
-    this.webroot = config.http.webroot = config.http.webroot ? config.http.webroot : HTTP_WEBROOT;
-    this.mediaroot = config.http.mediaroot = config.http.mediaroot ? config.http.mediaroot : HTTP_MEDIAROOT;
+    this.port = config.http.port || HTTP_PORT;
+    this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
     let app = Express();
 
-    app.all(['/api/*', '*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4', '*.flv'], (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
-      next();
+    app.all('*', (req, res, next) => {
+      res.header("Access-Control-Allow-Origin", this.config.http.allow_origin);
+      res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
+      res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+      res.header("Access-Control-Allow-Credentials", true);
+      req.method === "OPTIONS" ? res.sendStatus(200) : next();
     });
 
-    app.all('*.flv', (req, res, next) => {
-      if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'range');
-        res.end();
-      } else if (Fs.existsSync(this.mediaroot + req.url)) {
-        res.setHeader('Access-Control-Expose-Headers', 'Content-Length');
-        next();
-      } else {
-        req.nmsConnectionType = 'http';
-        this.onConnect(req, res);
-      }
+    app.get('*.flv', (req, res, next) => {
+      req.nmsConnectionType = 'http';
+      this.onConnect(req, res);
     });
 
-    app.use(bodyParser.urlencoded({ extended: true }));
-
-    app.use(Express.static(this.webroot));
-    app.use(Express.static(this.mediaroot));
+    let adminEntry = path.join(__dirname + '/public/admin/index.html');
+    if (Fs.existsSync(adminEntry)) {
+      app.get('/admin/*', (req, res) => {
+        res.sendFile(adminEntry);
+      });
+    }
 
     if (this.config.auth && this.config.auth.api) {
-      app.use('/api/*', basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+      app.use(['/api/*', '/static/*', '/admin/*'], basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
     }
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
     app.use('/api/relay', relayRoute(context));
+
+    app.use(Express.static(path.join(__dirname + '/public')));
+    app.use(Express.static(this.mediaroot));
+
+    app.use(bodyParser.urlencoded({ extended: true }));
 
     this.httpServer = Http.createServer(app);
 
