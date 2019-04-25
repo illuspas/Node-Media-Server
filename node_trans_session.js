@@ -20,9 +20,19 @@ class NodeTransSession extends EventEmitter {
   run() {
     let vc = this.conf.vc || 'copy';
     let ac = this.conf.ac || 'copy';
-    let inPath = this.conf.inPath;
+    let inPath = 'rtmp://127.0.0.1:' + this.conf.rtmpPort + this.conf.streamPath;
     let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
     let mapStr = '';
+
+    if (this.conf.rtmp && this.conf.rtmpApp) {
+      if (this.conf.rtmpApp === this.conf.streamApp) {
+        Logger.error('[Transmuxing RTMP] Cannot output to the same app.');
+      } else {
+        let rtmpOutput = `rtmp://127.0.0.1:${this.conf.rtmpPort}/${this.conf.rtmpApp}/${this.conf.streamName}`;
+        mapStr += `[f=flv]${rtmpOutput}|`;
+        Logger.log('[Transmuxing RTMP] ' + this.conf.streamPath + ' to ' + rtmpOutput);
+      }
+    }
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
       let mp4FileName = dateFormat('yyyy-mm-dd-HH-MM') + '.mp4';

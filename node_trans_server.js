@@ -60,7 +60,7 @@ class NodeTransServer {
       let conf = this.config.trans.tasks[i];
       conf.ffmpeg = this.config.trans.ffmpeg;
       conf.mediaroot = this.config.http.mediaroot;
-      conf.inPath = 'rtmp://127.0.0.1:' + this.config.rtmp.port + streamPath;
+      conf.rtmpPort = this.config.rtmp.port;
       conf.streamPath = streamPath;
       conf.streamApp = app;
       conf.streamName = name;
