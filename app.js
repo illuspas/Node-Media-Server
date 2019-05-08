@@ -1,16 +1,15 @@
-const { NodeMediaServer } = require('./index');
+const NodeMediaServer = require('./');
 
 const config = {
   rtmp: {
     port: 1935,
     chunk_size: 60000,
     gop_cache: true,
-    ping: 60,
-    ping_timeout: 30
+    ping: 30,
+    ping_timeout: 60
   },
   http: {
     port: 8000,
-    webroot: './public',
     mediaroot: './media',
     allow_origin: '*'
   },

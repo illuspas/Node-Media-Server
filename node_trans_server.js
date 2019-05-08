@@ -13,7 +13,7 @@ const _ = require('lodash');
 const mkdirp = require('mkdirp');
 
 class NodeTransServer {
-  constructor(config) {   
+  constructor(config) {
     this.config = config;
     this.transSessions = new Map();
   }
@@ -54,15 +54,16 @@ class NodeTransServer {
 
   onPostPublish(id, streamPath, args) {
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
-    let [app, stream] = _.slice(regRes, 1);
+    let [app, name] = _.slice(regRes, 1);
     let i = this.config.trans.tasks.length;
     while (i--) {
       let conf = this.config.trans.tasks[i];
-      conf.port = this.config.rtmp.port;
       conf.ffmpeg = this.config.trans.ffmpeg;
       conf.mediaroot = this.config.http.mediaroot;
+      conf.rtmpPort = this.config.rtmp.port;
       conf.streamPath = streamPath;
-      conf.stream = stream;
+      conf.streamApp = app;
+      conf.streamName = name;
       conf.args = args;
       if (app === conf.app) {
         let session = new NodeTransSession(conf);
