@@ -48,12 +48,29 @@ class NodeRelaySession extends EventEmitter {
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Relay end] id=', this.id);
-      this.emit('end', this.id);
+      this.ffmpeg_exec = null;
+      if (!this._ended) {
+        this._runtimeout = setTimeout(() => {
+          this._runtimeout = null;
+          this.run();
+        }, 1000);
+      } else {
+        this.emit('end', this.id);
+      }
     });
   }
 
   end() {
-    this.ffmpeg_exec.kill();
+    this._ended = true;
+    if (this._runtimeout != null) {
+      clearTimeout(this._runtimeout);
+      this._runtimeout = null;
+    }
+    if (this.ffmpeg_exec) {
+      this.ffmpeg_exec.kill();
+    } else {
+      this.emit('end', this.id);
+    }
   }
 }
 
