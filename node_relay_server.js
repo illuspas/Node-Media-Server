@@ -84,9 +84,18 @@ class NodeRelayServer {
     let session = new NodeRelaySession(conf);
     session.id = id;
     session.on('end', (id) => {
-      this.dynamicSessions.delete(id);
+      let list = this.dynamicSessions.get(id);
+      if (list.indexOf(session) > -1) {
+        list.splice(list.indexOf(session), 1);
+        if (list.length == 0) {
+          this.dynamicSessions.delete(id);
+        }
+      }
     });
-    this.dynamicSessions.set(id, session);
+    if (!this.dynamicSessions.has(id)) {
+      this.dynamicSessions.set(id, []);
+    }
+    this.dynamicSessions.get(id).push(session);
     session.run();
     Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
     return id;
@@ -102,9 +111,18 @@ class NodeRelayServer {
     let session = new NodeRelaySession(conf);
     session.id = id;
     session.on('end', (id) => {
-      this.dynamicSessions.delete(id);
+      let list = this.dynamicSessions.get(id);
+      if (list.indexOf(session) > -1) {
+        list.splice(list.indexOf(session), 1);
+        if (list.length == 0) {
+          this.dynamicSessions.delete(id);
+        }
+      }
     });
-    this.dynamicSessions.set(id, session);
+    if (!this.dynamicSessions.has(id)) {
+      this.dynamicSessions.set(id, []);
+    }
+    this.dynamicSessions.get(id).push(session);
     session.run();
     Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
   }
@@ -127,9 +145,18 @@ class NodeRelayServer {
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
-          this.dynamicSessions.delete(id);
+          let list = this.dynamicSessions.get(id);
+          if (list.indexOf(session) > -1) {
+            list.splice(list.indexOf(session), 1);
+            if (list.length == 0) {
+              this.dynamicSessions.delete(id);
+            }
+          }
         });
-        this.dynamicSessions.set(id, session);
+        if (!this.dynamicSessions.has(id)) {
+          this.dynamicSessions.set(id, []);
+        }
+        this.dynamicSessions.get(id).push(session);
         session.run();
         Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
       }
@@ -137,10 +164,10 @@ class NodeRelayServer {
   }
 
   onDonePlay(id, streamPath, args) {
-    let session = this.dynamicSessions.get(id);
+    let list = this.dynamicSessions.get(id);
     let publisher = context.sessions.get(context.publishers.get(streamPath));
-    if (session && publisher.players.size == 0) {
-      session.end();
+    if (list && publisher.players.size == 0) {
+      list.slice().forEach(session => session.end());
     }
   }
 
@@ -158,13 +185,22 @@ class NodeRelayServer {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
-        conf.ouPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
+        conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
-          this.dynamicSessions.delete(id);
+          let list = this.dynamicSessions.get(id);
+          if (list.indexOf(session) > -1) {
+            list.splice(list.indexOf(session), 1);
+            if (list.length == 0) {
+              this.dynamicSessions.delete(id);
+            }
+          }
         });
-        this.dynamicSessions.set(id, session);
+        if (!this.dynamicSessions.has(id)) {
+          this.dynamicSessions.set(id, []);
+        }
+        this.dynamicSessions.get(id).push(session);
         session.run();
         Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
       }
@@ -173,9 +209,9 @@ class NodeRelayServer {
   }
 
   onDonePublish(id, streamPath, args) {
-    let session = this.dynamicSessions.get(id);
-    if (session) {
-      session.end();
+    let list = this.dynamicSessions.get(id);
+    if (list) {
+      list.slice().forEach(session => session.end());
     }
 
     for (session of this.staticSessions.values()) {
