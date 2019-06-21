@@ -67,7 +67,7 @@ class NodeHttpServer {
 
     if (this.config.http.server) {
       this.httpServer = this.config.http.server;
-      if (!this.config.http.express)
+      if (!this.config.express)
         this.httpServer.on('request', app);
       this.hasUserdefinedServer = true;
     }
@@ -81,7 +81,8 @@ class NodeHttpServer {
     if (this.config.https) {
       if (this.config.https.server) {
         this.httpsServer = this.config.https.server;
-        this.httpsServer.on('request', app);
+        if (!this.config.express)
+          this.httpsServer.on('request', app);
         this.hasUserdefinedSecureServer = true;
       }
       else {
