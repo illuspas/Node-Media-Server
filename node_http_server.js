@@ -101,15 +101,15 @@ class NodeHttpServer {
       this.httpServer.listen(this.port, () => {
         Logger.log(`Node Media Http Server started on port: ${this.port}`);
       });
+
+      this.httpServer.on('error', (e) => {
+        Logger.error(`Node Media Http Server ${e}`);
+      });
+
+      this.httpServer.on('close', () => {
+        Logger.log('Node Media Http Server Close.');
+      });
     }
-
-    this.httpServer.on('error', (e) => {
-      Logger.error(`Node Media Http Server ${e}`);
-    });
-
-    this.httpServer.on('close', () => {
-      Logger.log('Node Media Http Server Close.');
-    });
 
     let wsconfig = { server: this.httpServer };
     if (this.config.http.wsroute)
@@ -133,15 +133,15 @@ class NodeHttpServer {
         this.httpsServer.listen(this.sport, () => {
           Logger.log(`Node Media Https Server started on port: ${this.sport}`);
         });
+
+        this.httpsServer.on('error', (e) => {
+          Logger.error(`Node Media Https Server ${e}`);
+        });
+
+        this.httpsServer.on('close', () => {
+          Logger.log('Node Media Https Server Close.');
+        });
       }
-
-      this.httpsServer.on('error', (e) => {
-        Logger.error(`Node Media Https Server ${e}`);
-      });
-
-      this.httpsServer.on('close', () => {
-        Logger.log('Node Media Https Server Close.');
-      });
 
       let wssconfig = { server: this.httpsServer };
       if (this.config.https.wsroute)
