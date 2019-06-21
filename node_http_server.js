@@ -32,7 +32,7 @@ class NodeHttpServer {
     this.hasUserdefinedSecureServer = false;
 
     let app;
-    if (this.config.http.express)
+    if (this.config.express)
       app = this.config.http.express;
     else
       app = Express();
