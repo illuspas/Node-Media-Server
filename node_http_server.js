@@ -81,6 +81,7 @@ class NodeHttpServer {
     if (this.config.https) {
       if (this.config.https.server) {
         this.httpsServer = this.config.https.server;
+        this.httpsServer.on('request', app);
         this.hasUserdefinedSecureServer = true;
       }
       else {
