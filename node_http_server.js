@@ -28,8 +28,14 @@ class NodeHttpServer {
     this.webroot = config.http.webroot = config.http.webroot ? config.http.webroot : HTTP_WEBROOT;
     this.mediaroot = config.http.mediaroot = config.http.mediaroot ? config.http.mediaroot : HTTP_MEDIAROOT;
     this.config = config;
+    this.hasUserdefinedServer = false;
+    this.hasUserdefinedSecureServer = false;
 
-    let app = Express();
+    let app;
+    if (this.config.http.express)
+      app = this.config.http.express;
+    else
+      app = Express();
 
     app.all(['/api/*','*.m3u8', '*.ts', '*.mpd', '*.m4s', '*.mp4', '*.flv'], (req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
@@ -59,7 +65,13 @@ class NodeHttpServer {
     app.use('/api/streams', streamsRoute(context));
     app.use('/api/server', serverRoute(context));
 
-    this.httpServer = Http.createServer(app);
+    if (this.config.http.server) {
+      this.httpServer = this.config.http.server;
+      if (!this.config.http.express)
+        this.httpServer.on('request', app);
+      this.hasUserdefinedServer = true;
+    }
+    else this.httpServer = Http.createServer(app);
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
@@ -67,19 +79,27 @@ class NodeHttpServer {
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
-      let options = {
-        key: Fs.readFileSync(this.config.https.key),
-        cert: Fs.readFileSync(this.config.https.cert)
-      };
-      this.sport = config.https.port ? config.https.port : HTTPS_PORT;
-      this.httpsServer = Https.createServer(options, app);
+      if (this.config.https.server) {
+        this.httpsServer = this.config.https.server;
+        this.hasUserdefinedSecureServer = true;
+      }
+      else {
+        let options = {
+          key: Fs.readFileSync(this.config.https.key),
+          cert: Fs.readFileSync(this.config.https.cert)
+        };
+        this.sport = config.https.port ? config.https.port : HTTPS_PORT;
+        this.httpsServer = Https.createServer(options, app);
+      }
     }
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
-      Logger.log(`Node Media Http Server started on port: ${this.port}`);
-    });
+    if (!this.hasUserdefinedServer) {
+      this.httpServer.listen(this.port, () => {
+        Logger.log(`Node Media Http Server started on port: ${this.port}`);
+      });
+    }
 
     this.httpServer.on('error', (e) => {
       Logger.error(`Node Media Http Server ${e}`);
@@ -89,7 +109,10 @@ class NodeHttpServer {
       Logger.log('Node Media Http Server Close.');
     });
 
-    this.wsServer = new WebSocket.Server({ server: this.httpServer });
+    let wsconfig = { server: this.httpServer };
+    if (this.config.http.wsroute)
+      wsconfig.path = this.config.http.wsroute;
+    this.wsServer = new WebSocket.Server(wsconfig);
 
     this.wsServer.on('connection', (ws, req) => {
       req.nmsConnectionType = 'ws';
@@ -104,9 +127,11 @@ class NodeHttpServer {
     });
 
     if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, () => {
-        Logger.log(`Node Media Https Server started on port: ${this.sport}`);
-      });
+      if (!this.hasUserdefinedSecureServer) {
+        this.httpsServer.listen(this.sport, () => {
+          Logger.log(`Node Media Https Server started on port: ${this.sport}`);
+        });
+      }
 
       this.httpsServer.on('error', (e) => {
         Logger.error(`Node Media Https Server ${e}`);
@@ -116,7 +141,10 @@ class NodeHttpServer {
         Logger.log('Node Media Https Server Close.');
       });
 
-      this.wssServer = new WebSocket.Server({ server: this.httpsServer });
+      let wssconfig = { server: this.httpsServer };
+      if (this.config.https.wsroute)
+        wssconfig.path = this.config.https.wsroute;
+      this.wssServer = new WebSocket.Server(wssconfig);
 
       this.wssServer.on('connection', (ws, req) => {
         req.nmsConnectionType = 'ws';
@@ -148,10 +176,9 @@ class NodeHttpServer {
   }
 
   stop() {
-    this.httpServer.close();
-    if (this.httpsServer) {
+    if (!this.hasUserdefinedServer) this.httpServer.close();
+    if (this.httpsServer && !this.hasUserdefinedSecureServer)
       this.httpsServer.close();
-    }
     context.sessions.forEach((session, id) => {
       if (session instanceof NodeFlvSession) {
         session.req.destroy();
