@@ -39,10 +39,8 @@ class NodeRtmpServer {
   stop() {
     this.tcpServer.close();
     context.sessions.forEach((session, id) => {
-      if (session instanceof NodeRtmpSession) {
-        session.socket.destroy();
-        context.sessions.delete(id);
-      }
+      if (session instanceof NodeRtmpSession)
+        session.stop();
     });
   }
 }
