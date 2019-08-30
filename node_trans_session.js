@@ -95,7 +95,7 @@ class NodeTransSession extends EventEmitter {
   }
 
   end() {
-    this.ffmpeg_exec.kill();
+    // this.ffmpeg_exec.kill();
   }
 }
 
