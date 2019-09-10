@@ -5,5 +5,6 @@ module.exports = (context) => {
   let router = express.Router();
   router.get('/', streamController.getStreams.bind(context));
   router.get('/:app/:stream', streamController.getStream.bind(context));
+  router.delete('/:app/:stream', streamController.delStream.bind(context));
   return router;
 };
