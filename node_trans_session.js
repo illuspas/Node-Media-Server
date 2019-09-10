@@ -42,10 +42,10 @@ class NodeTransSession extends EventEmitter {
     }
     if (this.conf.hls) {
       this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
-      let hlsFileName = 'index.m3u8';
-      let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
+      this.hlsFileName = 'index.m3u8';
+      let mapHls = `${this.conf.hlsFlags}${ouPath}/${this.hlsFileName}|`;
       mapStr += mapHls;
-      Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
+      Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + this.hlsFileName);
     }
     if (this.conf.dash) {
       this.conf.dashFlags = this.conf.dashFlags ? this.conf.dashFlags : '';
@@ -78,7 +78,7 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      fs.readdir(ouPath, function (err, files) {
+      fs.readdirSync(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
             if (filename.endsWith('.ts')
@@ -88,9 +88,12 @@ class NodeTransSession extends EventEmitter {
               || filename.endsWith('.tmp')) {
               fs.unlinkSync(ouPath + '/' + filename);
             }
-          })
+		  });
         }
-      });
+	  });
+	  if (this.conf.hls) {
+		fs.writeFileSync(ouPath + '/' + this.hlsFileName, '#EXTM3U\n');
+	  }
     });
   }
 
