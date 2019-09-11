@@ -88,12 +88,12 @@ class NodeTransSession extends EventEmitter {
               || filename.endsWith('.tmp')) {
               fs.unlinkSync(ouPath + '/' + filename);
             }
-		  });
+          });
         }
-	  });
-	  if (this.conf.hls) {
-		fs.writeFileSync(ouPath + '/' + this.hlsFileName, '#EXTM3U\n');
-	  }
+      });
+      if (this.conf.hls) {
+        fs.writeFileSync(ouPath + '/' + this.hlsFileName, '#EXTM3U\n');
+      }
     });
   }
 
