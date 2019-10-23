@@ -73,8 +73,8 @@ const RTMP_TYPE_INVOKE = 20; // AMF0
 const RTMP_TYPE_METADATA = 22;
 
 const RTMP_CHUNK_SIZE = 128;
-const RTMP_PING_TIME = 60000;
-const RTMP_PING_TIMEOUT = 30000;
+const RTMP_PING_TIME = 30000;
+const RTMP_PING_TIMEOUT = 60000;
 
 const STREAM_BEGIN = 0x00;
 const STREAM_EOF = 0x01;
@@ -126,6 +126,7 @@ class NodeRtmpSession {
     this.pingTime = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
     this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
+    this.pingResponseTime = 0;
 
     this.isLocal = this.ip === "127.0.0.1" || this.ip === "::1" || this.ip == "::ffff:127.0.0.1";
     this.isStarting = false;
@@ -574,7 +575,21 @@ class NodeRtmpSession {
     }
   }
 
-  rtmpEventHandler() { }
+  rtmpEventHandler() { 
+    let eventType = this.parserPacket.payload.readUInt16BE();
+    let eventData = this.parserPacket.payload.slice(2);
+    switch(eventType) {
+      case 3:
+        // let streamID = eventData.readUInt32BE();
+        // let bufferLength = eventData.readUInt32BE(4);
+        // console.log(`[rtmp event Handler] SetBufferLength: streamID=${streamID} bufferLength=${bufferLength}`);
+        break;
+      case 7:
+        this.pingResponseTime = eventData.readUInt32BE();
+        // console.log(`[rtmp event Handler] PingResponse: timestamp=${timestamp}`);
+        break;
+    }
+  }
 
   rtmpAudioHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
@@ -927,6 +942,11 @@ class NodeRtmpSession {
 
   sendPingRequest() {
     let currentTimestamp = Date.now() - this.startTimestamp;
+    if(currentTimestamp - this.pingResponseTime > this.pingTimeout) {
+      Logger.log(`[rtmp ping timout] id=${this.id}`);
+      this.stop();
+      return;
+    }
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_PROTOCOL;
