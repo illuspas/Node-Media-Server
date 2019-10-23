@@ -98,7 +98,7 @@ class NodeTransSession extends EventEmitter {
             }
           });
         }
-    });
+      });
     });
   }
 
