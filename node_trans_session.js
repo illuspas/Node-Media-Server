@@ -81,24 +81,24 @@ class NodeTransSession extends EventEmitter {
       fs.readdir(ouPath, function (err, files) {
         if (!err) {
           files.forEach((filename) => {
-			let filepath = ouPath + '/' + filename
+            let filepath = ouPath + '/' + filename
 
             if (filename.endsWith('.ts')
               || filename.endsWith('.m4s')
               || filename.endsWith('.tmp')) {
               fs.unlinkSync(filepath);
-			}
+            }
 
-			if (filename.endsWith('.m3u8')) {
-			  fs.writeFileSync(filepath, '#EXTM3U\n');
-			}
+            if (filename.endsWith('.m3u8')) {
+              fs.writeFileSync(filepath, '#EXTM3U\n');
+            }
 
-			if (filename.endsWith('.mpd')) {
-			  fs.writeFileSync(filepath, '<?xml version="1.0">\n<MPD></MPD>\n');
-			}
+            if (filename.endsWith('.mpd')) {
+              fs.writeFileSync(filepath, '<?xml version="1.0">\n<MPD></MPD>\n');
+            }
           });
         }
-	  });
+    });
     });
   }
 
