@@ -126,6 +126,7 @@ class NodeRtmpSession {
     this.pingTime = config.rtmp.ping ? config.rtmp.ping * 1000 : RTMP_PING_TIME;
     this.pingTimeout = config.rtmp.ping_timeout ? config.rtmp.ping_timeout * 1000 : RTMP_PING_TIMEOUT;
     this.pingInterval = null;
+    this.pingReset = false;
     this.pingResponseTime = 0;
 
     this.isLocal = this.ip === "127.0.0.1" || this.ip === "::1" || this.ip == "::ffff:127.0.0.1";
@@ -237,6 +238,7 @@ class NodeRtmpSession {
   }
 
   onSocketData(data) {
+    this.pingReset = true;
     let bytes = data.length;
     let p = 0;
     let n = 0;
@@ -942,7 +944,7 @@ class NodeRtmpSession {
 
   sendPingRequest() {
     let currentTimestamp = Date.now() - this.startTimestamp;
-    if(currentTimestamp - this.pingResponseTime > this.pingTimeout) {
+    if(currentTimestamp - this.pingResponseTime > this.pingTimeout && !this.pingReset) {
       Logger.log(`[rtmp ping timout] id=${this.id}`);
       this.stop();
       return;
@@ -956,6 +958,7 @@ class NodeRtmpSession {
     packet.header.length = packet.payload.length;
     let chunks = this.rtmpChunksCreate(packet);
     this.socket.write(chunks);
+    this.pingReset = false;
   }
 
   respondConnect(tid) {
