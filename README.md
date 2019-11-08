@@ -372,7 +372,7 @@ http://localhost:8000/api/server
     "speed": 3592
   },
   "mem": {
-    "totle": 8589934592,
+    "total": 8589934592,
     "free": 754126848
   },
   "net": {
