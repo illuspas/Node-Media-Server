@@ -8,7 +8,13 @@
 ![logo](https://www.nodemedia.cn/uploads/site_logo.png)
 
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
-[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
+[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
+
+# NMSv3
+https://github.com/NodeMedia/NodeMediaServer
+
+# Web Admin Panel Screenshot
+[http://server_ip:8000/admin](http://server_ip:8000/admin)
 
 ![admin](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_dashboard.png)
 ![preview](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_streams_preview.png)
