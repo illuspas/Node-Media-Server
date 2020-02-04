@@ -12,13 +12,14 @@ const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
 const context = require('./node_core_ctx');
 const Package = require("./package.json");
+const EventCheck = require('./node_event_check');
 
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
   }
 
-  run() {
+  run () {
     Logger.setLogType(this.config.logType);
     Logger.log(`Node Media Server v${Package.version}`);
     if (this.config.rtmp) {
@@ -74,11 +75,11 @@ class NodeMediaServer {
     });
   }
 
-  on(eventName, listener) {
+  on (eventName, listener) {
     context.nodeEvent.on(eventName, listener);
   }
 
-  stop() {
+  stop () {
     if (this.nrs) {
       this.nrs.stop();
     }
@@ -90,8 +91,12 @@ class NodeMediaServer {
     }
   }
 
-  getSession(id) {
+  getSession (id) {
     return context.sessions.get(id);
+  }
+
+  check (eventName, listener) {
+    EventCheck.on(eventName, listener);
   }
 }
 
