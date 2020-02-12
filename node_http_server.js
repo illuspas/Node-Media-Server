@@ -132,7 +132,7 @@ class NodeHttpServer {
   }
 
   run () {
-    this.httpServer.listen(this.port, () => {
+    this.httpServer.listen(this.port, "0.0.0.0", () => {
       Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
