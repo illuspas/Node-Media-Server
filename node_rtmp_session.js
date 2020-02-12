@@ -984,6 +984,10 @@ class NodeRtmpSession {
     let preConnect = await EventCheck.run("preConnect", {
       id: this.id,
       eventName: "preConnect",
+      stream: {
+        app: invokeMessage.cmdObj.app,
+        path: invokeMessage.cmdObj.tcUrl
+      },
       data: invokeMessage.cmdObj
     });
 
@@ -1004,6 +1008,10 @@ class NodeRtmpSession {
       let postConnect = await EventCheck.run("postConnect", {
         id: this.id,
         eventName: "postConnect",
+        stream: {
+          app: invokeMessage.cmdObj.app,
+          path: invokeMessage.cmdObj.tcUrl
+        },
         data: invokeMessage.cmdObj
       });
 
@@ -1035,7 +1043,12 @@ class NodeRtmpSession {
     let prePublish = await EventCheck.run("prePublish", {
       id: this.id,
       eventName: "prePublish",
-      streamPath: this.publishStreamPath,
+      stream: {
+        id: this.publishStreamId,
+        path: this.publishStreamPath,
+        app: this.appname,
+        key: invokeMessage.streamName.split("?")[0]
+      },
       data: this.publishArgs
     });
 
@@ -1071,7 +1084,12 @@ class NodeRtmpSession {
         let postPublish = await EventCheck.run("postPublish", {
           id: this.id,
           eventName: "postPublish",
-          streamPath: this.publishStreamPath,
+          stream: {
+            id: this.publishStreamId,
+            path: this.publishStreamPath,
+            app: this.appname,
+            key: invokeMessage.streamName.split("?")[0]
+          },
           data: this.publishArgs
         });
 
@@ -1101,7 +1119,12 @@ class NodeRtmpSession {
     let prePlay = await EventCheck.run("prePlay", {
       id: this.id,
       eventName: "prePlay",
-      streamPath: this.playStreamPath,
+      stream: {
+        id: this.playStreamId,
+        path: this.playStreamPath,
+        app: this.appname,
+        key: invokeMessage.streamName.split("?")[0]
+      },
       data: this.playArgs
     });
 
@@ -1189,7 +1212,11 @@ class NodeRtmpSession {
     let postPlay = await EventCheck.run("postPlay", {
       id: this.id,
       eventName: "postPlay",
-      streamPath: this.playStreamPath,
+      stream: {
+        id: this.playStreamId,
+        path: this.playStreamPath,
+        app: this.appname
+      },
       data: this.playArgs
     });
 

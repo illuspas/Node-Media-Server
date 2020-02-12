@@ -18,12 +18,21 @@ class NodeTransServer {
     this.transSessions = new Map();
   }
 
-  async run() {
+  async run () {
     try {
       mkdirp.sync(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
     } catch (error) {
       Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
+      return;
+    }
+    try {
+      if (this.config.http.hlsroot) {
+        mkdirp.sync(this.config.http.hlsroot);
+        fs.accessSync(this.config.http.hlsroot, fs.constants.W_OK);
+      }
+    } catch (error) {
+      Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.hlsroot} cannot be written.`);
       return;
     }
 
@@ -49,10 +58,10 @@ class NodeTransServer {
     }
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
     context.nodeEvent.on('donePublish', this.onDonePublish.bind(this));
-    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}, ffmpeg version: ${version}`);
+    Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}, HlsRoot: ${this.config.http.hlsroot || this.config.http.mediaroot},ffmpeg version: ${version}`);
   }
 
-  onPostPublish(id, streamPath, args) {
+  onPostPublish (id, streamPath, args) {
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, name] = _.slice(regRes, 1);
     let i = this.config.trans.tasks.length;
@@ -60,12 +69,13 @@ class NodeTransServer {
       let conf = this.config.trans.tasks[i];
       conf.ffmpeg = this.config.trans.ffmpeg;
       conf.mediaroot = this.config.http.mediaroot;
+      conf.hlsroot = this.config.http.hlsroot || this.config.http.mediaroot;
       conf.rtmpPort = this.config.rtmp.port;
       conf.streamPath = streamPath;
       conf.streamApp = app;
       conf.streamName = name;
       conf.args = args;
-      if (app === conf.app) {
+      if (app === conf.app || conf.app === "*") {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
         session.on('end', () => {
@@ -76,7 +86,7 @@ class NodeTransServer {
     }
   }
 
-  onDonePublish(id, streamPath, args) {
+  onDonePublish (id, streamPath, args) {
     let session = this.transSessions.get(id);
     if (session) {
       session.end();

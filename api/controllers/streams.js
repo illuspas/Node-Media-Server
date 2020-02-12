@@ -1,6 +1,6 @@
 const _ = require('lodash');
 
-function getStreams(req, res, next) {
+function getStreams (req, res, next) {
   let stats = {};
 
   this.sessions.forEach(function (session, id) {
@@ -84,7 +84,7 @@ function getStreams(req, res, next) {
   res.json(stats);
 }
 
-function getStream(req, res, next) {
+function getStream (req, res, next) {
 
   let streamStats = {
     isLive: false,
@@ -105,11 +105,12 @@ function getStream(req, res, next) {
   streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
   streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
   streamStats.startTime = streamStats.isLive ? publisherSession.connectTime : null;
+  console.log(streamStats);
 
   res.json(streamStats);
 }
 
-function delStream(req, res, next) {
+function delStream (req, res, next) {
   let publishStreamPath = `/${req.params.app}/${req.params.stream}`;
   let publisherSession = this.sessions.get(
     this.publishers.get(publishStreamPath)
