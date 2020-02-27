@@ -55,6 +55,7 @@ class NodeTransServer {
   onPostPublish(id, streamPath, args) {
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, name] = _.slice(regRes, 1);
+    app = app.replace(/\?.*/g, "");
     let i = this.config.trans.tasks.length;
     while (i--) {
       let conf = this.config.trans.tasks[i];
