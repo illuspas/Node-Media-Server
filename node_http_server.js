@@ -52,12 +52,14 @@ class NodeHttpServer {
       });
     }
 
-    if (this.config.auth && this.config.auth.api) {
-      app.use(['/api/*', '/static/*', '/admin/*'], basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+    if (this.config.http.api !== false) {
+      if (this.config.auth && this.config.auth.api) {
+        app.use(['/api/*', '/static/*', '/admin/*'], basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+      }
+      app.use('/api/streams', streamsRoute(context));
+      app.use('/api/server', serverRoute(context));
+      app.use('/api/relay', relayRoute(context));
     }
-    app.use('/api/streams', streamsRoute(context));
-    app.use('/api/server', serverRoute(context));
-    app.use('/api/relay', relayRoute(context));
 
     app.use(Express.static(path.join(__dirname + '/public')));
     app.use(Express.static(this.mediaroot));
@@ -71,7 +73,7 @@ class NodeHttpServer {
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
