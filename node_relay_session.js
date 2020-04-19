@@ -4,6 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Logger = require('./node_core_logger');
+const NodeCoreUtils = require("./node_core_utils");
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
@@ -14,6 +15,7 @@ class NodeRelaySession extends EventEmitter {
   constructor(conf) {
     super();
     this.conf = conf;
+    this.id = NodeCoreUtils.generateNewSessionID();
   }
 
   run() {
