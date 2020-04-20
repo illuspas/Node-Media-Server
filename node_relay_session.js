@@ -16,6 +16,7 @@ class NodeRelaySession extends EventEmitter {
     super();
     this.conf = conf;
     this.id = NodeCoreUtils.generateNewSessionID();
+    this.TAG = 'relay';
   }
 
   run() {
