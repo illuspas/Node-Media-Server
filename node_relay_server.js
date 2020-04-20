@@ -62,8 +62,7 @@ class NodeRelayServer {
         conf.inPath = conf.edge;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
-        const id = session.id;
-        context.sessions.set(id, session);
+        session.id = i;
         session.streamPath = `/${conf.app}/${conf.name}`;
         session.on('end', (id) => {
           this.staticSessions.delete(id);
