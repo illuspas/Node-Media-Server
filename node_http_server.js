@@ -32,6 +32,8 @@ class NodeHttpServer {
 
     let app = Express();
 
+    app.use(bodyParser.urlencoded({ extended: true }));
+
     app.all('*', (req, res, next) => {
       res.header("Access-Control-Allow-Origin", this.config.http.allow_origin);
       res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
@@ -66,8 +68,6 @@ class NodeHttpServer {
     if (config.http.webroot) {
       app.use(Express.static(config.http.webroot));
     }
-
-    app.use(bodyParser.urlencoded({ extended: true }));
 
     this.httpServer = Http.createServer(app);
 

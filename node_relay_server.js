@@ -62,12 +62,13 @@ class NodeRelayServer {
         conf.inPath = conf.edge;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${conf.app}/${conf.name}`;
         let session = new NodeRelaySession(conf);
-        session.id = i;
+        const id = session.id;
+        context.sessions.set(id, session);
         session.streamPath = `/${conf.app}/${conf.name}`;
         session.on('end', (id) => {
           this.staticSessions.delete(id);
         });
-        this.staticSessions.set(i, session);
+        this.staticSessions.set(id, session);
         session.run();
         Logger.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
       }
@@ -77,12 +78,14 @@ class NodeRelayServer {
   //从远端拉推到本地
   onRelayPull(url, app, name) {
     let conf = {};
+    conf.app = app;
+    conf.name = name;
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
     conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
-    let id = NodeCoreUtils.generateNewSessionID();
     let session = new NodeRelaySession(conf);
-    session.id = id;
+    const id = session.id;
+    context.sessions.set(id, session);
     session.on('end', (id) => {
       this.dynamicSessions.delete(id);
     });
@@ -95,12 +98,14 @@ class NodeRelayServer {
   //从本地拉推到远端
   onRelayPush(url, app, name) {
     let conf = {};
+    conf.app = app;
+    conf.name = name;
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
     conf.ouPath = url;
-    let id = NodeCoreUtils.generateNewSessionID();
     let session = new NodeRelaySession(conf);
-    session.id = id;
+    const id = session.id;
+    context.sessions.set(id, session);
     session.on('end', (id) => {
       this.dynamicSessions.delete(id);
     });
