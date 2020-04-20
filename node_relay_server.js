@@ -68,9 +68,9 @@ class NodeRelayServer {
         session.on('end', (id) => {
           this.staticSessions.delete(id);
         });
-        this.staticSessions.set(id, session);
+        this.staticSessions.set(i, session);
         session.run();
-        Logger.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[Relay static pull] start', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
