@@ -635,6 +635,10 @@ class NodeRtmpSession {
     packet.payload = payload;
     packet.header.length = packet.payload.length;
     packet.header.timestamp = this.parserPacket.clock;
+
+    // Emit an event for the audio.
+    context.nodeEvent.emit('audio', this.id, packet);
+
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
@@ -716,6 +720,9 @@ class NodeRtmpSession {
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
 
+    // Emit an event for the video.
+    context.nodeEvent.emit('video', this.id, packet);
+
     //cache gop
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
       if (frame_type == 1 && payload[1] == 1) {
@@ -784,6 +791,10 @@ class NodeRtmpSession {
         packet.header.type = RTMP_TYPE_DATA;
         packet.payload = this.metaData;
         packet.header.length = packet.payload.length;
+
+        // Emit an event for the data.
+        context.nodeEvent.emit('data', this.id, packet);
+
         let rtmpChunks = this.rtmpChunksCreate(packet);
         let flvTag = NodeFlvSession.createFlvTag(packet);
 
