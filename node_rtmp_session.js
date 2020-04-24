@@ -714,7 +714,6 @@ class NodeRtmpSession {
     }
 
     const timestamp = this.parserPacket.clock;
-    console.log('length', length)
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_VIDEO;
