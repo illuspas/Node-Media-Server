@@ -10,7 +10,6 @@ const path = require('path');
 const Http = require('http');
 const Https = require('https');
 const WebSocket = require('ws');
-const cookieSession = require('cookie-session')
 const Express = require('express');
 const bodyParser = require('body-parser');
 const basicAuth = require('basic-auth-connect');
@@ -38,10 +37,6 @@ class NodeHttpServer {
     let app = Express();
     app.set('trust proxy', 1) // trust first proxy
 
-    app.use(cookieSession({
-      name: 'session',
-      keys: ['kAFk7RJWXNahD8sL', '4C6tTh4ASLvszz9g']
-    }));
 
     app.all('*', (req, res, next) => {
       res.header("Access-Control-Allow-Origin", this.config.http.allow_origin);
@@ -49,11 +44,6 @@ class NodeHttpServer {
       res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
       res.header("Access-Control-Allow-Credentials", true);
       req.method === "OPTIONS" ? res.sendStatus(200) : next();
-    });
-
-    app.use(function (req, res, next) {
-      req.session.id = req.session.id || NodeCoreUtils.generateNewSessionID();
-      next();
     });
 
     app.get('*.flv', (req, res, next) => {
@@ -228,9 +218,9 @@ class NodeHttpServer {
       //send HLS index
       // try {
       var session;
-      if (context.sessions.has(req.session.id)) {
-        Logger.log(`[Existing Session] Connecting existing session ${req.session.id} `);
-        session = context.sessions.get(req.session.id);
+      if (context.sessions.has(req.params.key)) {
+        Logger.log(`[Existing Session] Connecting existing session ${req.params.key} `);
+        session = context.sessions.get(req.params.key);
       } else {
         Logger.log(`[New Session]Starting new session`);
         session = new NodeHlsSession(this.config, req, res);
@@ -250,6 +240,7 @@ class NodeHttpServer {
       if (index) {
         res.sendFile(index);
       } else {
+        Logger.error(`[play] Error ${index} not found.`);
         res.status(404);
         session.stop();
       }

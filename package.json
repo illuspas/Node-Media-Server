@@ -28,6 +28,7 @@
     "cookie-session": "^1.4.0",
     "dateformat": "^3.0.3",
     "express": "^4.16.4",
+    "express-session": "^1.17.1",
     "lodash": ">=4.17.13",
     "mkdirp": "^0.5.1",
     "ws": "^5.2.2"

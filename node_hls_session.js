@@ -16,7 +16,7 @@ class NodeHlsSession {
     this.config = config;
     this.req = req;
     this.res = res;
-    this.id = req.session.id;
+    this.id = req.params.key;
     this.ip = this.req.socket.remoteAddress;
 
     this.playStreamPath = '/' + req.params.app + '/' + req.params.key;
