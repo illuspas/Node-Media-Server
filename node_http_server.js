@@ -191,7 +191,7 @@ class NodeHttpServer {
         context.stat.inbytes += socket.bytesRead;
         context.stat.outbytes += socket.bytesWritten;
         if (session.req) {
-          context.hlsSessions.delete(session.req.session.id);
+          context.hlsSessions.delete(session.req.params.key);
         }
       }
     });

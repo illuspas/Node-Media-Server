@@ -95,6 +95,10 @@ class NodeMediaServer {
     return context.sessions.get(id);
   }
 
+  getContext () {
+    return context;
+  }
+
   check (eventName, listener) {
     EventCheck.on(eventName, listener);
   }
