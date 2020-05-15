@@ -38,6 +38,8 @@ class NodeHttpServer {
     app.set('trust proxy', 1) // trust first proxy
 
 
+    app.use(bodyParser.urlencoded({ extended: true }));
+
     app.all('*', (req, res, next) => {
       res.header("Access-Control-Allow-Origin", this.config.http.allow_origin);
       res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
@@ -88,12 +90,14 @@ class NodeHttpServer {
       });
     }
 
-    if (this.config.auth && this.config.auth.api) {
-      app.use(['/api/*', '/static/*', '/admin/*'], basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+    if (this.config.http.api !== false) {
+      if (this.config.auth && this.config.auth.api) {
+        app.use(['/api/*', '/static/*', '/admin/*'], basicAuth(this.config.auth.api_user, this.config.auth.api_pass));
+      }
+      app.use('/api/streams', streamsRoute(context));
+      app.use('/api/server', serverRoute(context));
+      app.use('/api/relay', relayRoute(context));
     }
-    app.use('/api/streams', streamsRoute(context));
-    app.use('/api/server', serverRoute(context));
-    app.use('/api/relay', relayRoute(context));
 
     app.use(Express.static(path.join(__dirname + '/public')));
 
@@ -102,13 +106,11 @@ class NodeHttpServer {
       app.use(Express.static(config.http.webroot));
     }
 
-    app.use(bodyParser.urlencoded({ extended: true }));
-
     this.httpServer = Http.createServer(app);
 
     /**
      * ~ openssl genrsa -out privatekey.pem 1024
-     * ~ openssl req -new -key privatekey.pem -out certrequest.csr 
+     * ~ openssl req -new -key privatekey.pem -out certrequest.csr
      * ~ openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
      */
     if (this.config.https) {
