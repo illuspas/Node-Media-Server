@@ -6,7 +6,7 @@
 
 const OS = require('os');
 const Package = require("../../package.json");
-function cpuAverage () {
+function cpuAverage() {
 
   //Initialise sum of idle and time of cores and fetch CPU info
   let totalIdle = 0, totalTick = 0;
@@ -31,7 +31,7 @@ function cpuAverage () {
   return { idle: totalIdle / cpus.length, total: totalTick / cpus.length };
 }
 
-function percentageCPU () {
+function percentageCPU() {
   return new Promise(function (resolve, reject) {
     let startMeasure = cpuAverage();
     setTimeout(() => {
@@ -47,7 +47,7 @@ function percentageCPU () {
   });
 }
 
-function getSessionsInfo (sessions) {
+function getSessionsInfo(sessions) {
   let info = {
     inbytes: 0,
     outbytes: 0,
@@ -70,7 +70,7 @@ function getSessionsInfo (sessions) {
 }
 
 
-function getInfo (req, res, next) {
+function getInfo(req, res, next) {
   let s = this.sessions;
   percentageCPU().then((cpuload) => {
     let sinfo = getSessionsInfo(s);

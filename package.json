@@ -25,10 +25,7 @@
   "dependencies": {
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.2",
-    "cookie-session": "^1.4.0",
     "dateformat": "^3.0.3",
-    "express": "^4.16.4",
-    "express-session": "^1.17.1",
     "lodash": ">=4.17.13",
     "mkdirp": "1.0.3",
     "ws": "^5.2.2"
