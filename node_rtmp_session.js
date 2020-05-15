@@ -14,7 +14,6 @@ const NodeCoreUtils = require("./node_core_utils");
 const NodeFlvSession = require("./node_flv_session");
 const context = require("./node_core_ctx");
 const Logger = require("./node_core_logger");
-const EventCheck = require('./node_event_check');
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
@@ -981,7 +980,7 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
-    let preConnect = await EventCheck.run("preConnect", {
+    let preConnect = await context.nodeCheck.run("preConnect", {
       id: this.id,
       eventName: "preConnect",
       stream: {
@@ -1005,7 +1004,7 @@ class NodeRtmpSession {
       this.setChunkSize(this.outChunkSize);
       this.respondConnect(invokeMessage.transId);
       Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
-      let postConnect = await EventCheck.run("postConnect", {
+      let postConnect = await context.nodeCheck.run("postConnect", {
         id: this.id,
         eventName: "postConnect",
         stream: {
@@ -1040,7 +1039,7 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
-    let prePublish = await EventCheck.run("prePublish", {
+    let prePublish = await context.nodeCheck.run("prePublish", {
       id: this.id,
       eventName: "prePublish",
       stream: {
@@ -1081,7 +1080,7 @@ class NodeRtmpSession {
             context.idlePlayers.delete(idlePlayerId);
           }
         }
-        let postPublish = await EventCheck.run("postPublish", {
+        let postPublish = await context.nodeCheck.run("postPublish", {
           id: this.id,
           eventName: "postPublish",
           stream: {
@@ -1116,7 +1115,7 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
-    let prePlay = await EventCheck.run("prePlay", {
+    let prePlay = await context.nodeCheck.run("prePlay", {
       id: this.id,
       eventName: "prePlay",
       stream: {
@@ -1209,7 +1208,7 @@ class NodeRtmpSession {
     this.isIdling = false;
     this.isPlaying = true;
     context.nodeEvent.emit("postPlay", this.id, this.playStreamPath, this.playArgs);
-    let postPlay = await EventCheck.run("postPlay", {
+    let postPlay = await context.nodeCheck.run("postPlay", {
       id: this.id,
       eventName: "postPlay",
       stream: {

@@ -37,7 +37,6 @@ class NodeHttpServer {
     let app = Express();
     app.set('trust proxy', 1) // trust first proxy
 
-
     app.use(bodyParser.urlencoded({ extended: true }));
 
     app.all('*', (req, res, next) => {
@@ -54,32 +53,9 @@ class NodeHttpServer {
     });
 
     if (config.http.hlsplay) {
-      // app.use(Express.cookieParser());
-      // app.use(function (req, res, next) {
-      //   // check if client sent cookie
-      //   var hlsId = req.cookies.hlsId;
-      //   if (hlsId === undefined) {
-      //     // no: set a new cookie
-      //     var randomNumber = Math.random().toString();
-      //     randomNumber = randomNumber.substring(2, randomNumber.length);
-      //     res.cookie('hlsId', randomNumber, { maxAge: 900000, httpOnly: true });
-      //   }
-      //   else {
-      //     // yes, cookie was already present 
-      //     console.log('cookie exists', cookie);
-      //   }
-      //   next(); // <-- important!
-      // });
       app.use(config.http.hlsplay, (req, res) => {
         req.nmsConnectionType = 'http';
         this.onConnect('hls', req, res);
-
-        // this.playStreamPath = req.baseUrl.split(".")[0];
-
-        // console.log('reqs:', req)
-        // context.nodeEvent.emit("prePlay", this.id, this.playStreamPath, {});
-
-        // res.sendFile(this.mediaroot + '/stream/gwVhVdjms/' + req.params['file']);
       })
     }
 
@@ -218,42 +194,36 @@ class NodeHttpServer {
   async onConnect(type, req, res) {
     if (type == 'hls') {
       //send HLS index
-      // try {
-      var session;
-      if (context.sessions.has(req.params.key)) {
-        Logger.log(`[Existing Session] Connecting existing session ${req.params.key} `);
-        session = context.sessions.get(req.params.key);
-      } else {
-        Logger.log(`[New Session]Starting new session`);
-        session = new NodeHlsSession(this.config, req, res);
-        try {
-          if (! await session.start()) {
-            res.status(403).end();
-            res.end();
+      try {
+        var session;
+        if (context.sessions.has(req.params.key)) {
+          session = context.sessions.get(req.params.key);
+        } else {
+          Logger.log(`[New HLS Session] Starting new session ${req.params.key}`);
+          session = new NodeHlsSession(this.config, req, res);
+          try {
+            if (! await session.start()) {
+              res.status(403).end();
+              return;
+            };
+          } catch (err) {
+            res.status(500).end();
             return;
-          };
-        } catch (err) {
-          res.status(500).end();
-          res.end();
-          return;
+          }
         }
+        let index = session.play(req.url);
+        if (index) {
+          res.sendFile(index);
+        } else {
+          Logger.error(`[play] Error ${index} not found.`);
+          res.status(404);
+          session.stop();
+        }
+      } catch (err) {
+        Logger.error(`[play] Error Loading stream.Error: ${JSON.stringify(err)} `);
+        res.status(500).end();
+        return;
       }
-      let index = session.play(req.url);
-      if (index) {
-        res.sendFile(index);
-      } else {
-        Logger.error(`[play] Error ${index} not found.`);
-        res.status(404);
-        session.stop();
-      }
-      // } else {
-      //   Logger.error(`[play] Error Loading stream.`);
-      //   res.status(403).end();
-      // }
-      // } catch (err) {
-      //   Logger.error(`[play] Error Loading stream.Error: ${ JSON.stringify(err) } `);
-      //   res.status(403).end();
-      // }
 
 
       // if (context.sessions.has(req.session.id))) 

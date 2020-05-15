@@ -9,7 +9,6 @@ const AMF = require("./node_core_amf");
 const Logger = require("./node_core_logger");
 const context = require("./node_core_ctx");
 const NodeCoreUtils = require("./node_core_utils");
-const EventCheck = require('./node_event_check');
 
 class NodeHlsSession {
   constructor(config, req, res) {
@@ -32,7 +31,7 @@ class NodeHlsSession {
     this.req.on("close", this.onReqClose.bind(this));
     this.req.on("error", this.onReqError.bind(this));
     req.on('end', () => {
-      console.log("end")
+      Logger.debug(`[HLS Session] Requested Ended`)
     });
 
     this.TAG = "http-hls";
@@ -42,9 +41,8 @@ class NodeHlsSession {
   }
 
   play(url) {
-    Logger.log(this.playStreamPath);
     let index = (this.config.http.hlsroot || this.config.http.mediaroot) + this.playStreamPath + (url === '/' ? '/index.m3u8' : url);
-    Logger.log(`[${this.TAG} play] Loading stream. id=${this.id} Index=${index} `);
+    Logger.log(`[${this.TAG} play] Loading stream. id=${this.id} Index=${index}, Path=${this.playStreamPath} `);
 
     if (this.playCheck) {
       clearTimeout(this.playCheck);
@@ -93,7 +91,7 @@ class NodeHlsSession {
   }
 
   async start() {
-    let prePlay = await EventCheck.run("prePlay", {
+    let prePlay = await context.nodeCheck.run("prePlay", {
       id: this.id,
       eventName: "prePlay",
       stream: {
@@ -116,7 +114,7 @@ class NodeHlsSession {
     if (this.isPlaying) {
       context.nodeEvent.emit("donePlay", this.id, this.playStreamPath, this.playArgs);
 
-      EventCheck.run("donePlay", {
+      context.nodeCheck.run("donePlay", {
         id: this.id,
         eventName: "donePlay",
         stream: {
@@ -160,7 +158,7 @@ class NodeHlsSession {
     if (!this.isStarting) {
       return;
     }
-    // let prePlay = await EventCheck.run("prePlay", {
+    // let prePlay = await context.nodeCheck.run("prePlay", {
     //   id: this.id,
     //   eventName: "prePlay",
     //   type: 'hls',
@@ -200,8 +198,6 @@ class NodeHlsSession {
     let publisher = context.sessions.get(publisherId);
     let players = publisher.players;
     players.add(this.id);
-    console.log('this.playStreamPath', this.playStreamPath);
-    console.log('url', this.req.url);
 
     //send HLS index
     let index = (this.config.http.hlsroot || this.config.http.mediaroot) + this.playStreamPath + (this.req.url === '/' ? '/index.m3u8' : this.req.url);

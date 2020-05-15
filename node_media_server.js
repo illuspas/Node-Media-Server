@@ -12,16 +12,22 @@ const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
 const context = require('./node_core_ctx');
 const Package = require("./package.json");
-const EventCheck = require('./node_event_check');
 
 class NodeMediaServer {
   constructor(config) {
     this.config = config;
   }
 
-  run() {
-    Logger.setLogType(this.config.logType);
+  async run() {
+    await Logger.setLogFile({
+      path: this.config.logging.file_path || '../logs',
+      output: this.config.logging.file_output || 'NONE'
+    });
+
+    Logger.setLogType(this.config.logging.shell_output || this.config.logType || 'NORMAL');
+
     Logger.log(`Node Media Server v${Package.version}`);
+
     if (this.config.rtmp) {
       this.nrs = new NodeRtmpServer(this.config);
       this.nrs.run();
@@ -100,7 +106,7 @@ class NodeMediaServer {
   }
 
   check(eventName, listener) {
-    EventCheck.on(eventName, listener);
+    context.nodeCheck.on(eventName, listener);
   }
 }
 

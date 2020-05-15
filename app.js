@@ -28,8 +28,12 @@ const config = {
     publish: false,
     secret: 'nodemedia2017privatekey'
   },
+  logging: {
+    shell_output: 'NORMAL',
+    file_output: 'NORMAL',
+    file_path: './logs'
+  }
 };
-
 
 let nms = new NodeMediaServer(config)
 nms.run();
