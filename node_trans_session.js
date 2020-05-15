@@ -17,7 +17,7 @@ class NodeTransSession extends EventEmitter {
     this.conf = conf;
   }
 
-  run () {
+  run() {
     let vc = this.conf.vc || 'copy';
     let ac = this.conf.ac || 'copy';
     let hlsPath = this.conf.hlsroot || this.conf.mediaroot;
@@ -115,7 +115,7 @@ class NodeTransSession extends EventEmitter {
     });
   }
 
-  end () {
+  end() {
     // this.ffmpeg_exec.kill();
   }
 }

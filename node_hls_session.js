@@ -41,7 +41,7 @@ class NodeHlsSession {
     context.sessions.set(this.id, this);
   }
 
-  play (url) {
+  play(url) {
     Logger.log(this.playStreamPath);
     let index = (this.config.http.hlsroot || this.config.http.mediaroot) + this.playStreamPath + (url === '/' ? '/index.m3u8' : url);
     Logger.log(`[${this.TAG} play] Loading stream. id=${this.id} Index=${index} `);
@@ -65,7 +65,7 @@ class NodeHlsSession {
     }
   }
 
-  run () {
+  run() {
     // let method = this.req.method;
     // let urlInfo = URL.parse(this.req.url, true);
     // let streamPath = '/' + this.req.params.app + '/' + this.req.params.key;
@@ -92,7 +92,7 @@ class NodeHlsSession {
 
   }
 
-  async start () {
+  async start() {
     let prePlay = await EventCheck.run("prePlay", {
       id: this.id,
       eventName: "prePlay",
@@ -111,7 +111,7 @@ class NodeHlsSession {
     return prePlay ? (prePlay.error ? false : true) : true;
   }
 
-  async stop () {
+  async stop() {
     this.isStarting = false;
     if (this.isPlaying) {
       context.nodeEvent.emit("donePlay", this.id, this.playStreamPath, this.playArgs);
@@ -140,22 +140,22 @@ class NodeHlsSession {
     context.sessions.delete(this.id);
   }
 
-  onReqClose () {
+  onReqClose() {
     Logger.log(`[${this.TAG} play] Close stream. id=${this.id} streamPath=${this.playStreamPath}`);
   }
 
-  onReqError (e) {
+  onReqError(e) {
     Logger.log(`[${this.TAG} play] Error stream. id=${this.id} streamPath=${this.playStreamPath}`);
     this.res.status(500);
     this.stop();
   }
 
-  reject () {
+  reject() {
     Logger.log(`[${this.TAG} reject] id=${this.id}`);
     this.stop();
   }
 
-  onPlay () {
+  onPlay() {
     context.nodeEvent.emit("prePlay", this.id, this.playStreamPath, this.playArgs);
     if (!this.isStarting) {
       return;
@@ -195,7 +195,7 @@ class NodeHlsSession {
     this.onStartPlay();
   }
 
-  onStartPlay () {
+  onStartPlay() {
     let publisherId = context.publishers.get(this.playStreamPath);
     let publisher = context.sessions.get(publisherId);
     let players = publisher.players;

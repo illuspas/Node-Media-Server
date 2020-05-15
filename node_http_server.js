@@ -123,7 +123,7 @@ class NodeHttpServer {
     }
   }
 
-  run () {
+  run() {
     this.httpServer.listen(this.port, "0.0.0.0", () => {
       Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
@@ -199,7 +199,7 @@ class NodeHttpServer {
     });
   }
 
-  stop () {
+  stop() {
     this.httpServer.close();
     if (this.httpsServer) {
       this.httpsServer.close();
@@ -215,7 +215,7 @@ class NodeHttpServer {
     });
   }
 
-  async onConnect (type, req, res) {
+  async onConnect(type, req, res) {
     if (type == 'hls') {
       //send HLS index
       // try {

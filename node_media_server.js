@@ -19,7 +19,7 @@ class NodeMediaServer {
     this.config = config;
   }
 
-  run () {
+  run() {
     Logger.setLogType(this.config.logType);
     Logger.log(`Node Media Server v${Package.version}`);
     if (this.config.rtmp) {
@@ -75,11 +75,11 @@ class NodeMediaServer {
     });
   }
 
-  on (eventName, listener) {
+  on(eventName, listener) {
     context.nodeEvent.on(eventName, listener);
   }
 
-  stop () {
+  stop() {
     if (this.nrs) {
       this.nrs.stop();
     }
@@ -91,15 +91,15 @@ class NodeMediaServer {
     }
   }
 
-  getSession (id) {
+  getSession(id) {
     return context.sessions.get(id);
   }
 
-  getContext () {
+  getContext() {
     return context;
   }
 
-  check (eventName, listener) {
+  check(eventName, listener) {
     EventCheck.on(eventName, listener);
   }
 }

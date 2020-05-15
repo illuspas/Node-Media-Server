@@ -18,7 +18,7 @@ class NodeTransServer {
     this.transSessions = new Map();
   }
 
-  async run () {
+  async run() {
     try {
       mkdirp.sync(this.config.http.mediaroot);
       fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
@@ -61,7 +61,7 @@ class NodeTransServer {
     Logger.log(`Node Media Trans Server started for apps: [ ${apps}] , MediaRoot: ${this.config.http.mediaroot}, HlsRoot: ${this.config.http.hlsroot || this.config.http.mediaroot},ffmpeg version: ${version}`);
   }
 
-  onPostPublish (id, streamPath, args) {
+  onPostPublish(id, streamPath, args) {
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, name] = _.slice(regRes, 1);
     let i = this.config.trans.tasks.length;
@@ -86,7 +86,7 @@ class NodeTransServer {
     }
   }
 
-  onDonePublish (id, streamPath, args) {
+  onDonePublish(id, streamPath, args) {
     let session = this.transSessions.get(id);
     if (session) {
       session.end();
