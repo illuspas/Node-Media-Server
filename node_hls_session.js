@@ -31,7 +31,7 @@ class NodeHlsSession {
     this.req.on("close", this.onReqClose.bind(this));
     this.req.on("error", this.onReqError.bind(this));
     req.on('end', () => {
-      Logger.debug(`[HLS Session] Requested Ended`)
+      Logger.debug(`[HLS Session] Request Ended`)
     });
 
     this.TAG = "http-hls";
