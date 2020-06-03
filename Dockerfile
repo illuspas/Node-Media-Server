@@ -1,4 +1,8 @@
+FROM sitkevij/ffmpeg:4.0-alpine
 FROM node:10.15.0-alpine
+
+# copy ffmpeg bins from first image
+COPY --from=0 / /
 
 WORKDIR /usr/src/app
 
