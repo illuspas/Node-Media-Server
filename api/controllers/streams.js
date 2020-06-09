@@ -12,15 +12,15 @@ function getStreams(req, res, next) {
       let [app, stream] = _.slice(regRes, 1);
 
       if (!_.get(stats, [app, stream])) {
-        _.set(stats, [app, stream], {
+        _.setWith(stats, [app, stream], {
           publisher: null,
           subscribers: []
-        });
+        }, Object);
       }
 
       switch (true) {
         case session.isPublishing: {
-          _.set(stats, [app, stream, 'publisher'], {
+          _.setWith(stats, [app, stream, 'publisher'], {
             app: app,
             stream: stream,
             clientId: session.id,
@@ -41,7 +41,7 @@ function getStreams(req, res, next) {
               level: session.videoLevel,
               fps: session.videoFps
             } : null,
-          });
+          },Object);
 
           break;
         }
@@ -80,7 +80,6 @@ function getStreams(req, res, next) {
       }
     }
   });
-  stats.live = stats.live.filter(Boolean);
   res.json(stats);
 }
 
