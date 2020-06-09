@@ -80,7 +80,7 @@ function getStreams(req, res, next) {
       }
     }
   });
-
+  stats.live = stats.live.filter(Boolean);
   res.json(stats);
 }
 
