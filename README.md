@@ -679,7 +679,7 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 https://github.com/NodeMedia/react-native-nodemediaclient
 
 ## NodePlayer.js HTML5 live player
-* Implemented with asm.js
+* Implemented with asm.js / wasm
 * http-flv/ws-flv
 * H.264/H.265 + AAC/Nellymoser/G.711 decoder
 * Ultra low latency (Support for iOS safari browser)
