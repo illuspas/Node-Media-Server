@@ -233,7 +233,7 @@ class NodeRtmpClient {
 
   stop() {
     if (this.streamId > 0) {
-      if(!this.socket.destroyed) {
+      if (!this.socket.destroyed) {
         if (this.isPublish) {
           this.rtmpSendFCUnpublish();
         }
