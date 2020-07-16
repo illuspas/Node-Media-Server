@@ -663,6 +663,62 @@ relay: {
 }
 ```
 
+# Fission
+Real-time transcoding multi-resolution output
+```
+fission: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      rule: "game/*",
+      model: [
+        {
+          ab: "128k",
+          vb: "1500k",
+          vs: "1280x720",
+          vf: "30",
+        },
+        {
+          ab: "64k",
+          vb: "1000k",
+          vs: "854x480",
+          vf: "24",
+        },
+        {
+          ab: "32k",
+          vb: "600k",
+          vs: "640x360",
+          vf: "20",
+        },
+      ]
+    },
+    {
+      rule: "show/*",
+      model: [
+        {
+          ab: "128k",
+          vb: "1500k",
+          vs: "720x1280",
+          vf: "30",
+        },
+        {
+          ab: "64k",
+          vb: "1000k",
+          vs: "480x854",
+          vf: "24",
+        },
+        {
+          ab: "32k",
+          vb: "600k",
+          vs: "360x640",
+          vf: "20",
+        },
+      ]
+    },
+  ]
+}
+```
+
 # Publisher and Player App/SDK
 
 ## Android Livestream App
