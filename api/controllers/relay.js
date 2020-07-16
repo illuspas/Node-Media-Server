@@ -13,7 +13,7 @@ function getStreams(req, res, next) {
       return;
     }
 
-    let {app, name} = session.conf;
+    let { app, name } = session.conf;
 
     if (!_.get(stats, [app, name])) {
       _.set(stats, [app, name], {
