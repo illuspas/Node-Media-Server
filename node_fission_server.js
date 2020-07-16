@@ -53,6 +53,10 @@ class NodeFissionServer {
       regRes = /(.*)\/(.*)/gi.exec(task.rule);
       let [ruleApp, ruleName] = _.slice(regRes, 1);
       if ((app === ruleApp || ruleApp === "*") && (name === ruleName || ruleName === "*")) {
+        let s = context.sessions.get(id);
+        if (s.isLocal && name.split('_')[1]) {
+          continue;
+        }
         let conf = task;
         conf.ffmpeg = this.config.fission.ffmpeg;
         conf.mediaroot = this.config.http.mediaroot;
