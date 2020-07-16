@@ -97,7 +97,7 @@ ffmpeg -re -i INPUT_FILE_NAME -c copy -f flv rtmp://localhost/live/STREAM_NAME
 
 Or if you have a video file that is encoded in other audio/video format:
 ```bash
-ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset superfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
+ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset veryfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
 ```
 
 ## From OBS
@@ -586,7 +586,7 @@ const config = {
       {
         app: 'live',
         mp4: true,
-        mp4Flags: '[movflags=faststart]',
+        mp4Flags: '[movflags=frag_keyframe+empty_moov]',
       }
     ]
   }
