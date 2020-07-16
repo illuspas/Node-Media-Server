@@ -665,6 +665,7 @@ relay: {
 
 # Fission
 Real-time transcoding multi-resolution output
+![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
 ```
 fission: {
   ffmpeg: '/usr/local/bin/ffmpeg',
