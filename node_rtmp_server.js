@@ -21,7 +21,6 @@ class NodeRtmpServer {
 	
     if (config.rtmp.SSL){
       this.protocol = 'Rtmps';
-
       try {
         const options = {
           key: Fs.readFileSync(config.rtmp.SSL.key),
@@ -37,7 +36,6 @@ class NodeRtmpServer {
       }
     } else {
       this.protocol = 'Rtmp';
-
       this.tcpServer = Net.createServer((socket) => {
         let session = new NodeRtmpSession(config, socket);
         session.run();
