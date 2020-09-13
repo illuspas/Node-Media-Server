@@ -7,12 +7,13 @@ const config = {
     gop_cache: true,
     ping: 30,
     ping_timeout: 60,
-    /*
-    SSL {
+	/*
+    ssl: {
+      port: 443,
       key: './privatekey.pem',
       cert: './certificate.pem',
     }
-    */
+	*/
   },
   http: {
     port: 8000,
