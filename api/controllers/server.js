@@ -57,6 +57,7 @@ function getSessionsInfo(sessions) {
   };
 
   for (let session of sessions.values()) {
+    if (session.TAG === 'relay') continue;
     let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
     info.inbytes += socket.bytesRead;
     info.outbytes += socket.bytesWritten;

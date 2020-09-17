@@ -40,43 +40,36 @@ function getStreams(req, res, next) {
       let [app, stream] = _.slice(regRes, 1);
 
       if (!_.get(stats, [app, stream])) {
-        _.set(stats, [app, stream], {
+        _.setWith(stats, [app, stream], {
           publisher: null,
           subscribers: []
-        });
+        }, Object);
       }
 
       switch (true) {
         case session.isPublishing: {
-          _.set(stats, [app, stream, "publisher"], {
+          _.setWith(stats, [app, stream, 'publisher'], {
             app: app,
             stream: stream,
             clientId: session.id,
             connectCreated: session.connectTime,
             bytes: session.socket.bytesRead,
             ip: session.socket.remoteAddress,
-            audio:
-              session.audioCodec > 0
-                ? {
-                    codec: session.audioCodecName,
-                    profile: session.audioProfileName,
-                    samplerate: session.audioSamplerate,
-                    channels: session.audioChannels
-                  }
-                : null,
-            video:
-              session.videoCodec > 0
-                ? {
-                    codec: session.videoCodecName,
-                    width: session.videoWidth,
-                    height: session.videoHeight,
-                    profile: session.videoProfileName,
-                    level: session.videoLevel,
-                    fps: session.videoFps
-                  }
-                : null
-          });
-
+            audio: session.audioCodec > 0 ? {
+              codec: session.audioCodecName,
+              profile: session.audioProfileName,
+              samplerate: session.audioSamplerate,
+              channels: session.audioChannels
+            } : null,
+            video: session.videoCodec > 0 ? {
+              codec: session.videoCodecName,
+              width: session.videoWidth,
+              height: session.videoHeight,
+              profile: session.videoProfileName,
+              level: session.videoLevel,
+              fps: session.videoFps
+            } : null,
+          },Object);
           break;
         }
         case !!session.playStreamPath: {
@@ -114,7 +107,6 @@ function getStreams(req, res, next) {
       }
     }
   });
-
   res.json(stats);
 }
 

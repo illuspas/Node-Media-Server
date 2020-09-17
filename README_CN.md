@@ -37,7 +37,7 @@ docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
 ```bash
 mkdir nms
 cd nms
-git clone https://github.com/illuspas/Node-Media-Server
+git clone https://github.com/illuspas/Node-Media-Server .
 npm i
 node app.js
 ```
@@ -83,7 +83,7 @@ ffmpeg -re -i INPUT_FILE_NAME -c copy -f flv rtmp://localhost/live/STREAM_NAME
 
 或者有个其他编码格式，需要转为h.264+AAC的编码再转直播:
 ```bash
-ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset superfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
+ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset veryfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
 ```
 
 ## 使用 OBS 推流
@@ -480,9 +480,9 @@ const config = {
     ffmpeg: '/usr/local/bin/ffmpeg',
     tasks: [
       {
-        app: 'vod',
+        app: 'live',
         mp4: true,
-        mp4Flags: '[movflags=faststart]',
+        mp4Flags: '[movflags=frag_keyframe+empty_moov]',
       }
     ]
   }
@@ -572,7 +572,7 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 https://github.com/NodeMedia/react-native-nodemediaclient
 
 ## NodePlayer.js HTML5 live player
-* 使用 asm.js 实现
+* 使用 asm.js / wasm 实现
 * http-flv/ws-flv 协议
 * H.264/H.265 + AAC/Nellymoser/G.711 解码器
 * 超低延迟，自动消累积延迟 (支持 iOS safari 浏览器)

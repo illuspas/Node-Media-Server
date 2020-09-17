@@ -10,6 +10,7 @@ const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
 const NodeTransServer = require('./node_trans_server');
 const NodeRelayServer = require('./node_relay_server');
+const NodeFissionServer = require('./node_fission_server');
 const context = require('./node_core_ctx');
 const Package = require("./package.json");
 
@@ -46,6 +47,15 @@ class NodeMediaServer {
       } else {
         this.nls = new NodeRelayServer(this.config);
         this.nls.run();
+      }
+    }
+
+    if (this.config.fission) {
+      if (this.config.cluster) {
+        Logger.log('NodeFissionServer does not work in cluster mode');
+      } else {
+        this.nfs = new NodeFissionServer(this.config);
+        this.nfs.run();
       }
     }
 
@@ -87,6 +97,9 @@ class NodeMediaServer {
     }
     if (this.nls) {
       this.nls.stop();
+    }
+    if (this.nfs) {
+      this.nfs.stop();
     }
   }
 
