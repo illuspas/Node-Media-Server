@@ -31,6 +31,7 @@ class NodeHttpServer {
     this.config = config;
 
     let app = Express();
+    app.use(bodyParser.json());
 
     app.use(bodyParser.urlencoded({ extended: true }));
 
