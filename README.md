@@ -29,8 +29,7 @@ https://github.com/NodeMedia/NodeMediaServer
  - Cross platform support Windows/Linux/Unix
  - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711
  - Support GOP cache
- - Support remux to LIVE-HTTP-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
- - Support remux to LIVE-WebSocket-FLV,Support [flv.js](https://github.com/Bilibili/flv.js) playback
+ - Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
  - Support remux to HLS/DASH/MP4
  - Support xycdn style authentication
  - Support event callback
@@ -38,9 +37,10 @@ https://github.com/NodeMedia/NodeMediaServer
  - Support Server Monitor
  - Support Rtsp/Rtmp relay
  - Support api control relay
-  
+ - Support real-time multi-resolution transcoding
+
 # Usage 
-## docker version (only_linux_x64)
+## docker version
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
 ```
@@ -753,5 +753,6 @@ http://www.nodemedia.cn/products/node-media-player
 http://www.nodemedia.cn/products/node-media-client/win
 
 # Thanks
-strive, 树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+
 Thank you for your support.
