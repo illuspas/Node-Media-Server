@@ -1036,7 +1036,7 @@ class NodeRtmpSession {
       this.sendStatusMessage(this.publishStreamId, "status", "NetStream.Publish.Start", `${this.publishStreamPath} is now published.`);
       for (let idlePlayerId of context.idlePlayers) {
         let idlePlayer = context.sessions.get(idlePlayerId);
-        if (idlePlayer.playStreamPath === this.publishStreamPath) {
+        if (idlePlayer && idlePlayer.playStreamPath === this.publishStreamPath) {
           idlePlayer.onStartPlay();
           context.idlePlayers.delete(idlePlayerId);
         }
