@@ -23,7 +23,10 @@ class NodeHttpServer {
     this.expressApp = Express();
 
     this.expressApp.options('*.flv', (req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', this.config.http.allow_origin);
+      res.setHeader(
+        'Access-Control-Allow-Origin',
+        this.config.http.allow_origin,
+      );
       res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'range');
 

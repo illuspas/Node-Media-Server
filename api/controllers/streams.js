@@ -7,7 +7,9 @@ function getStreams(req, res, next) {
 
   nms.sessions.forEach((session, id) => {
     if (session.isStarting) {
-      const regRes = /\/(.*)\/(.*)/gi.exec(session.publishStreamPath || session.playStreamPath);
+      const regRes = /\/(.*)\/(.*)/gi.exec(
+        session.publishStreamPath || session.playStreamPath,
+      );
 
       if (regRes === null) {
         return;
@@ -18,7 +20,7 @@ function getStreams(req, res, next) {
       if (!_.get(stats, [app, stream])) {
         _.set(stats, [app, stream], {
           publisher: null,
-          subscribers: []
+          subscribers: [],
         });
       }
 
@@ -37,7 +39,7 @@ function getStreams(req, res, next) {
                     codec: session.audioCodecName,
                     profile: session.audioProfileName,
                     samplerate: session.audioSamplerate,
-                    channels: session.audioChannels
+                    channels: session.audioChannels,
                   }
                 : null,
             video:
@@ -45,10 +47,10 @@ function getStreams(req, res, next) {
                 ? {
                     codec: session.videoCodecName,
                     size: session.videoSize,
-                    fps: session.videoFps
+                    fps: session.videoFps,
                   }
                 : null,
-            userId: session.userId || null
+            userId: session.userId || null,
           });
 
           break;
@@ -64,7 +66,7 @@ function getStreams(req, res, next) {
                 bytes: session.socket.bytesWritten,
                 ip: session.socket.remoteAddress,
                 protocol: 'rtmp',
-                userId: session.userId || null
+                userId: session.userId || null,
               });
 
               break;
@@ -78,7 +80,7 @@ function getStreams(req, res, next) {
                 bytes: session.req.connection.bytesWritten,
                 ip: session.req.connection.remoteAddress,
                 protocol: session.TAG === 'websocket-flv' ? 'ws' : 'http',
-                userId: session.userId || null
+                userId: session.userId || null,
               });
 
               break;
@@ -99,7 +101,9 @@ function getStream(req, res, next) {
 
   const publishStreamPath = `/${req.params.app}/${req.params.stream}`;
 
-  const publisherSession = nms.sessions.get(nms.publishers.get(publishStreamPath));
+  const publisherSession = nms.sessions.get(
+    nms.publishers.get(publishStreamPath),
+  );
 
   const isLive = !!publisherSession;
 
@@ -107,17 +111,25 @@ function getStream(req, res, next) {
     return session.playStreamPath === publishStreamPath;
   }).length;
 
-  const duration = isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
+  const duration = isLive
+    ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000)
+    : 0;
 
   const bitrate =
-    duration > 0 ? Math.ceil((_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8) / duration / 1024) : 0;
+    duration > 0
+      ? Math.ceil(
+          (_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8) /
+            duration /
+            1024,
+        )
+      : 0;
 
   const streamStats = {
     isLive,
     viewers,
     duration,
     bitrate,
-    startTime: isLive ? publisherSession.connectTime : null
+    startTime: isLive ? publisherSession.connectTime : null,
   };
 
   res.json(streamStats);

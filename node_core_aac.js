@@ -16,7 +16,7 @@ const AAC_SAMPLE_RATE = [
   7350,
   0,
   0,
-  0
+  0,
 ];
 const AAC_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 8];
 
@@ -30,7 +30,9 @@ function getObjectType(bitop) {
 
 function getSampleRate(bitop, info) {
   info.sampling_index = bitop.read(4);
-  return info.sampling_index === 0x0f ? bitop.read(24) : AAC_SAMPLE_RATE[info.sampling_index];
+  return info.sampling_index === 0x0f
+    ? bitop.read(24)
+    : AAC_SAMPLE_RATE[info.sampling_index];
 }
 
 function readAudioSpecificConfig(aacSequenceHeader) {

@@ -45,14 +45,20 @@ const RandomCrud = new Buffer([
   0xcf,
   0xeb,
   0x31,
-  0xae
+  0xae,
 ]);
 
 const GenuineFMSConst = 'Genuine Adobe Flash Media Server 001';
-const GenuineFMSConstCrud = Buffer.concat([new Buffer(GenuineFMSConst, 'utf8'), RandomCrud]);
+const GenuineFMSConstCrud = Buffer.concat([
+  new Buffer(GenuineFMSConst, 'utf8'),
+  RandomCrud,
+]);
 
 const GenuineFPConst = 'Genuine Adobe Flash Player 001';
-const _GenuineFPConstCrud = Buffer.concat([new Buffer(GenuineFPConst, 'utf8'), RandomCrud]);
+const _GenuineFPConstCrud = Buffer.concat([
+  new Buffer(GenuineFPConst, 'utf8'),
+  RandomCrud,
+]);
 
 function calcHmac(data, key) {
   const hmac = Crypto.createHmac('sha256', key);
@@ -75,14 +81,20 @@ function GetServerGenuineConstDigestOffset(buf) {
 function detectClientMessageFormat(clientsig) {
   let computedSignature, msg, providedSignature, sdl;
   sdl = GetServerGenuineConstDigestOffset(clientsig.slice(772, 776));
-  msg = Buffer.concat([clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)], 1504);
+  msg = Buffer.concat(
+    [clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)],
+    1504,
+  );
   computedSignature = calcHmac(msg, GenuineFPConst);
   providedSignature = clientsig.slice(sdl, sdl + SHA256DL);
   if (computedSignature.equals(providedSignature)) {
     return MESSAGE_FORMAT_2;
   }
   sdl = GetClientGenuineConstDigestOffset(clientsig.slice(8, 12));
-  msg = Buffer.concat([clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)], 1504);
+  msg = Buffer.concat(
+    [clientsig.slice(0, sdl), clientsig.slice(sdl + SHA256DL)],
+    1504,
+  );
   computedSignature = calcHmac(msg, GenuineFPConst);
   providedSignature = clientsig.slice(sdl, sdl + SHA256DL);
   if (computedSignature.equals(providedSignature)) {
@@ -93,18 +105,28 @@ function detectClientMessageFormat(clientsig) {
 
 function generateS1(messageFormat) {
   const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
-  const handshakeBytes = Buffer.concat([new Buffer([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
+  const handshakeBytes = Buffer.concat(
+    [new Buffer([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes],
+    RTMP_SIG_SIZE,
+  );
 
   let serverDigestOffset;
   if (messageFormat === 1) {
-    serverDigestOffset = GetClientGenuineConstDigestOffset(handshakeBytes.slice(8, 12));
+    serverDigestOffset = GetClientGenuineConstDigestOffset(
+      handshakeBytes.slice(8, 12),
+    );
   } else {
-    serverDigestOffset = GetServerGenuineConstDigestOffset(handshakeBytes.slice(772, 776));
+    serverDigestOffset = GetServerGenuineConstDigestOffset(
+      handshakeBytes.slice(772, 776),
+    );
   }
 
   const msg = Buffer.concat(
-    [handshakeBytes.slice(0, serverDigestOffset), handshakeBytes.slice(serverDigestOffset + SHA256DL)],
-    RTMP_SIG_SIZE - SHA256DL
+    [
+      handshakeBytes.slice(0, serverDigestOffset),
+      handshakeBytes.slice(serverDigestOffset + SHA256DL),
+    ],
+    RTMP_SIG_SIZE - SHA256DL,
   );
   const hash = calcHmac(msg, GenuineFMSConst);
   hash.copy(handshakeBytes, serverDigestOffset, 0, 32);
@@ -115,11 +137,18 @@ function generateS2(messageFormat, clientsig, callback) {
   const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 32);
   let challengeKeyOffset;
   if (messageFormat === 1) {
-    challengeKeyOffset = GetClientGenuineConstDigestOffset(clientsig.slice(8, 12));
+    challengeKeyOffset = GetClientGenuineConstDigestOffset(
+      clientsig.slice(8, 12),
+    );
   } else {
-    challengeKeyOffset = GetServerGenuineConstDigestOffset(clientsig.slice(772, 776));
+    challengeKeyOffset = GetServerGenuineConstDigestOffset(
+      clientsig.slice(772, 776),
+    );
   }
-  const challengeKey = clientsig.slice(challengeKeyOffset, challengeKeyOffset + 32);
+  const challengeKey = clientsig.slice(
+    challengeKeyOffset,
+    challengeKeyOffset + 32,
+  );
   const hash = calcHmac(challengeKey, GenuineFMSConstCrud);
   const signature = calcHmac(randomBytes, hash);
   const s2Bytes = Buffer.concat([randomBytes, signature], RTMP_SIG_SIZE);
@@ -138,7 +167,11 @@ function generateS0S1S2(clientsig) {
     allBytes = Buffer.concat([clientType, clientsig, clientsig]);
   } else {
     //    console.log('[rtmp handshake] using complex handshake.');
-    allBytes = Buffer.concat([clientType, generateS1(messageFormat), generateS2(messageFormat, clientsig)]);
+    allBytes = Buffer.concat([
+      clientType,
+      generateS1(messageFormat),
+      generateS2(messageFormat, clientsig),
+    ]);
   }
   return allBytes;
 }

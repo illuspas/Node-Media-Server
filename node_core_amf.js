@@ -16,7 +16,7 @@ const amf3dRules = {
   0x09: amf3decArray,
   0x0a: amf3decObject,
   0x0b: amf3decXml,
-  0x0c: amf3decByteArray //,
+  0x0c: amf3decByteArray, //,
   //    0x0D: amf3decVecInt,
   //    0x0E: amf3decVecUInt,
   //    0x0F: amf3decVecDouble,
@@ -36,7 +36,7 @@ const amf3eRules = {
   true: amf3encTrue,
   false: amf3encFalse,
   undefined: amf3encUndefined,
-  null: amf3encNull
+  null: amf3encNull,
 };
 
 const amf0dRules = {
@@ -57,7 +57,7 @@ const amf0dRules = {
   //    0x0E: amf0decRecSet, // Has been never originally implemented by Adobe!
   0x0f: amf0decXmlDoc,
   0x10: amf0decTypedObj,
-  0x11: amf0decSwitchAmf3
+  0x11: amf0decSwitchAmf3,
 };
 
 const amf0eRules = {
@@ -72,7 +72,7 @@ const amf0eRules = {
   true: amf0encBool,
   false: amf0encBool,
   undefined: amf0encUndefined,
-  null: amf0encNull
+  null: amf0encNull,
 };
 
 function amfType(o) {
@@ -282,9 +282,14 @@ function amf3decString(buf) {
   const s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) {
-    return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
+    return {
+      len: sLen.value + 5,
+      value: buf.slice(5, sLen.value + 5).toString('utf8'),
+    };
   }
-  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
+  throw new Error(
+    'Error, we have a need to decode a String that is a Reference',
+  ); // TODO: Implement references!
 }
 
 /**
@@ -309,9 +314,14 @@ function amf3decXmlDoc(buf) {
   const s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) {
-    return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
+    return {
+      len: sLen.value + 5,
+      value: buf.slice(5, sLen.value + 5).toString('utf8'),
+    };
   }
-  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
+  throw new Error(
+    'Error, we have a need to decode a String that is a Reference',
+  ); // TODO: Implement references!
 }
 
 /**
@@ -336,9 +346,14 @@ function amf3decXml(buf) {
   const s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) {
-    return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
+    return {
+      len: sLen.value + 5,
+      value: buf.slice(5, sLen.value + 5).toString('utf8'),
+    };
   }
-  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
+  throw new Error(
+    'Error, we have a need to decode a String that is a Reference',
+  ); // TODO: Implement references!
 }
 
 /**
@@ -365,7 +380,9 @@ function amf3decByteArray(buf) {
   if (s) {
     return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5) };
   }
-  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
+  throw new Error(
+    'Error, we have a need to decode a String that is a Reference',
+  ); // TODO: Implement references!
 }
 
 /**
@@ -377,7 +394,11 @@ function amf3encByteArray(str) {
   const sLen = amf3encUI29(str.length << 1);
   const buf = Buffer.alloc(1);
   buf.writeUInt8(0x0c, 0);
-  return Buffer.concat([buf, sLen, typeof str === 'string' ? new Buffer(str, 'binary') : str]);
+  return Buffer.concat([
+    buf,
+    sLen,
+    typeof str === 'string' ? new Buffer(str, 'binary') : str,
+  ]);
 }
 
 /**
@@ -435,7 +456,9 @@ function amf3decArray(buf) {
   const count = amf3decUI29(buf.slice(1));
   const obj = amf3decObject(buf.slice(count.len));
   if (count.value % 2 === 1) {
-    throw new Error("This is a reference to another array, which currently we don't support!");
+    throw new Error(
+      "This is a reference to another array, which currently we don't support!",
+    );
   }
   return { len: count.len + obj.len, value: obj.value };
 }
@@ -999,13 +1022,13 @@ const rtmpCmdDecode = {
   receiveVideo: ['transId', 'cmdObj', 'bool'],
   publish: ['transId', 'cmdObj', 'streamName', 'type'],
   seek: ['transId', 'cmdObj', 'ms'],
-  pause: ['transId', 'cmdObj', 'pause', 'ms']
+  pause: ['transId', 'cmdObj', 'pause', 'ms'],
 };
 
 const rtmpDataDecode = {
   '@setDataFrame': ['method', 'dataObj'],
   onMetaData: ['cmdObj'],
-  '|RtmpSampleAccess': ['bool1', 'bool2']
+  '|RtmpSampleAccess': ['bool1', 'bool2'],
 };
 
 /**
@@ -1218,5 +1241,5 @@ module.exports = {
   amf3encUI29: amf3encUI29,
   amf3encUndefined: amf3encUndefined,
   amf3encXml: amf3encXml,
-  amf3encXmlDoc: amf3encXmlDoc
+  amf3encXmlDoc: amf3encXmlDoc,
 };

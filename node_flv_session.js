@@ -129,7 +129,12 @@ class NodeFlvSession extends EventEmitter {
 
       if (publisherId) {
         this.sessions.get(publisherId).players.delete(this.id);
-        this.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
+        this.nodeEvent.emit(
+          'donePlay',
+          this.id,
+          this.playStreamPath,
+          this.playArgs,
+        );
       }
     }
 
@@ -175,7 +180,21 @@ class NodeFlvSession extends EventEmitter {
     }
 
     //send FLV header
-    const FLVHeader = new Buffer([0x46, 0x4c, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
+    const FLVHeader = new Buffer([
+      0x46,
+      0x4c,
+      0x56,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x09,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+    ]);
     if (publisher.isFirstAudioReceived) {
       FLVHeader[4] |= 0b00000100;
     }
@@ -190,10 +209,13 @@ class NodeFlvSession extends EventEmitter {
         chunkStreamID: 5,
         timestamp: 0,
         messageTypeID: 0x12,
-        messageStreamID: 1
+        messageStreamID: 1,
       };
 
-      const metaDataFlvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.metaData);
+      const metaDataFlvMessage = NodeFlvSession.createFlvMessage(
+        rtmpHeader,
+        publisher.metaData,
+      );
       this.res.write(metaDataFlvMessage);
     }
     //send aacSequenceHeader
@@ -202,9 +224,12 @@ class NodeFlvSession extends EventEmitter {
         chunkStreamID: 4,
         timestamp: 0,
         messageTypeID: 0x08,
-        messageStreamID: 1
+        messageStreamID: 1,
       };
-      const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.aacSequenceHeader);
+      const flvMessage = NodeFlvSession.createFlvMessage(
+        rtmpHeader,
+        publisher.aacSequenceHeader,
+      );
       this.res.write(flvMessage);
     }
     //send avcSequenceHeader
@@ -213,9 +238,12 @@ class NodeFlvSession extends EventEmitter {
         chunkStreamID: 6,
         timestamp: 0,
         messageTypeID: 0x09,
-        messageStreamID: 1
+        messageStreamID: 1,
       };
-      const flvMessage = NodeFlvSession.createFlvMessage(rtmpHeader, publisher.avcSequenceHeader);
+      const flvMessage = NodeFlvSession.createFlvMessage(
+        rtmpHeader,
+        publisher.avcSequenceHeader,
+      );
       this.res.write(flvMessage);
     }
     //send gop cache
@@ -225,7 +253,12 @@ class NodeFlvSession extends EventEmitter {
       }
     }
     console.log(`[${this.TAG} play] join stream ` + this.playStreamPath);
-    this.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
+    this.nodeEvent.emit(
+      'postPlay',
+      this.id,
+      this.playStreamPath,
+      this.playArgs,
+    );
   }
 
   onPublish() {}

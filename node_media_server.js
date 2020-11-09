@@ -22,13 +22,23 @@ class NodeMediaServer {
 
   run() {
     if (this.config.rtmp) {
-      this.nrs = new NodeRtmpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nrs = new NodeRtmpServer(
+        this.config,
+        this.sessions,
+        this.publishers,
+        this.idlePlayers,
+      );
 
       this.nrs.run();
     }
 
     if (this.config.http) {
-      this.nhs = new NodeHttpServer(this.config, this.sessions, this.publishers, this.idlePlayers);
+      this.nhs = new NodeHttpServer(
+        this.config,
+        this.sessions,
+        this.publishers,
+        this.idlePlayers,
+      );
 
       this.nhs.expressApp.use((req, res, next) => {
         req.nms = this;
