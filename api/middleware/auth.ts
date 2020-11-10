@@ -1,6 +1,6 @@
-const _ = require('lodash');
+import * as _ from 'lodash';
 
-function authCheck(req, res, next) {
+export function authCheck(req, res, next) {
   if (!_.get(req.nms, ['config', 'api'], null)) {
     return next();
   }
@@ -11,5 +11,3 @@ function authCheck(req, res, next) {
 
   next();
 }
-
-module.exports = authCheck;

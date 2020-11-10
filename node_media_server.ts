@@ -8,8 +8,8 @@ import { nodeEvent } from './node_core_utils';
 import { NodeHttpServer } from './node_http_server';
 import { NodeRtmpServer } from './node_rtmp_server';
 
-const authCheck = require('./api/middleware/auth');
-const streams = require('./api/routes/streams');
+import { getStreams } from './api/controllers/streams';
+import { authCheck } from './api/middleware/auth';
 
 export class NodeMediaServer {
   config: any;
@@ -59,7 +59,7 @@ export class NodeMediaServer {
 
       this.nhs.expressApp.use(authCheck);
 
-      this.nhs.expressApp.use('/api/streams', streams);
+      this.nhs.expressApp.use('/api/streams', getStreams);
 
       this.nhs.run();
     }

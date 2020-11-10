@@ -1,9 +1,9 @@
-const _ = require('lodash');
+import * as _ from 'lodash';
 
-function getStreams(req, res, next) {
+export function getStreams(req, res, next) {
   const nms = req.nms;
 
-  const stats = {};
+  const stats: any = {};
 
   nms.sessions.forEach((session, id) => {
     if (session.isStarting) {
@@ -96,7 +96,7 @@ function getStreams(req, res, next) {
   res.json(stats);
 }
 
-function getStream(req, res, next) {
+export function getStream(req, res, next) {
   const nms = req.nms;
 
   const publishStreamPath = `/${req.params.app}/${req.params.stream}`;
@@ -108,7 +108,7 @@ function getStream(req, res, next) {
   const isLive = !!publisherSession;
 
   const viewers = _.filter(Array.from(nms.sessions.values()), session => {
-    return session.playStreamPath === publishStreamPath;
+    return (session as any).playStreamPath === publishStreamPath;
   }).length;
 
   const duration = isLive
@@ -134,6 +134,3 @@ function getStream(req, res, next) {
 
   res.json(streamStats);
 }
-
-exports.getStreams = getStreams;
-exports.getStream = getStream;
