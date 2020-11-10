@@ -1,12 +1,12 @@
 {
   "name": "node-media-server",
-  "version": "1.1.6",
+  "version": "2.0.0",
   "description": "A Node.js implementation of RTMP Server",
-  "main": "node_media_server.js",
+  "main": "node_media_server.ts",
   "scripts": {
     "lint": "eslint . && prettier --list-different \"**/*.{ts,js,json,html,css,scss,md}\"",
     "lint:fix": "eslint . --fix && prettier --write \"**/*.{ts,js,json,html,css,scss,md}\"",
-    "start": "ts-node index.js"
+    "start": "ts-node index.ts"
   },
   "dependencies": {
     "bitop": "^0.0.1",
