@@ -1,4 +1,4 @@
-const Bitop = require('bitop');
+import * as Bitop from 'bitop';
 
 const AAC_SAMPLE_RATE = [
   96000,
@@ -35,8 +35,8 @@ function getSampleRate(bitop, info) {
     : AAC_SAMPLE_RATE[info.sampling_index];
 }
 
-function readAudioSpecificConfig(aacSequenceHeader) {
-  const info = {};
+export function readAudioSpecificConfig(aacSequenceHeader) {
+  const info: any = {};
   const bitop = new Bitop(aacSequenceHeader);
   bitop.read(16);
   info.object_type = getObjectType(bitop);
@@ -60,7 +60,7 @@ function readAudioSpecificConfig(aacSequenceHeader) {
   return info;
 }
 
-function getProfileName(info) {
+export function getProfileName(info) {
   switch (info.object_type) {
     case 1:
       return 'Main';
@@ -82,5 +82,3 @@ function getProfileName(info) {
       return '';
   }
 }
-
-module.exports = { readAudioSpecificConfig, getProfileName };
