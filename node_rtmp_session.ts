@@ -1,13 +1,11 @@
-//
 //  Created by Mingliang Chen on 17/8/1.
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
-//
 
-const EventEmitter = require('events');
-const QueryString = require('querystring');
+import { EventEmitter } from 'events';
+import * as qs from 'querystring';
+
 const AAC = require('./node_core_aac');
-
 const AMF = require('./node_core_amf');
 const Handshake = require('./node_rtmp_handshake');
 const BufferPool = require('./node_core_bufferpool');
@@ -64,10 +62,64 @@ const VIDEO_CODEC_NAME = [
   'H265',
 ];
 
-class NodeRtmpSession extends EventEmitter {
+export class NodeRtmpSession extends EventEmitter {
+  config: any;
+
+  bp: any;
+  nodeEvent: any;
+  socket: any;
+  players: any;
+  inChunkSize: number;
+  outChunkSize: any;
+  previousChunkMessage: {};
+  ping: number;
+  pingTimeout: number;
+  pingInterval: any;
+  isStarting: boolean;
+  isPublishing: boolean;
+  isPlaying: boolean;
+  isIdling: boolean;
+  isFirstAudioReceived: boolean;
+  isFirstVideoReceived: boolean;
+  metaData: any;
+  aacSequenceHeader: any;
+  avcSequenceHeader: any;
+  audioCodec: number;
+  audioCodecName: string;
+  audioProfileName: string;
+  audioSamplerate: number;
+  audioChannels: number;
+  videoCodec: number;
+  videoCodecName: string;
+  videoSize: string;
+  videoFps: number;
+  gopCacheEnable: any;
+  rtmpGopCacheQueue: any;
+  flvGopCacheQueue: any;
+  ackSize: number;
+  inLastAck: number;
+  appname: string;
+  streams: number;
+  playStreamId: number;
+  playStreamPath: string;
+  playArgs: qs.ParsedUrlQuery;
+  publishStreamId: number;
+  publishStreamPath: string;
+  publishArgs: qs.ParsedUrlQuery;
+  sessions: any;
+  idlePlayers: any;
+  publishers: any;
+  startTimestamp: number;
+  objectEncoding: any;
+  connectTime: Date;
+  id: any;
+  connectCmdObj: any;
+
   constructor(config, socket) {
     super();
+
     this.config = config;
+
     this.bp = new BufferPool();
     this.nodeEvent = NodeCoreUtils.nodeEvent;
     this.socket = socket;
@@ -117,11 +169,11 @@ class NodeRtmpSession extends EventEmitter {
 
     this.playStreamId = 0;
     this.playStreamPath = '';
-    this.playArgs = '';
+    this.playArgs = undefined;
 
     this.publishStreamId = 0;
     this.publishStreamPath = '';
-    this.publishArgs = '';
+    this.publishArgs = undefined;
 
     this.on('connect', this.onConnect);
     this.on('publish', this.onPublish);
@@ -199,7 +251,7 @@ class NodeRtmpSession extends EventEmitter {
     console.log('[rtmp message parser]  start');
     this.bp.readBytes = 0;
     while (this.isStarting) {
-      const message = {};
+      const message: any = {};
       let chunkMessageHeader = null;
       let previousChunk = null;
 
@@ -501,7 +553,7 @@ class NodeRtmpSession extends EventEmitter {
         // console.log('[rtmp handleRtmpMessage] Ack:' + rtmpBody.readUInt32BE());
         break;
       case 4:
-        const userControlMessage = {};
+        const userControlMessage: any = {};
         userControlMessage.eventType = rtmpBody.readUInt16BE();
         userControlMessage.eventData = rtmpBody.slice(2);
         this.handleUserControlMessage(userControlMessage);
@@ -594,9 +646,7 @@ class NodeRtmpSession extends EventEmitter {
       case 'publish':
         this.publishStreamPath =
           '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
-        this.publishArgs = QueryString.parse(
-          commandMessage.streamName.split('?')[1],
-        );
+        this.publishArgs = qs.parse(commandMessage.streamName.split('?')[1]);
         this.publishStreamId = streamID;
         // console.log('publish streamID=' + streamID);
         this.emit('publish');
@@ -604,9 +654,7 @@ class NodeRtmpSession extends EventEmitter {
       case 'play':
         this.playStreamPath =
           '/' + this.appname + '/' + commandMessage.streamName.split('?')[0];
-        this.playArgs = QueryString.parse(
-          commandMessage.streamName.split('?')[1],
-        );
+        this.playArgs = qs.parse(commandMessage.streamName.split('?')[1]);
         this.playStreamId = streamID;
         // console.log('play streamID=' + streamID);
         this.emit('play');
@@ -1116,7 +1164,7 @@ class NodeRtmpSession extends EventEmitter {
     }
   }
 
-  onCloseStream(streamID, del) {
+  onCloseStream(streamID, del = undefined) {
     if (this.isIdling && this.playStreamId === streamID) {
       this.sendStatusMessage(
         this.playStreamId,
@@ -1200,5 +1248,3 @@ class NodeRtmpSession extends EventEmitter {
     this.onCloseStream(streamID, true);
   }
 }
-
-module.exports = NodeRtmpSession;
