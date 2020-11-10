@@ -4,6 +4,8 @@
 
 import { EventEmitter } from 'events';
 import * as qs from 'querystring';
+import * as net from 'net';
+
 import { getProfileName, readAudioSpecificConfig } from './node_core_aac';
 import {
   decodeAmf0Cmd,
@@ -69,16 +71,16 @@ const VIDEO_CODEC_NAME = [
 export class NodeRtmpSession extends EventEmitter {
   config: any;
 
-  bp: any;
-  nodeEvent: any;
-  socket: any;
-  players: any;
+  bp: BufferPool;
+  nodeEvent: EventEmitter;
+  socket: net.Socket;
+  players: Set<string>;
   inChunkSize: number;
-  outChunkSize: any;
-  previousChunkMessage: {};
+  outChunkSize: number;
+  previousChunkMessage: any;
   ping: number;
   pingTimeout: number;
-  pingInterval: any;
+  pingInterval: NodeJS.Timer;
   isStarting: boolean;
   isPublishing: boolean;
   isPlaying: boolean;
@@ -86,8 +88,8 @@ export class NodeRtmpSession extends EventEmitter {
   isFirstAudioReceived: boolean;
   isFirstVideoReceived: boolean;
   metaData: any;
-  aacSequenceHeader: any;
-  avcSequenceHeader: any;
+  aacSequenceHeader: Buffer;
+  avcSequenceHeader: Buffer;
   audioCodec: number;
   audioCodecName: string;
   audioProfileName: string;
@@ -97,9 +99,9 @@ export class NodeRtmpSession extends EventEmitter {
   videoCodecName: string;
   videoSize: string;
   videoFps: number;
-  gopCacheEnable: any;
-  rtmpGopCacheQueue: any;
-  flvGopCacheQueue: any;
+  gopCacheEnable: boolean;
+  rtmpGopCacheQueue: Set<Buffer>;
+  flvGopCacheQueue: Set<Buffer>;
   ackSize: number;
   inLastAck: number;
   appname: string;
@@ -110,13 +112,13 @@ export class NodeRtmpSession extends EventEmitter {
   publishStreamId: number;
   publishStreamPath: string;
   publishArgs: qs.ParsedUrlQuery;
-  sessions: any;
-  idlePlayers: any;
-  publishers: any;
+  sessions: Map<string, any>;
+  publishers: Map<string, string>;
+  idlePlayers: Set<string>;
   startTimestamp: number;
-  objectEncoding: any;
+  objectEncoding: number;
   connectTime: Date;
-  id: any;
+  id: string;
   connectCmdObj: any;
 
   constructor(config, socket) {
@@ -451,7 +453,7 @@ export class NodeRtmpSession extends EventEmitter {
     this.onCloseStream(this.publishStreamId);
 
     if (this.pingInterval) {
-      clearImmediate(this.pingInterval);
+      clearInterval(this.pingInterval);
       this.pingInterval = null;
     }
     this.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);

@@ -3,7 +3,9 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 
 import { EventEmitter } from 'events';
+import { ParsedUrlQuery } from 'querystring';
 import * as url from 'url';
+
 import { BufferPool } from './node_core_bufferpool';
 import { nodeEvent } from './node_core_utils';
 
@@ -12,20 +14,20 @@ export class NodeFlvSession extends EventEmitter {
 
   req: any;
   res: any;
-  bp: any;
-  allow_origin: any;
+  bp: BufferPool;
+  allow_origin: string;
   isPublisher: boolean;
   playStreamPath: string;
-  playArgs: any;
-  nodeEvent: any;
+  playArgs: ParsedUrlQuery;
+  nodeEvent: EventEmitter;
   TAG: string;
   connectCmdObj: any;
   isStarting: boolean;
   connectTime: Date;
-  publishers: any;
-  sessions: any;
-  idlePlayers: any;
-  id: any;
+  sessions: Map<string, any>;
+  publishers: Map<string, string>;
+  idlePlayers: Set<string>;
+  id: string;
 
   constructor(config, req, res) {
     super();
