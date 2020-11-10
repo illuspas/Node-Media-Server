@@ -1,10 +1,8 @@
-//
 //  Created by Mingliang Chen on 17/8/1.
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
-//
 
-const Crypto = require('crypto');
+import * as crypto from 'crypto';
 
 const MESSAGE_FORMAT_0 = 0;
 const MESSAGE_FORMAT_1 = 1;
@@ -61,7 +59,7 @@ const _GenuineFPConstCrud = Buffer.concat([
 ]);
 
 function calcHmac(data, key) {
-  const hmac = Crypto.createHmac('sha256', key);
+  const hmac = crypto.createHmac('sha256', key);
   hmac.update(data);
   return hmac.digest();
 }
@@ -104,7 +102,7 @@ function detectClientMessageFormat(clientsig) {
 }
 
 function generateS1(messageFormat) {
-  const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
+  const randomBytes = crypto.randomBytes(RTMP_SIG_SIZE - 8);
   const handshakeBytes = Buffer.concat(
     [Buffer.from([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes],
     RTMP_SIG_SIZE,
@@ -133,8 +131,8 @@ function generateS1(messageFormat) {
   return handshakeBytes;
 }
 
-function generateS2(messageFormat, clientsig, callback) {
-  const randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 32);
+function generateS2(messageFormat, clientsig) {
+  const randomBytes = crypto.randomBytes(RTMP_SIG_SIZE - 32);
   let challengeKeyOffset;
   if (messageFormat === 1) {
     challengeKeyOffset = GetClientGenuineConstDigestOffset(
@@ -155,7 +153,7 @@ function generateS2(messageFormat, clientsig, callback) {
   return s2Bytes;
 }
 
-function generateS0S1S2(clientsig) {
+export function generateS0S1S2(clientsig) {
   const clientType = clientsig.slice(0, 1);
   // console.log("[rtmp handshake] client type: " + clientType);
   clientsig = clientsig.slice(1);
@@ -175,5 +173,3 @@ function generateS0S1S2(clientsig) {
   }
   return allBytes;
 }
-
-module.exports = { generateS0S1S2 };
