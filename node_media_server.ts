@@ -1,8 +1,8 @@
-//
 //  Created by Mingliang Chen on 17/8/1.
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
-//
+
+import { EventEmitter } from 'events';
 
 const NodeRtmpServer = require('./node_rtmp_server');
 const NodeHttpServer = require('./node_http_server');
@@ -11,9 +11,20 @@ const NodeCoreUtils = require('./node_core_utils');
 const authCheck = require('./api/middleware/auth');
 const streams = require('./api/routes/streams');
 
-class NodeMediaServer {
+export class NodeMediaServer {
+  config: any;
+
+  sessions: Map<string, any>;
+  publishers: Map<string, string>;
+  idlePlayers: Set<string>;
+  nodeEvent: EventEmitter;
+
+  nrs: any;
+  nhs: any;
+
   constructor(config) {
     this.config = config;
+
     this.sessions = new Map();
     this.publishers = new Map();
     this.idlePlayers = new Set();
@@ -62,5 +73,3 @@ class NodeMediaServer {
     return this.sessions.get(id);
   }
 }
-
-module.exports = NodeMediaServer;
