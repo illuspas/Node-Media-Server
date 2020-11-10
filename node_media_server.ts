@@ -4,9 +4,9 @@
 
 import { EventEmitter } from 'events';
 
-const NodeRtmpServer = require('./node_rtmp_server');
-const NodeHttpServer = require('./node_http_server');
-const NodeCoreUtils = require('./node_core_utils');
+import { nodeEvent } from './node_core_utils';
+import { NodeHttpServer } from './node_http_server';
+import { NodeRtmpServer } from './node_rtmp_server';
 
 const authCheck = require('./api/middleware/auth');
 const streams = require('./api/routes/streams');
@@ -19,8 +19,8 @@ export class NodeMediaServer {
   idlePlayers: Set<string>;
   nodeEvent: EventEmitter;
 
-  nrs: any;
-  nhs: any;
+  nrs: NodeRtmpServer;
+  nhs: NodeHttpServer;
 
   constructor(config) {
     this.config = config;
@@ -28,7 +28,7 @@ export class NodeMediaServer {
     this.sessions = new Map();
     this.publishers = new Map();
     this.idlePlayers = new Set();
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
+    this.nodeEvent = nodeEvent;
   }
 
   run() {
@@ -52,7 +52,7 @@ export class NodeMediaServer {
       );
 
       this.nhs.expressApp.use((req, res, next) => {
-        req.nms = this;
+        req['nms'] = this;
 
         next();
       });

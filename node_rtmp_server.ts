@@ -4,8 +4,8 @@
 
 import * as net from 'net';
 
-const NodeRtmpSession = require('./node_rtmp_session');
-const NodeCoreUtils = require('./node_core_utils');
+import { generateNewSessionID } from './node_core_utils';
+import { NodeRtmpSession } from './node_rtmp_session';
 
 const RTMP_PORT = 1935;
 
@@ -17,7 +17,7 @@ export class NodeRtmpServer {
     this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
 
     this.tcpServer = net.createServer(socket => {
-      const id = NodeCoreUtils.generateNewSessionID(sessions);
+      const id = generateNewSessionID();
       const session = new NodeRtmpSession(config, socket);
       sessions.set(id, session);
       session.id = id;

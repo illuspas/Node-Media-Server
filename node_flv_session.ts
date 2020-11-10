@@ -4,9 +4,8 @@
 
 import { EventEmitter } from 'events';
 import * as url from 'url';
-
-const BufferPool = require('./node_core_bufferpool');
-const NodeCoreUtils = require('./node_core_utils');
+import { BufferPool } from './node_core_bufferpool';
+import { nodeEvent } from './node_core_utils';
 
 export class NodeFlvSession extends EventEmitter {
   config: any;
@@ -20,7 +19,7 @@ export class NodeFlvSession extends EventEmitter {
   playArgs: any;
   nodeEvent: any;
   TAG: string;
-  connectCmdObj: { method: any; streamPath: any; query: any };
+  connectCmdObj: any;
   isStarting: boolean;
   connectTime: Date;
   publishers: any;
@@ -41,7 +40,7 @@ export class NodeFlvSession extends EventEmitter {
     this.isPublisher = false;
     this.playStreamPath = '';
     this.playArgs = null;
-    this.nodeEvent = NodeCoreUtils.nodeEvent;
+    this.nodeEvent = nodeEvent;
 
     this.on('connect', this.onConnect);
     this.on('play', this.onPlay);

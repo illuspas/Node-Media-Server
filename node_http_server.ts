@@ -7,8 +7,8 @@ import * as ws from 'ws';
 import * as express from 'express';
 import { Express } from 'express';
 
-const NodeCoreUtils = require('./node_core_utils');
-const NodeFlvSession = require('./node_flv_session');
+import { generateNewSessionID } from './node_core_utils';
+import { NodeFlvSession } from './node_flv_session';
 
 const HTTP_PORT = 80;
 
@@ -81,7 +81,7 @@ export class NodeHttpServer {
   }
 
   onConnect(req, res) {
-    const id = NodeCoreUtils.generateNewSessionID(this.sessions);
+    const id = generateNewSessionID();
     const session = new NodeFlvSession(this.config, req, res);
     this.sessions.set(id, session);
     session.id = id;

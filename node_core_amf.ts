@@ -1063,7 +1063,7 @@ export function decodeAmf0Data(dbuf) {
  * @param dbuf
  * @returns {{cmd: (*|string|String|*), value: *}}
  */
-export function decodeAMF0Cmd(dbuf) {
+export function decodeAmf0Cmd(dbuf) {
   let buffer = dbuf;
   const resp: any = {};
 
@@ -1090,7 +1090,7 @@ export function decodeAMF0Cmd(dbuf) {
  * @param opt
  * @returns {*}
  */
-export function encodeAMF0Cmd(opt) {
+export function encodeAmf0Cmd(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
   if (rtmpCmdDecode[opt.cmd]) {
@@ -1106,7 +1106,7 @@ export function encodeAMF0Cmd(opt) {
   return data;
 }
 
-export function encodeAMF0Data(opt) {
+export function encodeAmf0Data(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
   if (rtmpDataDecode[opt.cmd]) {
@@ -1127,7 +1127,7 @@ export function encodeAMF0Data(opt) {
  * @param dbuf
  * @returns {{}}
  */
-export function decodeAMF3Cmd(dbuf) {
+export function decodeAmf3Cmd(dbuf) {
   let buffer = dbuf;
   const resp: any = {};
 
@@ -1154,7 +1154,7 @@ export function decodeAMF3Cmd(dbuf) {
  * @param opt
  * @returns {*}
  */
-export function encodeAMF3Cmd(opt) {
+export function encodeAmf3Cmd(opt) {
   let data = amf0EncodeOne(opt.cmd);
 
   if (rtmpCmdDecode[opt.cmd]) {

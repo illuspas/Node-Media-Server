@@ -10,7 +10,7 @@ export class BufferPool extends Readable {
   needBytes: number;
   gFun: Generator;
 
-  constructor(options) {
+  constructor(options = undefined) {
     super(options);
   }
 
