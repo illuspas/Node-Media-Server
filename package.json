@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint . && prettier --list-different \"**/*.{ts,js,json,html,css,scss,md}\"",
     "lint:fix": "eslint . --fix && prettier --write \"**/*.{ts,js,json,html,css,scss,md}\"",
-    "start": "node app.js"
+    "start": "ts-node index.js"
   },
   "dependencies": {
     "bitop": "^0.0.1",
