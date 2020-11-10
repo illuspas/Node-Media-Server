@@ -3,6 +3,7 @@
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
 
 import { EventEmitter } from 'events';
+import { IncomingMessage, ServerResponse } from 'http';
 import { ParsedUrlQuery } from 'querystring';
 import * as url from 'url';
 
@@ -12,8 +13,8 @@ import { nodeEvent } from './node_core_utils';
 export class NodeFlvSession extends EventEmitter {
   config: any;
 
-  req: any;
-  res: any;
+  req: IncomingMessage;
+  res: ServerResponse;
   bp: BufferPool;
   allow_origin: string;
   isPublisher: boolean;
@@ -52,8 +53,8 @@ export class NodeFlvSession extends EventEmitter {
       this.res.on('message', this.onReqData.bind(this));
       this.res.on('close', this.onReqClose.bind(this));
       this.res.on('error', this.onReqError.bind(this));
-      this.res.write = this.res.send;
-      this.res.end = this.res.close;
+      this.res.write = this.res['send'];
+      this.res.end = this.res['close'];
       this.TAG = 'websocket-flv';
     } else {
       this.req.on('data', this.onReqData.bind(this));
