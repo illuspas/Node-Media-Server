@@ -1,12 +1,15 @@
-//
 //  Created by Mingliang Chen on 17/8/1.
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
-//
 
-const Readable = require('stream').Readable;
+import { Readable } from 'stream';
 
-class BufferPool extends Readable {
+export class BufferPool extends Readable {
+  readBytes: number;
+  poolBytes: number;
+  needBytes: number;
+  gFun: Generator;
+
   constructor(options) {
     super(options);
   }
@@ -23,7 +26,7 @@ class BufferPool extends Readable {
     this.gFun.next(true);
   }
 
-  push(buf) {
+  push(buf): any {
     super.push(buf);
     this.poolBytes += buf.length;
     this.readBytes += buf.length;
@@ -47,5 +50,3 @@ class BufferPool extends Readable {
     return ret;
   }
 }
-
-module.exports = BufferPool;
