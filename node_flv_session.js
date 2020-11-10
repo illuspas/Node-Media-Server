@@ -180,7 +180,7 @@ class NodeFlvSession extends EventEmitter {
     }
 
     //send FLV header
-    const FLVHeader = new Buffer([
+    const FLVHeader = Buffer.from([
       0x46,
       0x4c,
       0x56,

@@ -223,7 +223,7 @@ function amf3encUI29(num) {
   if (num >= 0x200000) {
     len = 4;
   }
-  const buf = new Buffer(len);
+  const buf = Buffer.alloc(len);
   switch (len) {
     case 1:
       buf.writeUInt8(num, 0);
@@ -301,7 +301,7 @@ function amf3encString(str) {
   const sLen = amf3encUI29(str.length << 1);
   const buf = Buffer.alloc(1);
   buf.writeUInt8(0x6, 0);
-  return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, sLen, Buffer.from(str, 'utf8')]);
 }
 
 /**
@@ -333,7 +333,7 @@ function amf3encXmlDoc(str) {
   const sLen = amf3encUI29(str.length << 1);
   const buf = Buffer.alloc(1);
   buf.writeUInt8(0x7, 0);
-  return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, sLen, Buffer.from(str, 'utf8')]);
 }
 
 /**
@@ -365,7 +365,7 @@ function amf3encXml(str) {
   const sLen = amf3encUI29(str.length << 1);
   const buf = Buffer.alloc(1);
   buf.writeUInt8(0x0b, 0);
-  return Buffer.concat([buf, sLen, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, sLen, Buffer.from(str, 'utf8')]);
 }
 
 /**
@@ -397,7 +397,7 @@ function amf3encByteArray(str) {
   return Buffer.concat([
     buf,
     sLen,
-    typeof str === 'string' ? new Buffer(str, 'binary') : str,
+    typeof str === 'string' ? Buffer.from(str, 'binary') : str,
   ]);
 }
 
@@ -690,7 +690,7 @@ function amf0decUString(buf) {
  * @returns {Buffer}
  */
 function amf0encUString(s) {
-  const data = new Buffer(s, 'utf8');
+  const data = Buffer.from(s, 'utf8');
   const sLen = Buffer.alloc(2);
   sLen.writeUInt16BE(data.length, 0);
   return Buffer.concat([sLen, data]);
@@ -705,7 +705,7 @@ function amf0encString(str) {
   const buf = Buffer.alloc(3);
   buf.writeUInt8(0x02, 0);
   buf.writeUInt16BE(str.length, 1);
-  return Buffer.concat([buf, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, Buffer.from(str, 'utf8')]);
 }
 
 /**
@@ -727,7 +727,7 @@ function amf0encLongString(str) {
   const buf = Buffer.alloc(5);
   buf.writeUInt8(0x0c, 0);
   buf.writeUInt32BE(str.length, 1);
-  return Buffer.concat([buf, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, Buffer.from(str, 'utf8')]);
 }
 
 /**
@@ -803,7 +803,7 @@ function amf0encXmlDoc(str) {
   const buf = Buffer.alloc(3);
   buf.writeUInt8(0x0f, 0);
   buf.writeUInt16BE(str.length, 1);
-  return Buffer.concat([buf, new Buffer(str, 'utf8')]);
+  return Buffer.concat([buf, Buffer.from(str, 'utf8')]);
 }
 
 /**
