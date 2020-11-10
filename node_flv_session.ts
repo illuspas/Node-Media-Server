@@ -1,19 +1,38 @@
-//
 //  Created by Mingliang Chen on 17/8/4.
 //  illuspas[a]gmail.com
 //  Copyright (c) 2017 Nodemedia. All rights reserved.
-//
 
-const EventEmitter = require('events');
-const URL = require('url');
+import { EventEmitter } from 'events';
+import * as url from 'url';
 
 const BufferPool = require('./node_core_bufferpool');
 const NodeCoreUtils = require('./node_core_utils');
 
-class NodeFlvSession extends EventEmitter {
+export class NodeFlvSession extends EventEmitter {
+  config: any;
+
+  req: any;
+  res: any;
+  bp: any;
+  allow_origin: any;
+  isPublisher: boolean;
+  playStreamPath: string;
+  playArgs: any;
+  nodeEvent: any;
+  TAG: string;
+  connectCmdObj: { method: any; streamPath: any; query: any };
+  isStarting: boolean;
+  connectTime: Date;
+  publishers: any;
+  sessions: any;
+  idlePlayers: any;
+  id: any;
+
   constructor(config, req, res) {
     super();
+
     this.config = config;
+
     this.req = req;
     this.res = res;
     this.bp = new BufferPool();
@@ -45,7 +64,7 @@ class NodeFlvSession extends EventEmitter {
 
   run() {
     const method = this.req.method;
-    const urlInfo = URL.parse(this.req.url, true);
+    const urlInfo = url.parse(this.req.url, true);
     const streamPath = urlInfo.pathname.split('.')[0];
     const format = urlInfo.pathname.split('.')[1];
     this.connectCmdObj = { method, streamPath, query: urlInfo.query };
@@ -277,5 +296,3 @@ class NodeFlvSession extends EventEmitter {
     return Buffer.concat([FLVTagHeader, rtmpBody, PreviousTagSizeN]);
   }
 }
-
-module.exports = NodeFlvSession;
