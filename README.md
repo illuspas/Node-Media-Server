@@ -663,6 +663,28 @@ relay: {
 }
 ```
 
+To push to edge servers that require special key/url you can use:
+
+```
+relay: {
+  ffmpeg: '/usr/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'live',
+      mode: 'push',
+      appendName: false,
+      edge: `rtmps://live-api-s.facebook.com:443/rtmp/${process.env.FB_STREAM_KEY}`
+    },
+    {
+      app: 'live',
+      mode: 'push',
+      appendName: false,
+      edge: `rtmp://a.rtmp.youtube.com/live2/${process.env.YT_STREAM_KEY}`
+    }
+  ]
+}
+```
+
 # Fission
 Real-time transcoding multi-resolution output
 ![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
