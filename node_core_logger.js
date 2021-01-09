@@ -22,34 +22,38 @@ const logTime = () => {
   return nowDate.toLocaleDateString() + ' ' + nowDate.toLocaleTimeString([], { hour12: false });
 };
 
+const unshiftLogContainer = (timestamp, pid, type, ...args) => {
+  logsContainer.unshift({ timestamp: timestamp, type: type, pid: pid, message: [...args] })
+}
+
 const log = (...args) => {
   if (logType < LOG_TYPES.NORMAL) return;
 
-  logsContainer.unshift({ timestamp: logTime(), type: 'info', pid: process.pid, message: [...args] })
+  unshiftLogContainer(logTime(), process.pid, 'info', ...args)
   console.log(logTime(), process.pid, chalk.bold.green('[INFO]'), ...args);
 };
 
 const error = (...args) => {
   if (logType < LOG_TYPES.ERROR) return;
 
-  logsContainer.unshift({ timestamp: logTime(), type: 'error', pid: process.pid, message: { ...args } })
+  unshiftLogContainer(logTime(), process.pid, 'error', ...args)
   console.log(logTime(), process.pid, chalk.bold.red('[ERROR]'), ...args);
 };
 
 const debug = (...args) => {
   if (logType < LOG_TYPES.DEBUG) return;
 
-  logsContainer.unshift({ timestamp: logTime(), type: 'debug', pid: process.pid, message: { ...args } })
+  unshiftLogContainer(logTime(), process.pid, 'debug', ...args)
   console.log(logTime(), process.pid, chalk.bold.blue('[DEBUG]'), ...args);
 };
 
 const ffdebug = (...args) => {
   if (logType < LOG_TYPES.FFDEBUG) return;
 
-  logsContainer.unshift({ timestamp: logTime(), type: 'ffdebug', pid: process.pid, message: { ...args } })
+  unshiftLogContainer(logTime(), process.pid, 'ffdebug', ...args)
   console.log(logTime(), process.pid, chalk.bold.blue('[FFDEBUG]'), ...args);
 };
-  
+
 module.exports = {
   LOG_TYPES,
   setLogType,
