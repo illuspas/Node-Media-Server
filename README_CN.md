@@ -16,8 +16,7 @@
  - 跨平台支持 Windows/Linux/Unix
  - 支持的音视频编码 H.264/H.265/AAC/SPEEX/NELLYMOSER
  - 支持缓存最近一个关键帧间隔数据，实现RTMP协议秒开
- - 支持RTMP直播流转LIVE-HTTP-FLV流,支持 [flv.js](https://github.com/Bilibili/flv.js) 播放
- - 支持RTMP直播流转LIVE-WebSocket-FLV,支持 [flv.js](https://github.com/Bilibili/flv.js) 播放
+ - 支持RTMP直播流转LIVE-HTTP/WS-FLV流,支持 [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js)  播放
  - 支持星域CDN风格的鉴权
  - 支持事件回调
  - 支持https/wss加密传输
@@ -26,6 +25,7 @@
  - 支持RTMP直播流录制为MP4文件并开启faststart
  - 支持RTMP/RTSP中继
  - 支持API控制中继
+ - 支持实时多分辨率转码
 
 # 用法 
 ## docker 版本
@@ -37,7 +37,7 @@ docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
 ```bash
 mkdir nms
 cd nms
-git clone https://github.com/illuspas/Node-Media-Server
+git clone https://github.com/illuspas/Node-Media-Server .
 npm i
 node app.js
 ```
@@ -83,7 +83,7 @@ ffmpeg -re -i INPUT_FILE_NAME -c copy -f flv rtmp://localhost/live/STREAM_NAME
 
 或者有个其他编码格式，需要转为h.264+AAC的编码再转直播:
 ```bash
-ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset superfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
+ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset veryfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
 ```
 
 ## 使用 OBS 推流
@@ -529,9 +529,9 @@ const config = {
     ffmpeg: '/usr/local/bin/ffmpeg',
     tasks: [
       {
-        app: 'vod',
+        app: 'live',
         mp4: true,
-        mp4Flags: '[movflags=faststart]',
+        mp4Flags: '[movflags=frag_keyframe+empty_moov]',
       }
     ]
   }
@@ -605,6 +605,62 @@ relay: {
 }
 ```
 
+# 实时多分辨率转码
+![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
+```
+fission: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      rule: "game/*",
+      model: [
+        {
+          ab: "128k",
+          vb: "1500k",
+          vs: "1280x720",
+          vf: "30",
+        },
+        {
+          ab: "96k",
+          vb: "1000k",
+          vs: "854x480",
+          vf: "24",
+        },
+        {
+          ab: "96k",
+          vb: "600k",
+          vs: "640x360",
+          vf: "20",
+        },
+      ]
+    },
+    {
+      rule: "show/*",
+      model: [
+        {
+          ab: "128k",
+          vb: "1500k",
+          vs: "720x1280",
+          vf: "30",
+        },
+        {
+          ab: "96k",
+          vb: "1000k",
+          vs: "480x854",
+          vf: "24",
+        },
+        {
+          ab: "64k",
+          vb: "600k",
+          vs: "360x640",
+          vf: "20",
+        },
+      ]
+    },
+  ]
+}
+```
+
 # 推流与播放 App/SDK
 
 ## Android Livestream App
@@ -621,7 +677,7 @@ https://github.com/NodeMedia/NodeMediaClient-iOS
 https://github.com/NodeMedia/react-native-nodemediaclient
 
 ## NodePlayer.js HTML5 live player
-* 使用 asm.js 实现
+* 使用 asm.js / wasm 实现
 * http-flv/ws-flv 协议
 * H.264/H.265 + AAC/Nellymoser/G.711 解码器
 * 超低延迟，自动消累积延迟 (支持 iOS safari 浏览器)
@@ -636,7 +692,7 @@ https://github.com/NodeMedia/react-native-nodemediaclient
 http://www.nodemedia.cn/products/node-media-client/win/
 
 # 感谢
-strive, 树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
 
 感谢你们的大力支持！
 

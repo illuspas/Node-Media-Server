@@ -35,7 +35,11 @@ class NodeHttpServer {
     this.id = NodeCoreUtils.generateNewSessionID();
 
     let app = Express();
+<<<<<<< HEAD
     app.set('trust proxy', 1) // trust first proxy
+=======
+    app.use(bodyParser.json());
+>>>>>>> cd36fec55ceead7b9f9ea3a9ff8fb72dbd497df3
 
     app.use(bodyParser.urlencoded({ extended: true }));
 
