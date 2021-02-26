@@ -5,7 +5,7 @@
   "main": "node_media_server.js",
   "scripts": {
     "test": "node app.js",
-    "merge:git": "git fetch upstream && git checkout master && git merge upstream/master",
+    "merge:git": "git checkout master && git pull upstream master && git push origin master",
     "push:git": "clear && echo Please type your commit message && read msg && clear && git add . && git commit -m \"$msg\" && git push origin master"
   },
   "repository": {
