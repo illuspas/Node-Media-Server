@@ -110,12 +110,7 @@ function getStreams (req, res, next) {
   res.json(stats);
 }
 
-<<<<<<< HEAD
-function getStream (req, res, next) {
-
-=======
 function getStream(req, res, next) {
->>>>>>> cd36fec55ceead7b9f9ea3a9ff8fb72dbd497df3
   let streamStats = {
     isLive: false,
     viewers: 0,
@@ -131,15 +126,6 @@ function getStream(req, res, next) {
   );
 
   streamStats.isLive = !!publisherSession;
-<<<<<<< HEAD
-  streamStats.viewers = _.filter(Array.from(this.sessions.values()), (session) => {
-    return session.playStreamPath === publishStreamPath;
-  }).length;
-  streamStats.duration = streamStats.isLive ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000) : 0;
-  streamStats.bitrate = streamStats.duration > 0 ? Math.ceil(_.get(publisherSession, ['socket', 'bytesRead'], 0) * 8 / streamStats.duration / 1024) : 0;
-  streamStats.startTime = streamStats.isLive ? publisherSession.connectTime : null;
-  console.log(streamStats);
-=======
   streamStats.viewers = _.filter(
     Array.from(this.sessions.values()),
     session => {
@@ -160,7 +146,6 @@ function getStream(req, res, next) {
   streamStats.startTime = streamStats.isLive
     ? publisherSession.connectTime
     : null;
->>>>>>> cd36fec55ceead7b9f9ea3a9ff8fb72dbd497df3
 
   res.json(streamStats);
 }
