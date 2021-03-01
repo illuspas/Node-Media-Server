@@ -92,6 +92,6 @@ RUN npm i
 
 COPY . .
 
-EXPOSE 1935 8000
+EXPOSE 1935 8000 8443
 
 CMD ["node","app.js"]
