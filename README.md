@@ -1,51 +1,68 @@
 # Node-Media-Server
+
 [![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
 [![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
-[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
+[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+## Status
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7d88520caba84fec95830312a4407058)](https://www.codacy.com/gh/illuspas/Node-Media-Server/dashboard?utm_source=github.com&utm_medium=referral&utm_content=illuspas/Node-Media-Server&utm_campaign=Badge_Grade)
+![GitHub repo size](https://img.shields.io/github/repo-size/illuspas/Node-Media-Server?style=flat-square)
+![Lines of code](https://img.shields.io/tokei/lines/github/illuspas/Node-Media-Server?style=flat-square)
+
+![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/illuspas/Node-Media-Server?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/illuspas/Node-Media-Server?style=flat-square) ![GitHub forks](https://img.shields.io/github/forks/illuspas/Node-Media-Server?style=flat-square) ![GitHub Repo stars](https://img.shields.io/github/stars/illuspas/Node-Media-Server?style=flat-square) ![GitHub watchers](https://img.shields.io/github/watchers/illuspas/Node-Media-Server?style=flat-square)
 
 ![logo](https://www.nodemedia.cn/uploads/site_logo.png)
 
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
-[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
+[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)
 
 **If you like this project you can support me.**  
 <a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
 
 # NMSv3
+
 https://github.com/NodeMedia/NodeMediaServer
 
 # Web Admin Panel Source
+
 [https://github.com/illuspas/Node-Media-Server-Admin](https://github.com/illuspas/Node-Media-Server-Admin)
 
 # Web Admin Panel Screenshot
+
 [http://server_ip:8000/admin](http://server_ip:8000/admin)
 
 ![admin](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_dashboard.png)
 ![preview](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_streams_preview.png)
 
 # Features
- - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711
- - Support GOP cache
- - Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
- - Support remux to HLS/DASH/MP4
- - Support xycdn style authentication
- - Support event callback
- - Support https/wss
- - Support Server Monitor
- - Support Rtsp/Rtmp relay
- - Support api control relay
- - Support real-time multi-resolution transcoding
 
-# Usage 
+- Cross platform support Windows/Linux/Unix
+- Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711
+- Support GOP cache
+- Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
+- Support remux to HLS/DASH/MP4
+- Support xycdn style authentication
+- Support event callback
+- Support https/wss
+- Support Server Monitor
+- Support Rtsp/Rtmp relay
+- Support api control relay
+- Support real-time multi-resolution transcoding
+
+# Usage
+
 ## docker version
+
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
 ```
 
 ## git version
+
 ```bash
 mkdir nms
 cd nms
@@ -64,7 +81,7 @@ vi app.js
 ```
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require("node-media-server");
 
 const config = {
   rtmp: {
@@ -72,15 +89,15 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    allow_origin: '*'
-  }
+    allow_origin: "*",
+  },
 };
 
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
 ```
 
@@ -89,19 +106,24 @@ node app.js
 ```
 
 # Publishing live streams
+
 ## From FFmpeg
->If you have a video file with H.264 video and AAC audio:
+
+> If you have a video file with H.264 video and AAC audio:
+
 ```bash
 ffmpeg -re -i INPUT_FILE_NAME -c copy -f flv rtmp://localhost/live/STREAM_NAME
 ```
 
 Or if you have a video file that is encoded in other audio/video format:
+
 ```bash
 ffmpeg -re -i INPUT_FILE_NAME -c:v libx264 -preset veryfast -tune zerolatency -c:a aac -ar 44100 -f flv rtmp://localhost/live/STREAM_NAME
 ```
 
 ## From OBS
->Settings -> Stream
+
+> Settings -> Stream
 
 Stream Type : Custom Streaming Server
 
@@ -110,27 +132,33 @@ URL : rtmp://localhost/live
 Stream key : STREAM_NAME
 
 # Accessing the live stream
-## RTMP 
+
+## RTMP
+
 ```
 rtmp://localhost/live/STREAM_NAME
 ```
 
 ## http-flv
+
 ```
 http://localhost:8000/live/STREAM_NAME.flv
 ```
 
 ## websocket-flv
+
 ```
 ws://localhost:8000/live/STREAM_NAME.flv
 ```
 
 ## HLS
+
 ```
 http://localhost:8000/live/STREAM_NAME/index.m3u8
 ```
 
 ## DASH
+
 ```
 http://localhost:8000/live/STREAM_NAME/index.mpd
 ```
@@ -141,16 +169,16 @@ http://localhost:8000/live/STREAM_NAME/index.mpd
 <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
-    if (flvjs.isSupported()) {
-        var videoElement = document.getElementById('videoElement');
-        var flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: 'http://localhost:8000/live/STREAM_NAME.flv'
-        });
-        flvPlayer.attachMediaElement(videoElement);
-        flvPlayer.load();
-        flvPlayer.play();
-    }
+  if (flvjs.isSupported()) {
+    var videoElement = document.getElementById("videoElement");
+    var flvPlayer = flvjs.createPlayer({
+      type: "flv",
+      url: "http://localhost:8000/live/STREAM_NAME.flv",
+    });
+    flvPlayer.attachMediaElement(videoElement);
+    flvPlayer.load();
+    flvPlayer.play();
+  }
 </script>
 ```
 
@@ -160,24 +188,27 @@ http://localhost:8000/live/STREAM_NAME/index.mpd
 <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
 <video id="videoElement"></video>
 <script>
-    if (flvjs.isSupported()) {
-        var videoElement = document.getElementById('videoElement');
-        var flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: 'ws://localhost:8000/live/STREAM_NAME.flv'
-        });
-        flvPlayer.attachMediaElement(videoElement);
-        flvPlayer.load();
-        flvPlayer.play();
-    }
+  if (flvjs.isSupported()) {
+    var videoElement = document.getElementById("videoElement");
+    var flvPlayer = flvjs.createPlayer({
+      type: "flv",
+      url: "ws://localhost:8000/live/STREAM_NAME.flv",
+    });
+    flvPlayer.attachMediaElement(videoElement);
+    flvPlayer.load();
+    flvPlayer.play();
+  }
 </script>
 ```
 
 # Logging
+
 ## Modify the logging type
+
 It is now possible to modify the logging type which determines which console outputs are shown.
 
 There are a total of 4 possible options:
+
 - 0 - Don't log anything
 - 1 - Log errors
 - 2 - Log errors and generic info
@@ -187,7 +218,7 @@ Modifying the logging type is easy - just add a new value `logType` in the confi
 By default, this is set to show errors and generic info internally (setting 2).
 
 ```js
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require("node-media-server");
 
 const config = {
   logType: 3,
@@ -197,29 +228,32 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    allow_origin: '*'
-  }
+    allow_origin: "*",
+  },
 };
 
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
-
 ```
 
 # Authentication
+
 ## Encryption URL consists of:
+
 > rtmp://hostname:port/appname/stream?sign=expires-HashValue  
 > http://hostname:port/appname/stream.flv?sign=expires-HashValue  
-> ws://hostname:port/appname/stream.flv?sign=expires-HashValue  
+> ws://hostname:port/appname/stream.flv?sign=expires-HashValue
 
 1.Publish or play address:
->rtmp://192.168.0.10/live/stream
+
+> rtmp://192.168.0.10/live/stream
 
 2.Config set auth->secret: 'nodemedia2017privatekey'
+
 ```js
 const config = {
   rtmp: {
@@ -227,37 +261,43 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    allow_origin: '*'
+    allow_origin: "*",
   },
   auth: {
     play: true,
     publish: true,
-    secret: 'nodemedia2017privatekey'
-  }
-}
+    secret: "nodemedia2017privatekey",
+  },
+};
 ```
+
 3.expiration time: 2017/8/23 11:25:21 ,The calculated expiration timestamp is
->1503458721
+
+> 1503458721
 
 4.The combination HashValue is:
->HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
->HashValue = 80c1d1ad2e0c2ab63eebb50eed64201a
+
+> HashValue = md5("/live/stream-1503458721-nodemedia2017privatekey”)  
+> HashValue = 80c1d1ad2e0c2ab63eebb50eed64201a
 
 5.Final request address
+
 > rtmp://192.168.0.10/live/stream?sign=1503458721-80c1d1ad2e0c2ab63eebb50eed64201a  
 > The 'sign' keyword can not be modified
 
 # H.265 over RTMP
+
 H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
 Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
 Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
 Pure JavaScrip live stream player: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
 
 # Event callback
+
 ```js
 ......
 nms.run();
@@ -303,18 +343,21 @@ nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
 ```
+
 # Https/Wss
 
 ## Generate certificate
+
 ```bash
 openssl genrsa -out privatekey.pem 1024
-openssl req -new -key privatekey.pem -out certrequest.csr 
+openssl req -new -key privatekey.pem -out certrequest.csr
 openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
 ```
 
 ## Config https
+
 ```js
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require("node-media-server");
 
 const config = {
   rtmp: {
@@ -322,32 +365,36 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    allow_origin: '*'
+    allow_origin: "*",
   },
   https: {
     port: 8443,
-    key:'./privatekey.pem',
-    cert:'./certificate.pem',
-  }
+    key: "./privatekey.pem",
+    cert: "./certificate.pem",
+  },
 };
 
-
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
 ```
+
 ## Accessing
+
 ```
 https://localhost:8443/live/STREAM_NAME.flv
 wss://localhost:8443/live/STREAM_NAME.flv
 ```
->In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
 
-# API 
-## Protected API 
+> In the browser environment, Self-signed certificates need to be added with trust before they can be accessed.
+
+# API
+
+## Protected API
+
 ```
 const config = {
  .......
@@ -356,14 +403,16 @@ const config = {
     api_user: 'admin',
     api_pass: 'nms2018',
   },
- 
+
  ......
 }
 ```
->Based on the basic auth，Please change your password.
->The default is not turned on
+
+> Based on the basic auth，Please change your password.
+> The default is not turned on
 
 ## Server stats
+
 http://localhost:8000/api/server
 
 ```json
@@ -409,6 +458,7 @@ http://localhost:8000/api/server
 ```
 
 ## Streams stats
+
 http://localhost:8000/api/streams
 
 ```json
@@ -486,8 +536,9 @@ http://localhost:8000/api/streams
 ```
 
 # Remux to HLS/DASH live stream
+
 ```js
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require("node-media-server");
 
 const config = {
   rtmp: {
@@ -495,34 +546,35 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    mediaroot: './media',
-    allow_origin: '*'
+    mediaroot: "./media",
+    allow_origin: "*",
   },
   trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
+    ffmpeg: "/usr/local/bin/ffmpeg",
     tasks: [
       {
-        app: 'live',
+        app: "live",
         hls: true,
-        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        hlsFlags: "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
         dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
-      }
-    ]
-  }
+        dashFlags: "[f=dash:window_size=3:extra_window_size=5]",
+      },
+    ],
+  },
 };
 
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
 ```
 
 # Remux to RTMP/HLS/DASH live stream with audio transcode
+
 ```js
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require("node-media-server");
 
 const config = {
   rtmp: {
@@ -530,40 +582,41 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
   },
   http: {
     port: 8000,
-    mediaroot: './media',
-    allow_origin: '*'
+    mediaroot: "./media",
+    allow_origin: "*",
   },
   trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
+    ffmpeg: "/usr/local/bin/ffmpeg",
     tasks: [
       {
-        app: 'live',
+        app: "live",
         vc: "copy",
         vcParam: [],
         ac: "aac",
-        acParam: ['-ab', '64k', '-ac', '1', '-ar', '44100'],
-        rtmp:true,
-        rtmpApp:'live2',
+        acParam: ["-ab", "64k", "-ac", "1", "-ar", "44100"],
+        rtmp: true,
+        rtmpApp: "live2",
         hls: true,
-        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        hlsFlags: "[hls_time=2:hls_list_size=3:hls_flags=delete_segments]",
         dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
-      }
-    ]
-  }
+        dashFlags: "[f=dash:window_size=3:extra_window_size=5]",
+      },
+    ],
+  },
 };
 
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
 ```
->Remux to RTMP cannot use the same app name
 
+> Remux to RTMP cannot use the same app name
 
 # Record to MP4
+
 ```JS
 const NodeMediaServer = require('node-media-server');
 
@@ -597,9 +650,11 @@ nms.run();
 ```
 
 # Rtsp/Rtmp Relay
+
 NodeMediaServer implement RTSP and RTMP relay with ffmpeg.
 
 ## Static pull
+
 The static pull mode is executed at service startup and reconnect after failure.
 It could be a live stream or a file. In theory, it is not limited to RTSP or RTMP protocol.
 
@@ -628,7 +683,8 @@ relay: {
 }
 ```
 
-## Dynamic pull 
+## Dynamic pull
+
 When the local server receives a play request.
 If the stream does not exist, pull the stream from the configured edge server to local.
 When the stream is not played by the client, it automatically disconnects.
@@ -647,6 +703,7 @@ relay: {
 ```
 
 ## Dynamic push
+
 When the local server receives a publish request.
 Automatically push the stream to the edge server.
 
@@ -664,8 +721,10 @@ relay: {
 ```
 
 # Fission
+
 Real-time transcoding multi-resolution output
 ![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
+
 ```
 fission: {
   ffmpeg: '/usr/local/bin/ffmpeg',
@@ -723,36 +782,43 @@ fission: {
 # Publisher and Player App/SDK
 
 ## Android Livestream App
+
 https://play.google.com/store/apps/details?id=cn.nodemedia.qlive  
-http://www.nodemedia.cn/uploads/qlive-release.apk  
+http://www.nodemedia.cn/uploads/qlive-release.apk
 
 ## Android SDK
+
 https://github.com/NodeMedia/NodeMediaClient-Android
 
 ## iOS SDK
+
 https://github.com/NodeMedia/NodeMediaClient-iOS
 
 ## React-Native SDK
+
 https://github.com/NodeMedia/react-native-nodemediaclient
 
 ## NodePlayer.js HTML5 live player
-* Implemented with asm.js / wasm
-* http-flv/ws-flv
-* H.264/H.265 + AAC/Nellymoser/G.711 decoder
-* Ultra low latency (Support for iOS safari browser)
+
+- Implemented with asm.js / wasm
+- http-flv/ws-flv
+- H.264/H.265 + AAC/Nellymoser/G.711 decoder
+- Ultra low latency (Support for iOS safari browser)
 
 http://www.nodemedia.cn/products/node-media-player
 
 ## Windows browser plugin(ActiveX/NPAPI)
-* H.264/H.265+AAC rtmp publisher
-* Camera/Desktop + Microphone capture
-* Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
-* Ultra low latency rtmp/rtsp/http live player
-* Only 6MB installation package
+
+- H.264/H.265+AAC rtmp publisher
+- Camera/Desktop + Microphone capture
+- Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
+- Ultra low latency rtmp/rtsp/http live player
+- Only 6MB installation package
 
 http://www.nodemedia.cn/products/node-media-client/win
 
 # Thanks
-Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
+
+Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous
 
 Thank you for your support.
