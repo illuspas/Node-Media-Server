@@ -14,11 +14,14 @@ const NodeCoreUtils = require('./node_core_utils');
 const context = require('./node_core_ctx');
 
 const RTMP_PORT = 1935;
+const RTMP_HOST = '0.0.0.0';
 const RTMPS_PORT = 443;
+const RTMPS_HOST = '0.0.0.0';
 
 class NodeRtmpServer {
   constructor(config) {
     config.rtmp.port = this.port = config.rtmp.port ? config.rtmp.port : RTMP_PORT;
+    config.rtmp.host = this.host = config.rtmp.host ? config.rtmp.host : RTMP_HOST;
     this.tcpServer = Net.createServer((socket) => {
       let session = new NodeRtmpSession(config, socket);
       session.run();
@@ -26,6 +29,7 @@ class NodeRtmpServer {
 
     if (config.rtmp.ssl){
       config.rtmp.ssl.port = this.sslPort = config.rtmp.ssl.port ? config.rtmp.ssl.port : RTMPS_PORT;
+      config.rtmp.ssl.host = this.sslHost = config.rtmp.ssl.host ? config.rtmp.ssl.host : RTMPS_HOST;
       try {
         const options = {
           key: Fs.readFileSync(config.rtmp.ssl.key),
@@ -42,8 +46,8 @@ class NodeRtmpServer {
   }
 
   run() {
-    this.tcpServer.listen(this.port, () => {
-      Logger.log(`Node Media Rtmp Server started on port: ${this.port}`);
+    this.tcpServer.listen(this.port, this.host, () => {
+      Logger.log(`Node Media Rtmp Server started on: ${this.host}:${this.port}`);
     });
 
     this.tcpServer.on('error', (e) => {
@@ -55,8 +59,8 @@ class NodeRtmpServer {
     });
 
     if (this.tlsServer) {
-      this.tlsServer.listen(this.sslPort, () => {
-        Logger.log(`Node Media Rtmps Server started on port: ${this.sslPort}`);
+      this.tlsServer.listen(this.sslPort, this.sslHost, () => {
+        Logger.log(`Node Media Rtmps Server started on: ${this.sslHost}:${this.sslPort}`);
       });
 
       this.tlsServer.on('error', (e) => {
