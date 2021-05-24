@@ -27,7 +27,7 @@ https://github.com/NodeMedia/NodeMediaServer
 
 # Features
  - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711
+ - Support H.264/H.265/AAC/MP3/SPEEX/NELLYMOSER/G.711/OPUS
  - Support GOP cache
  - Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
  - Support remux to HLS/DASH/MP4
