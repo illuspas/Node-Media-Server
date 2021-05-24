@@ -599,7 +599,7 @@ class NodeRtmpSession {
         this.audioSamplerate = 8000;
       }
 
-      if (sound_format != 10) {
+      if (sound_format != 10 && sound_format != 13) {
         Logger.log(
           `[rtmp publish] Handle audio. id=${this.id} streamPath=${
           this.publishStreamPath
@@ -610,15 +610,21 @@ class NodeRtmpSession {
       }
     }
 
-    if (sound_format == 10 && payload[1] == 0) {
+    if ((sound_format == 10 || sound_format == 13) && payload[1] == 0) {
       //cache aac sequence header
       this.isFirstAudioReceived = true;
       this.aacSequenceHeader = Buffer.alloc(payload.length);
       payload.copy(this.aacSequenceHeader);
-      let info = AV.readAACSpecificConfig(this.aacSequenceHeader);
-      this.audioProfileName = AV.getAACProfileName(info);
-      this.audioSamplerate = info.sample_rate;
-      this.audioChannels = info.channels;
+      if(sound_format == 10) {
+        let info = AV.readAACSpecificConfig(this.aacSequenceHeader);
+        this.audioProfileName = AV.getAACProfileName(info);
+        this.audioSamplerate = info.sample_rate;
+        this.audioChannels = info.channels;
+      } else {
+        this.audioSamplerate = 48000
+        this.audioChannels = payload[11];
+      }
+
       Logger.log(
         `[rtmp publish] Handle audio. id=${this.id} streamPath=${
         this.publishStreamPath
@@ -1101,7 +1107,7 @@ class NodeRtmpSession {
       this.socket.write(chunks);
     }
 
-    if (publisher.audioCodec === 10) {
+    if (publisher.audioCodec === 10 || publisher.audioCodec === 13) {
       let packet = RtmpPacket.create();
       packet.header.fmt = RTMP_CHUNK_TYPE_0;
       packet.header.cid = RTMP_CHANNEL_AUDIO;
@@ -1150,7 +1156,7 @@ class NodeRtmpSession {
         let publisherId = context.publishers.get(this.playStreamPath);
         let publisher = context.sessions.get(publisherId);
         let players = publisher.players;
-        if (publisher.audioCodec === 10) {
+        if (publisher.audioCodec === 10 || publisher.audioCodec === 13) {
           let packet = RtmpPacket.create();
           packet.header.fmt = RTMP_CHUNK_TYPE_0;
           packet.header.cid = RTMP_CHANNEL_AUDIO;

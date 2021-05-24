@@ -30,7 +30,7 @@ const AUDIO_CODEC_NAME = [
   'AAC',
   'Speex',
   '',
-  '',
+  'OPUS',
   'MP3-8K',
   'DeviceSpecific',
   'Uncompressed'
