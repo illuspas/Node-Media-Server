@@ -63,9 +63,9 @@ function getSessionsInfo(sessions) {
     info.outbytes += socket.bytesWritten;
     info.rtmp += session.TAG === 'rtmp' ? 1 : 0;
     info.http += session.TAG === 'http-flv' ? 1 : 0;
+    info.http += session.TAG === 'http-hls' ? 1 : 0;
     info.ws += session.TAG === 'websocket-flv' ? 1 : 0;
   }
-
   return info;
 }
 

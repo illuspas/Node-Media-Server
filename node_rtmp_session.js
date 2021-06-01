@@ -980,33 +980,61 @@ class NodeRtmpSession {
     this.sendRtmpSampleAccess();
   }
 
-  onConnect(invokeMessage) {
+  async onConnect(invokeMessage) {
     invokeMessage.cmdObj.app = invokeMessage.cmdObj.app.replace("/", ""); //fix jwplayer
     context.nodeEvent.emit("preConnect", this.id, invokeMessage.cmdObj);
     if (!this.isStarting) {
       return;
     }
-    this.connectCmdObj = invokeMessage.cmdObj;
-    this.appname = invokeMessage.cmdObj.app;
-    this.objectEncoding = invokeMessage.cmdObj.objectEncoding != null ? invokeMessage.cmdObj.objectEncoding : 0;
-    this.connectTime = new Date();
-    this.startTimestamp = Date.now();
-    this.pingInterval = setInterval(() => {
-      this.sendPingRequest();
-    }, this.pingTime);
-    this.sendWindowACK(5000000);
-    this.setPeerBandwidth(5000000, 2);
-    this.setChunkSize(this.outChunkSize);
-    this.respondConnect(invokeMessage.transId);
-    Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
-    context.nodeEvent.emit("postConnect", this.id, invokeMessage.cmdObj);
+    let preConnect = await context.nodeCheck.run("preConnect", {
+      id: this.id,
+      eventName: "preConnect",
+      stream: {
+        app: invokeMessage.cmdObj.app,
+        path: invokeMessage.cmdObj.tcUrl
+      },
+      data: invokeMessage.cmdObj
+    });
+
+    if (preConnect) {
+      this.connectCmdObj = invokeMessage.cmdObj;
+      this.appname = invokeMessage.cmdObj.app;
+      this.objectEncoding = invokeMessage.cmdObj.objectEncoding != null ? invokeMessage.cmdObj.objectEncoding : 0;
+      this.connectTime = new Date();
+      this.startTimestamp = Date.now();
+      this.pingInterval = setInterval(() => {
+        this.sendPingRequest();
+      }, this.pingTime);
+      this.sendWindowACK(5000000);
+      this.setPeerBandwidth(5000000, 2);
+      this.setChunkSize(this.outChunkSize);
+      this.respondConnect(invokeMessage.transId);
+      Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
+      let postConnect = await context.nodeCheck.run("postConnect", {
+        id: this.id,
+        eventName: "postConnect",
+        stream: {
+          app: invokeMessage.cmdObj.app,
+          path: invokeMessage.cmdObj.tcUrl
+        },
+        data: invokeMessage.cmdObj
+      });
+
+      if (postConnect) {
+        context.nodeEvent.emit("postConnect", this.id, invokeMessage.cmdObj);
+      } else {
+        this.reject();
+      }
+    } else {
+      this.reject();
+    };
   }
 
   onCreateStream(invokeMessage) {
     this.respondCreateStream(invokeMessage.transId);
   }
 
-  onPublish(invokeMessage) {
+  async onPublish(invokeMessage) {
     if (typeof invokeMessage.streamName !== "string") {
       return;
     }
@@ -1017,41 +1045,71 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
+    let prePublish = await context.nodeCheck.run("prePublish", {
+      id: this.id,
+      eventName: "prePublish",
+      stream: {
+        id: this.publishStreamId,
+        path: this.publishStreamPath,
+        app: this.appname,
+        key: invokeMessage.streamName.split("?")[0]
+      },
+      data: this.publishArgs
+    });
 
-    if (this.config.auth && this.config.auth.publish && !this.isLocal) {
-      let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
-      if (!results) {
-        Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
-        this.sendStatusMessage(this.publishStreamId, "error", "NetStream.publish.Unauthorized", "Authorization required.");
-        return;
-      }
-    }
-
-    if (context.publishers.has(this.publishStreamPath)) {
-      this.reject();
-      Logger.log(`[rtmp publish] Already has a stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadName", "Stream already publishing");
-    } else if (this.isPublishing) {
-      Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadConnection", "Connection already publishing");
-    } else {
-      Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
-      context.publishers.set(this.publishStreamPath, this.id);
-      this.isPublishing = true;
-
-      this.sendStatusMessage(this.publishStreamId, "status", "NetStream.Publish.Start", `${this.publishStreamPath} is now published.`);
-      for (let idlePlayerId of context.idlePlayers) {
-        let idlePlayer = context.sessions.get(idlePlayerId);
-        if (idlePlayer && idlePlayer.playStreamPath === this.publishStreamPath) {
-          idlePlayer.onStartPlay();
-          context.idlePlayers.delete(idlePlayerId);
+    if (prePublish) {
+      if (this.config.auth && this.config.auth.publish && !this.isLocal) {
+        let results = NodeCoreUtils.verifyAuth(this.publishArgs.sign, this.publishStreamPath, this.config.auth.secret);
+        if (!results) {
+          Logger.log(`[rtmp publish] Unauthorized. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId} sign=${this.publishArgs.sign} `);
+          this.sendStatusMessage(this.publishStreamId, "error", "NetStream.publish.Unauthorized", "Authorization required.");
+          return;
         }
       }
-      context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
-    }
+
+      if (context.publishers.has(this.publishStreamPath)) {
+        Logger.log(`[rtmp publish] Already has a stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadName", "Stream already publishing");
+      } else if (this.isPublishing) {
+        Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        this.sendStatusMessage(this.publishStreamId, "error", "NetStream.Publish.BadConnection", "Connection already publishing");
+      } else {
+        Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
+        context.publishers.set(this.publishStreamPath, this.id);
+        this.isPublishing = true;
+
+        this.sendStatusMessage(this.publishStreamId, "status", "NetStream.Publish.Start", `${this.publishStreamPath} is now published.`);
+        for (let idlePlayerId of context.idlePlayers) {
+          let idlePlayer = context.sessions.get(idlePlayerId);
+          if (idlePlayer.playStreamPath === this.publishStreamPath) {
+            idlePlayer.onStartPlay();
+            context.idlePlayers.delete(idlePlayerId);
+          }
+        }
+        let postPublish = await context.nodeCheck.run("postPublish", {
+          id: this.id,
+          eventName: "postPublish",
+          stream: {
+            id: this.publishStreamId,
+            path: this.publishStreamPath,
+            app: this.appname,
+            key: invokeMessage.streamName.split("?")[0]
+          },
+          data: this.publishArgs
+        });
+
+        if (postPublish) {
+          context.nodeEvent.emit("postPublish", this.id, this.publishStreamPath, this.publishArgs);
+        } else {
+          this.reject();
+        }
+      }
+    } else {
+      this.reject();
+    };
   }
 
-  onPlay(invokeMessage) {
+  async onPlay(invokeMessage) {
     if (typeof invokeMessage.streamName !== "string") {
       return;
     }
@@ -1063,33 +1121,48 @@ class NodeRtmpSession {
     if (!this.isStarting) {
       return;
     }
+    let prePlay = await context.nodeCheck.run("prePlay", {
+      id: this.id,
+      eventName: "prePlay",
+      stream: {
+        id: this.playStreamId,
+        path: this.playStreamPath,
+        app: this.appname,
+        key: invokeMessage.streamName.split("?")[0]
+      },
+      data: this.playArgs
+    });
 
-    if (this.config.auth && this.config.auth.play && !this.isLocal) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
-      if (!results) {
-        Logger.log(`[rtmp play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
-        this.sendStatusMessage(this.playStreamId, "error", "NetStream.play.Unauthorized", "Authorization required.");
-        return;
+    if (prePlay) {
+      if (this.config.auth && this.config.auth.play && !this.isLocal) {
+        let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
+        if (!results) {
+          Logger.log(`[rtmp play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} sign=${this.playArgs.sign}`);
+          this.sendStatusMessage(this.playStreamId, "error", "NetStream.play.Unauthorized", "Authorization required.");
+          return;
+        }
       }
-    }
 
-    if (this.isPlaying) {
-      Logger.log(`[rtmp play] NetConnection is playing. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
-      this.sendStatusMessage(this.playStreamId, "error", "NetStream.Play.BadConnection", "Connection already playing");
-    } else {
-      this.respondPlay();
-    }
+      if (this.isPlaying) {
+        Logger.log(`[rtmp play] NetConnection is playing. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+        this.sendStatusMessage(this.playStreamId, "error", "NetStream.Play.BadConnection", "Connection already playing");
+      } else {
+        this.respondPlay();
+      }
 
-    if (context.publishers.has(this.playStreamPath)) {
-      this.onStartPlay();
+      if (context.publishers.has(this.playStreamPath)) {
+        this.onStartPlay();
+      } else {
+        Logger.log(`[rtmp play] Stream not found. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId}`);
+        this.isIdling = true;
+        context.idlePlayers.add(this.id);
+      }
     } else {
-      Logger.log(`[rtmp play] Stream not found. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId}`);
-      this.isIdling = true;
-      context.idlePlayers.add(this.id);
-    }
+      this.reject();
+    };
   }
 
-  onStartPlay() {
+  async onStartPlay() {
     let publisherId = context.publishers.get(this.playStreamPath);
     let publisher = context.sessions.get(publisherId);
     let players = publisher.players;
@@ -1141,7 +1214,22 @@ class NodeRtmpSession {
     this.isIdling = false;
     this.isPlaying = true;
     context.nodeEvent.emit("postPlay", this.id, this.playStreamPath, this.playArgs);
-    Logger.log(`[rtmp play] Join stream. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+    let postPlay = await context.nodeCheck.run("postPlay", {
+      id: this.id,
+      eventName: "postPlay",
+      stream: {
+        id: this.playStreamId,
+        path: this.playStreamPath,
+        app: this.appname
+      },
+      data: this.playArgs
+    });
+
+    if (postPlay) {
+      Logger.log(`[rtmp play] Join stream. id=${this.id} streamPath=${this.playStreamPath}  streamId=${this.playStreamId} `);
+    } else {
+      this.reject();
+    }
   }
 
   onPause(invokeMessage) {

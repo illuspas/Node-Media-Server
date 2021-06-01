@@ -14,11 +14,13 @@ const Express = require('express');
 const bodyParser = require('body-parser');
 const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
+const NodeHlsSession = require('./node_hls_session');
 const HTTP_PORT = 80;
 const HTTPS_PORT = 443;
 const HTTP_MEDIAROOT = './media';
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
+const NodeCoreUtils = require("./node_core_utils");
 
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
@@ -29,9 +31,12 @@ class NodeHttpServer {
     this.port = config.http.port || HTTP_PORT;
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
+    this.config.http.hlsplay = this.config.http.hlsplay || '/play/:app/:key/';
+    this.id = NodeCoreUtils.generateNewSessionID();
 
     let app = Express();
-    app.use(bodyParser.json());
+    app.set('trust proxy', 1) // trust first proxy
+    // app.use(bodyParser.json());
 
     app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -45,8 +50,15 @@ class NodeHttpServer {
 
     app.get('*.flv', (req, res, next) => {
       req.nmsConnectionType = 'http';
-      this.onConnect(req, res);
+      this.onConnect('flv', req, res);
     });
+
+    if (config.http.hlsplay) {
+      app.use(config.http.hlsplay, (req, res) => {
+        req.nmsConnectionType = 'http';
+        this.onConnect('hls', req, res);
+      })
+    }
 
     let adminEntry = path.join(__dirname + '/public/admin/index.html');
     if (Fs.existsSync(adminEntry)) {
@@ -65,6 +77,7 @@ class NodeHttpServer {
     }
 
     app.use(Express.static(path.join(__dirname + '/public')));
+
     app.use(Express.static(this.mediaroot));
     if (config.http.webroot) {
       app.use(Express.static(config.http.webroot));
@@ -88,7 +101,7 @@ class NodeHttpServer {
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
+    this.httpServer.listen(this.port, "0.0.0.0", () => {
       Logger.log(`Node Media Http Server started on port: ${this.port}`);
     });
 
@@ -104,7 +117,7 @@ class NodeHttpServer {
 
     this.wsServer.on('connection', (ws, req) => {
       req.nmsConnectionType = 'ws';
-      this.onConnect(req, ws);
+      this.onConnect('ws', req, ws);
     });
 
     this.wsServer.on('listening', () => {
@@ -152,9 +165,14 @@ class NodeHttpServer {
 
     context.nodeEvent.on('doneConnect', (id, args) => {
       let session = context.sessions.get(id);
-      let socket = session instanceof NodeFlvSession ? session.req.socket : session.socket;
-      context.stat.inbytes += socket.bytesRead;
-      context.stat.outbytes += socket.bytesWritten;
+      if (session) {
+        let socket = session instanceof NodeFlvSession || session instanceof NodeHlsSession ? session.req.socket : session.socket;
+        context.stat.inbytes += socket.bytesRead;
+        context.stat.outbytes += socket.bytesWritten;
+        if (session.req) {
+          context.hlsSessions.delete(session.req.params.key);
+        }
+      }
     });
   }
 
@@ -164,17 +182,74 @@ class NodeHttpServer {
       this.httpsServer.close();
     }
     context.sessions.forEach((session, id) => {
-      if (session instanceof NodeFlvSession) {
+      if (session instanceof NodeFlvSession || session instanceof NodeHlsSession) {
         session.req.destroy();
         context.sessions.delete(id);
       }
     });
+    context.hlsSessions.forEach((session, id) => {
+      context.hlsSessions.delete(id);
+    });
   }
 
-  onConnect(req, res) {
-    let session = new NodeFlvSession(this.config, req, res);
-    session.run();
+  async onConnect(type, req, res) {
+    if (type == 'hls') {
+      //send HLS index
+      try {
+        var session;
+        if (context.sessions.has(req.params.key)) {
+          session = context.sessions.get(req.params.key);
+        } else {
+          Logger.log(`[New HLS Session] Starting new session ${req.params.key}`);
+          session = new NodeHlsSession(this.config, req, res);
+          try {
+            if (! await session.start()) {
+              res.status(403).end();
+              return;
+            };
+          } catch (err) {
+            res.status(500).end();
+            return;
+          }
+        }
+        let index = session.play(req.url);
+        if (index) {
+          res.sendFile(index);
+        } else {
+          Logger.error(`[play] Error ${index} not found.`);
+          res.status(404);
+          session.stop();
+        }
+      } catch (err) {
+        Logger.error(`[play] Error Loading stream.Error: ${JSON.stringify(err)} `);
+        res.status(500).end();
+        return;
+      }
 
+
+      // if (context.sessions.has(req.session.id))) 
+
+
+      // context.sessions.set(this.id, this);
+
+      // let streamPath = '/' + req.params.app + '/' + req.params.key;
+      // let index = (this.config.http.hlsroot || this.config.http.mediaroot) + streamPath + (req.url === '/' ? '/index.m3u8' : req.url);
+      // // if (context.hlsSessions.has(req.session.id)) {
+      // //   console.log('index', index);
+      // if (Fs.existsSync(index)) {
+      //   Logger.log(`[${ this.TAG } play]Loading stream.id = ${ this.id } Index = ${ index } `);
+      //   res.sendFile(index);
+      // } else {
+      //   Logger.log(`[${ this.TAG } play]Error Loading stream.id = ${ this.id } Index = ${ index } `);
+      // }
+      // } else {
+      //   let session = new NodeHlsSession(this.config, req, res);
+      //   session.run();
+      // }
+    } else {
+      let session = new NodeFlvSession(this.config, req, res);
+      session.run();
+    }
   }
 }
 

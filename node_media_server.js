@@ -19,9 +19,16 @@ class NodeMediaServer {
     this.config = config;
   }
 
-  run() {
-    Logger.setLogType(this.config.logType);
+  async run() {
+    await Logger.setLogFile({
+      path: this.config.logging.file_path || '../logs',
+      output: this.config.logging.file_output || 'NONE'
+    });
+
+    Logger.setLogType(this.config.logging.shell_output || this.config.logType || 'NORMAL');
+
     Logger.log(`Node Media Server v${Package.version}`);
+
     if (this.config.rtmp) {
       this.nrs = new NodeRtmpServer(this.config);
       this.nrs.run();
@@ -105,6 +112,14 @@ class NodeMediaServer {
 
   getSession(id) {
     return context.sessions.get(id);
+  }
+
+  getContext() {
+    return context;
+  }
+
+  check(eventName, listener) {
+    context.nodeCheck.on(eventName, listener);
   }
 }
 

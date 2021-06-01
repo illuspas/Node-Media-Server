@@ -240,6 +240,55 @@ nms.on('donePlay', (id, StreamPath, args) => {
 });
 ```
 
+# 事件检查
+```js
+......
+nms.run();
+nms.check('preConnect', async (args) => {
+  console.log('[NodeCheck on preConnect]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+
+  return connect ? true : false;
+});
+
+nms.check('postConnect', async (args) => {
+  console.log('[NodeCheck on postConnect]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+  
+  return connect ? true : false;
+});
+
+nms.check('doneConnect', async (args) => {
+  console.log('[NodeCheck on doneConnect]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+  
+  return connect ? true : false;
+});
+
+
+nms.check('postPublish', async (args) => {
+  console.log('[NodeCheck on postPublish]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+  
+  return connect ? true : false;
+});
+
+
+nms.check('prePlay', async (args) => {
+  console.log('[NodeCheck on prePlay]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+  
+  return connect ? true : false;
+});
+
+nms.check('postPlay', async (args) => {
+  console.log('[NodeCheck on postPlay]', `args=${JSON.stringify(args)}`);
+  connect = await function(args) { return ? };
+  
+  return connect ? true : false;
+});
+```
+
 # Https/Wss 视频加密传输
 
 ## 生成证书

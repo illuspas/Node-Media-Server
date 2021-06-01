@@ -26,7 +26,7 @@ function postStreamTrans(req, res, next) {
   }
 }
 
-function getStreams(req, res, next) {
+function getStreams (req, res, next) {
   let stats = {};
 
   this.sessions.forEach(function(session, id) {
@@ -150,7 +150,7 @@ function getStream(req, res, next) {
   res.json(streamStats);
 }
 
-function delStream(req, res, next) {
+function delStream (req, res, next) {
   let publishStreamPath = `/${req.params.app}/${req.params.stream}`;
   let publisherSession = this.sessions.get(
     this.publishers.get(publishStreamPath)
