@@ -150,6 +150,7 @@ class NodeRtmpSession {
     this.videoHeight = 0;
     this.videoFps = 0;
     this.videoLevel = 0;
+    this.bitrate = 0;
 
     this.gopCacheEnable = config.rtmp.gop_cache;
     this.rtmpGopCacheQueue = null;
@@ -172,6 +173,7 @@ class NodeRtmpSession {
 
     this.players = new Set();
     this.numPlayCache = 0;
+    this.bitrateCache = {};
     context.sessions.set(this.id, this);
   }
 
@@ -471,6 +473,15 @@ class NodeRtmpSession {
     if (this.ackSize > 0 && this.inAckSize - this.inLastAck >= this.ackSize) {
       this.inLastAck = this.inAckSize;
       this.sendACK(this.inAckSize);
+    }
+
+    this.bitrateCache.bytes += bytes
+    let current_time = Date.now();
+    let diff = current_time - this.bitrateCache.last_update;
+    if (diff >= this.bitrateCache.intervalMs) {
+      this.bitrate = Math.round(this.bitrateCache.bytes * 8 / diff);
+      this.bitrateCache.bytes = 0;
+      this.bitrateCache.last_update = current_time;
     }
   }
 
@@ -998,6 +1009,11 @@ class NodeRtmpSession {
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
     this.respondConnect(invokeMessage.transId);
+    this.bitrateCache = {
+      intervalMs: 1000,
+      last_update: this.startTimestamp,
+      bytes: 0,
+    }
     Logger.log(`[rtmp connect] id=${this.id} ip=${this.ip} app=${this.appname} args=${JSON.stringify(invokeMessage.cmdObj)}`);
     context.nodeEvent.emit("postConnect", this.id, invokeMessage.cmdObj);
   }
