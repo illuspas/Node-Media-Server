@@ -136,13 +136,7 @@ function getStream(req, res, next) {
     ? Math.ceil((Date.now() - publisherSession.startTimestamp) / 1000)
     : 0;
   streamStats.bitrate =
-    streamStats.duration > 0
-      ? Math.ceil(
-          (_.get(publisherSession, ["socket", "bytesRead"], 0) * 8) /
-            streamStats.duration /
-            1024
-        )
-      : 0;
+    streamStats.duration > 0 ? publisherSession.bitrate : 0;
   streamStats.startTime = streamStats.isLive
     ? publisherSession.connectTime
     : null;
