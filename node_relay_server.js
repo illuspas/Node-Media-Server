@@ -110,7 +110,7 @@ class NodeRelayServer {
     });
     this.dynamicSessions.set(id, session);
     session.run();
-    Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+    Logger.log('[Relay dynamic push] start onRelayPush', id, conf.inPath, ' to ', conf.ouPath);
   }
 
   onPrePlay(id, streamPath, args) {
@@ -126,7 +126,11 @@ class NodeRelayServer {
       if (isPull && app === conf.app && !context.publishers.has(streamPath)) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
-        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
+        if(conf.hasOwnProperty('streamInUseAppAndName') && conf.streamInUseAppAndName === false){
+			conf.inPath = `${conf.edge}`;
+		}else{
+			conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
+		}
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         let session = new NodeRelaySession(conf);
         session.id = id;
@@ -135,7 +139,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[Relay dynamic pull] start onPrePlay', id, conf.inPath, ' to ', conf.ouPath);
       }
     }
   }
