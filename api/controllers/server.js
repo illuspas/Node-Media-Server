@@ -5,6 +5,7 @@
 //
 
 const OS = require('os');
+const Logger = require('../../node_core_logger')
 const Package = require("../../package.json");
 function cpuAverage() {
 
@@ -113,4 +114,9 @@ function getInfo(req, res, next) {
   });
 }
 
+function getLogs(req,res,next) {
+  res.json(Logger.logsContainer)
+}
+
 exports.getInfo = getInfo;
+exports.getLogs = getLogs;
