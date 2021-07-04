@@ -40,18 +40,15 @@ https://github.com/NodeMedia/NodeMediaServer
  - Support real-time multi-resolution transcoding
 
 # Usage 
+
+## npx 
+```bash
+npx node-media-server
+```
+
 ## docker version
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
-```
-
-## git version
-```bash
-mkdir nms
-cd nms
-git clone https://github.com/illuspas/Node-Media-Server .
-npm i
-node app.js
 ```
 
 ## npm version (recommended)

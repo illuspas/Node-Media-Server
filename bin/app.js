@@ -1,5 +1,5 @@
 #!/usr/bin/env node 
-const NodeMediaServer = require('node-media-server');
+const NodeMediaServer = require('..');
 
 const config = {
   rtmp: {
