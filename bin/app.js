@@ -1,4 +1,4 @@
-const NodeMediaServer = require('./');
+const NodeMediaServer = require('..');
 
 const config = {
   rtmp: {
@@ -7,25 +7,23 @@ const config = {
     gop_cache: true,
     ping: 30,
     ping_timeout: 60,
-	/*
-    ssl: {
-      port: 443,
-      key: './privatekey.pem',
-      cert: './certificate.pem',
-    }
-	*/
+    // ssl: {
+    //   port: 443,
+    //   key: __dirname+'/privatekey.pem',
+    //   cert: __dirname+'/certificate.pem',
+    // }
   },
   http: {
     port: 8000,
-    mediaroot: './media',
-    webroot: './www',
+    mediaroot: __dirname+'/media',
+    webroot: __dirname+'/www',
     allow_origin: '*',
     api: true
   },
   https: {
     port: 8443,
-    key: './privatekey.pem',
-    cert: './certificate.pem',
+    key: __dirname+'/privatekey.pem',
+    cert: __dirname+'/certificate.pem',
   },
   auth: {
     api: true,
@@ -38,7 +36,7 @@ const config = {
 };
 
 
-let nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {

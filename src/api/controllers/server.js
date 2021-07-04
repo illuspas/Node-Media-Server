@@ -5,7 +5,7 @@
 //
 
 const OS = require('os');
-const Package = require("../../package.json");
+const Package = require('../../../package.json');
 function cpuAverage() {
 
   //Initialise sum of idle and time of cores and fetch CPU info
