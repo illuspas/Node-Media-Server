@@ -3,8 +3,6 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const Logger = require('./node_core_logger');
-
 const Crypto = require('crypto');
 
 const MESSAGE_FORMAT_0 = 0;
@@ -19,7 +17,7 @@ const RandomCrud = Buffer.from([
   0x2e, 0x00, 0xd0, 0xd1, 0x02, 0x9e, 0x7e, 0x57,
   0x6e, 0xec, 0x5d, 0x2d, 0x29, 0x80, 0x6f, 0xab,
   0x93, 0xb8, 0xe6, 0x36, 0xcf, 0xeb, 0x31, 0xae
-])
+]);
 
 const GenuineFMSConst = 'Genuine Adobe Flash Media Server 001';
 const GenuineFMSConstCrud = Buffer.concat([Buffer.from(GenuineFMSConst, 'utf8'), RandomCrud]);
@@ -68,15 +66,15 @@ function generateS1(messageFormat) {
   let randomBytes = Crypto.randomBytes(RTMP_SIG_SIZE - 8);
   let handshakeBytes = Buffer.concat([Buffer.from([0, 0, 0, 0, 1, 2, 3, 4]), randomBytes], RTMP_SIG_SIZE);
 
-  let serverDigestOffset
+  let serverDigestOffset;
   if (messageFormat === 1) {
     serverDigestOffset = GetClientGenuineConstDigestOffset(handshakeBytes.slice(8, 12));
   } else {
     serverDigestOffset = GetServerGenuineConstDigestOffset(handshakeBytes.slice(772, 776));
   }
 
-  msg = Buffer.concat([handshakeBytes.slice(0, serverDigestOffset), handshakeBytes.slice(serverDigestOffset + SHA256DL)], RTMP_SIG_SIZE - SHA256DL);
-  hash = calcHmac(msg, GenuineFMSConst);
+  let msg = Buffer.concat([handshakeBytes.slice(0, serverDigestOffset), handshakeBytes.slice(serverDigestOffset + SHA256DL)], RTMP_SIG_SIZE - SHA256DL);
+  let hash = calcHmac(msg, GenuineFMSConst);
   hash.copy(handshakeBytes, serverDigestOffset, 0, 32);
   return handshakeBytes;
 }
@@ -93,7 +91,7 @@ function generateS2(messageFormat, clientsig, callback) {
   let hash = calcHmac(challengeKey, GenuineFMSConstCrud);
   let signature = calcHmac(randomBytes, hash);
   let s2Bytes = Buffer.concat([randomBytes, signature], RTMP_SIG_SIZE);
-  return s2Bytes
+  return s2Bytes;
 }
 
 function generateS0S1S2(clientsig) {

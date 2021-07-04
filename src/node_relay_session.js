@@ -4,7 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Logger = require('./node_core_logger');
-const NodeCoreUtils = require("./node_core_utils");
+const NodeCoreUtils = require('./node_core_utils');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');

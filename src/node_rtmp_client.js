@@ -11,7 +11,7 @@ const Url = require('url');
 const Net = require('net');
 const AMF = require('./node_core_amf');
 
-const FLASHVER = "LNX 9,0,124,2";
+const FLASHVER = 'LNX 9,0,124,2';
 const RTMP_OUT_CHUNK_SIZE = 60000;
 const RTMP_PORT = 1935;
 
@@ -184,7 +184,7 @@ class NodeRtmpClient {
   }
 
   onSocketError(e) {
-    Logger.error('rtmp_client', "onSocketError", e);
+    Logger.error('rtmp_client', 'onSocketError', e);
     this.isSocketOpen = false;
     this.stop();
   }
@@ -287,7 +287,7 @@ class NodeRtmpClient {
   rtmpUrlParser(url) {
     let urlInfo = Url.parse(url, true);
     urlInfo.app = urlInfo.path.split('/')[1];
-    urlInfo.port = !!urlInfo.port ? urlInfo.port : RTMP_PORT;
+    urlInfo.port = urlInfo.port ? urlInfo.port : RTMP_PORT;
     urlInfo.tcurl = urlInfo.href.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/)[0];
     urlInfo.stream = urlInfo.path.slice(urlInfo.app.length + 2);
     return urlInfo;
@@ -676,7 +676,7 @@ class NodeRtmpClient {
         videoFunction: 1,
         encoding: 0
       }
-    }
+    };
     this.sendInvokeMessage(0, opt);
   }
 
@@ -788,4 +788,4 @@ class NodeRtmpClient {
   }
 }
 
-module.exports = NodeRtmpClient
+module.exports = NodeRtmpClient;

@@ -298,7 +298,7 @@ function HEVCParsePtl(bitop, hevc, max_sub_layers_minus1) {
 
   if (max_sub_layers_minus1 > 0) {
     for (let i = max_sub_layers_minus1; i < 8; i++) {
-      bitop.read(2)
+      bitop.read(2);
     }
   }
 
@@ -436,7 +436,7 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
         if (p.length < 2) {
           break;
         }
-        k = (p[0] << 8) | p[1];
+        let k = (p[0] << 8) | p[1];
         // Logger.debug('k', k);
         if (p.length < 2 + k) {
           break;
