@@ -33,6 +33,12 @@
 npx node-media-server
 ```
 
+## 安装为全局程序
+```bash
+npm i node-media-server -g
+node-media-server
+```
+
 ## docker 运行
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server

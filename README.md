@@ -46,6 +46,12 @@ https://github.com/NodeMedia/NodeMediaServer
 npx node-media-server
 ```
 
+## install as a global program
+```bash
+npm i node-media-server -g
+node-media-server
+```
+
 ## docker version
 ```bash
 docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server

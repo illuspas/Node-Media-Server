@@ -1,9 +1,33 @@
 #!/usr/bin/env node 
+
 const NodeMediaServer = require('..');
+let argv = require('minimist')(process.argv.slice(2),
+  {
+    string:['rtmp_port','http_port','https_port'],
+    alias: {
+      'rtmp_port': 'r',
+      'http_port': 'h',
+      'https_port': 's',
+    },
+    default:{
+      'rtmp_port': 1935,
+      'http_port': 8000,
+      'https_port': 8443,
+    }
+  });
+  
+if (argv.help) {
+  console.log('Usage:');
+  console.log('  node-media-server --help // print help information');
+  console.log('  node-media-server --rtmp_port 1935 or -r 1935');
+  console.log('  node-media-server --http_port 8000 or -h 8000');
+  console.log('  node-media-server --https_port 8443 or -s 8443');
+  process.exit(0);
+}
 
 const config = {
   rtmp: {
-    port: 1935,
+    port: argv.rtmp_port,
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
@@ -15,14 +39,14 @@ const config = {
     // }
   },
   http: {
-    port: 8000,
+    port: argv.http_port,
     mediaroot: __dirname+'/media',
     webroot: __dirname+'/www',
     allow_origin: '*',
     api: true
   },
   https: {
-    port: 8443,
+    port: argv.https_port,
     key: __dirname+'/privatekey.pem',
     cert: __dirname+'/certificate.pem',
   },
