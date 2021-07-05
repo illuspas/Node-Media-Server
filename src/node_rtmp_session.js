@@ -237,6 +237,11 @@ class NodeRtmpSession {
     this.stop();
   }
 
+  /**
+   * onSocketData
+   * @param {Buffer} data 
+   * @returns 
+   */
   onSocketData(data) {
     let bytes = data.length;
     let p = 0;
@@ -322,6 +327,11 @@ class NodeRtmpSession {
     return out;
   }
 
+  /**
+   * rtmpChunksCreate
+   * @param {RtmpPacket} packet 
+   * @returns 
+   */
   rtmpChunksCreate(packet) {
     let header = packet.header;
     let payload = packet.payload;
@@ -378,9 +388,14 @@ class NodeRtmpSession {
     return chunks;
   }
 
+  /**
+   * rtmpChunkRead
+   * @param {Buffer} data 
+   * @param {Number} p 
+   * @param {Number} bytes 
+   */
   rtmpChunkRead(data, p, bytes) {
     // Logger.log('rtmpChunkRead', p, bytes);
-
     let size = 0;
     let offset = 0;
     let extended_timestamp = 0;
@@ -454,7 +469,6 @@ class NodeRtmpSession {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;
             if (this.parserPacket.clock > 0xffffffff) {
-              //TODO Shit code, rewrite chunkcreate
               break;
             }
             this.rtmpHandler();

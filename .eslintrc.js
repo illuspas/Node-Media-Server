@@ -4,15 +4,10 @@ module.exports = {
     'es2020': true,
     'node': true
   },
-  'extends': 'eslint:recommended',
   'parserOptions': {
     'ecmaVersion': 11
   },
   'rules': {
-    'no-unused-vars': [2, { 
-      'vars': 'local',
-      'args': 'none' 
-    }],
     'indent': [
       'error',
       2,
