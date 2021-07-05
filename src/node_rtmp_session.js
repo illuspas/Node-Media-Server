@@ -149,6 +149,7 @@ class NodeRtmpSession {
     this.videoWidth = 0;
     this.videoHeight = 0;
     this.videoFps = 0;
+    this.videoCount = 0;
     this.videoLevel = 0;
     this.bitrate = 0;
 
@@ -710,6 +711,14 @@ class NodeRtmpSession {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
     let frame_type = (payload[0] >> 4) & 0x0f;
     let codec_id = payload[0] & 0x0f;
+    
+    if(this.videoFps === 0) {
+      if(this.videoCount++ === 0) {
+        setTimeout(()=>{
+          this.videoFps = Math.ceil(this.videoCount / 5);
+        }, 5000);
+      }
+    }
 
     if (codec_id == 7 || codec_id == 12) {
       //cache avc sequence header
