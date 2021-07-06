@@ -84,6 +84,7 @@ class NodeMediaServer {
           Logger.log(`There is a new version ${latestVersion} that can be updated`);
         }
       });
+    }).on('error', function (e) {
     });
   }
 
