@@ -69,7 +69,7 @@ class NodeRelayServer {
         });
         this.staticSessions.set(i, session);
         session.run();
-        Logger.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay static pull] start', i, conf.inPath, 'to', conf.ouPath);
       }
     }
   }
@@ -90,7 +90,7 @@ class NodeRelayServer {
     });
     this.dynamicSessions.set(id, session);
     session.run();
-    Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+    Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
     return id;
   }
 
@@ -110,7 +110,7 @@ class NodeRelayServer {
     });
     this.dynamicSessions.set(id, session);
     session.run();
-    Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+    Logger.log('[relay dynamic push] start id=' + id, conf.inPath, 'to', conf.ouPath);
   }
 
   onPrePlay(id, streamPath, args) {
@@ -135,7 +135,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
       }
     }
   }
@@ -170,7 +170,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay dynamic push] start id=' + id, conf.inPath, 'to', conf.ouPath);
       }
     }
 
