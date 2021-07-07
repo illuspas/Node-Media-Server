@@ -10,6 +10,7 @@ const NodeRelaySession = require('./node_relay_session');
 const context = require('./node_core_ctx');
 const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
 const fs = require('fs');
+const querystring = require('querystring');
 const _ = require('lodash');
 
 class NodeRelayServer {
@@ -128,6 +129,10 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
+        if(Object.keys(args).length > 0) {
+          conf.inPath += '?';
+          conf.inPath += querystring.encode(args);
+        }
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
@@ -163,6 +168,10 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
+        if(Object.keys(args).length > 0) {
+          conf.ouPath += '?';
+          conf.ouPath += querystring.encode(args);
+        }
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
