@@ -15,6 +15,7 @@ const _ = require('lodash');
 
 class NodeRelayServer {
   constructor(config) {
+    console.log(config)
     this.config = config;
     this.staticCycle = null;
     this.staticSessions = new Map();
@@ -120,16 +121,16 @@ class NodeRelayServer {
     }
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, stream] = _.slice(regRes, 1);
-    let i = this.config.relay.tasks.length;
-    while (i--) {
-      let conf = this.config.relay.tasks[i];
+
+    let conf = this.config.relay.tasks.find((config) => config.name === stream);
+    if (conf) {
       let isPull = conf.mode === 'pull';
-      if (isPull && app === conf.app && !context.publishers.has(streamPath)) {
+      if (isPull && app === conf.app && !context.publishers.has(streamPath) && conf) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
-        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
+        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}`;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
-        if(Object.keys(args).length > 0) {
+        if (Object.keys(args).length > 0) {
           conf.inPath += '?';
           conf.inPath += querystring.encode(args);
         }
@@ -168,7 +169,7 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
-        if(Object.keys(args).length > 0) {
+        if (Object.keys(args).length > 0) {
           conf.ouPath += '?';
           conf.ouPath += querystring.encode(args);
         }
