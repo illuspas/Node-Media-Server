@@ -1079,12 +1079,20 @@ class NodeRtmpSession {
       this.isPublishing = true;
 
       this.sendStatusMessage(this.publishStreamId, 'status', 'NetStream.Publish.Start', `${this.publishStreamPath} is now published.`);
+      let idlePlayerFound = false;
       for (let idlePlayerId of context.idlePlayers) {
         let idlePlayer = context.sessions.get(idlePlayerId);
         if (idlePlayer && idlePlayer.playStreamPath === this.publishStreamPath) {
           idlePlayer.onStartPlay();
           context.idlePlayers.delete(idlePlayerId);
+          idlePlayerFound = true;
         }
+      }
+      const streamMode = this.config.relay?.tasks.find((task)=>task.name === invokeMessage.streamName)?.mode;
+      if (!idlePlayerFound && streamMode === 'pull') {
+        // This RTMP session is doesn't have any idle players waiting for a video feed and this RTMP session was created in "pull" mode (not "static"). It can be stopped.
+        // This may occur when a socket connection is broken before the stream can finish publishing.
+        this.stop();
       }
       context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
     }
