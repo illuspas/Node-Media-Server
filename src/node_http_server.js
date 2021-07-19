@@ -15,7 +15,9 @@ const bodyParser = require('body-parser');
 const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
 const HTTP_PORT = 80;
+const HTTP_HOST = '0.0.0.0';
 const HTTPS_PORT = 443;
+const HTTPS_HOST = '0.0.0.0';
 const HTTP_MEDIAROOT = './media';
 const Logger = require('./node_core_logger');
 const context = require('./node_core_ctx');
@@ -27,6 +29,7 @@ const relayRoute = require('./api/routes/relay');
 class NodeHttpServer {
   constructor(config) {
     this.port = config.http.port || HTTP_PORT;
+    this.host = config.http.host || HTTP_HOST;
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
@@ -83,13 +86,14 @@ class NodeHttpServer {
         cert: Fs.readFileSync(this.config.https.cert)
       };
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
+      this.shost = config.https.host ? config.https.host : HTTPS_HOST;
       this.httpsServer = Https.createServer(options, app);
     }
   }
 
   run() {
-    this.httpServer.listen(this.port, () => {
-      Logger.log(`Node Media Http Server started on port: ${this.port}`);
+    this.httpServer.listen(this.port, this.host, () => {
+      Logger.log(`Node Media Http Server started on: ${this.host}:${this.port}`);
     });
 
     this.httpServer.on('error', (e) => {
@@ -108,15 +112,15 @@ class NodeHttpServer {
     });
 
     this.wsServer.on('listening', () => {
-      Logger.log(`Node Media WebSocket Server started on port: ${this.port}`);
+      Logger.log(`Node Media WebSocket Server started on: ${this.host}:${this.port}`);
     });
     this.wsServer.on('error', (e) => {
       Logger.error(`Node Media WebSocket Server ${e}`);
     });
 
     if (this.httpsServer) {
-      this.httpsServer.listen(this.sport, () => {
-        Logger.log(`Node Media Https Server started on port: ${this.sport}`);
+      this.httpsServer.listen(this.sport, this.shost, () => {
+        Logger.log(`Node Media Https Server started on: ${this.shost}:${this.sport}`);
       });
 
       this.httpsServer.on('error', (e) => {
@@ -135,7 +139,7 @@ class NodeHttpServer {
       });
 
       this.wssServer.on('listening', () => {
-        Logger.log(`Node Media WebSocketSecure Server started on port: ${this.sport}`);
+        Logger.log(`Node Media WebSocketSecure Server started on: ${this.shost}:${this.sport}`);
       });
       this.wssServer.on('error', (e) => {
         Logger.error(`Node Media WebSocketSecure Server ${e}`);
