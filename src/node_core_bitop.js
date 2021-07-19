@@ -21,7 +21,7 @@ class Bitop {
       d = this.bufoff + n > 8 ? 8 - this.bufoff : n;
 
       v <<= d;
-      v += (this.buffer[this.bufpos] >> (8 - this.bufoff - d)) & (0xff >> (8 - d))
+      v += (this.buffer[this.bufpos] >> (8 - this.bufoff - d)) & (0xff >> (8 - d));
 
       this.bufoff += d;
       n -= d;

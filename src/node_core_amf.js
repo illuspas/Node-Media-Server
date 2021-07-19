@@ -94,7 +94,7 @@ function amfType(o) {
     }
     return 'object';
   }
-  throw new Error('Unsupported type!')
+  throw new Error('Unsupported type!');
 }
 
 // AMF3 implementation
@@ -104,7 +104,7 @@ function amfType(o) {
  * @returns {{len: number, value: undefined}}
  */
 function amf3decUndefined() {
-  return { len: 1, value: undefined }
+  return { len: 1, value: undefined };
 }
 
 /**
@@ -122,7 +122,7 @@ function amf3encUndefined() {
  * @returns {{len: number, value: null}}
  */
 function amf3decNull() {
-  return { len: 1, value: null }
+  return { len: 1, value: null };
 }
 
 /**
@@ -140,7 +140,7 @@ function amf3encNull() {
  * @returns {{len: number, value: boolean}}
  */
 function amf3decFalse() {
-  return { len: 1, value: false }
+  return { len: 1, value: false };
 }
 
 /**
@@ -158,7 +158,7 @@ function amf3encFalse() {
  * @returns {{len: number, value: boolean}}
  */
 function amf3decTrue() {
-  return { len: 1, value: true }
+  return { len: 1, value: true };
 }
 
 /**
@@ -188,7 +188,7 @@ function amf3decUI29(buf) {
 
   if (len == 5) val = val | b; // Preserve the major bit of the last byte
 
-  return { len: len, value: val }
+  return { len: len, value: val };
 }
 
 /**
@@ -258,7 +258,7 @@ function amf3decString(buf) {
   let s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
-  throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
+  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
 }
 
 /**
@@ -283,7 +283,7 @@ function amf3decXmlDoc(buf) {
   let s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
-  throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
+  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
 }
 
 /**
@@ -308,7 +308,7 @@ function amf3decXml(buf) {
   let s = sLen & 1;
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5).toString('utf8') };
-  throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
+  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
 }
 
 /**
@@ -333,7 +333,7 @@ function amf3decByteArray(buf) {
   let s = sLen & 1; // TODO: Check if we follow the same rule!
   sLen = sLen >> 1; // The real length without the lowest bit
   if (s) return { len: sLen.value + 5, value: buf.slice(5, sLen.value + 5) };
-  throw new Error("Error, we have a need to decode a String that is a Reference"); // TODO: Implement references!
+  throw new Error('Error, we have a need to decode a String that is a Reference'); // TODO: Implement references!
 }
 
 /**
@@ -354,7 +354,7 @@ function amf3encByteArray(str) {
  * @returns {{len: number, value: (*|Number)}}
  */
 function amf3decDouble(buf) {
-  return { len: 9, value: buf.readDoubleBE(1) }
+  return { len: 9, value: buf.readDoubleBE(1) };
 }
 
 /**
@@ -377,7 +377,7 @@ function amf3encDouble(num) {
 function amf3decDate(buf) {  // The UI29 should be 1
   let uTz = amf3decUI29(buf);
   let ts = buf.readDoubleBE(uTz.len);
-  return { len: uTz.len + 8, value: ts }
+  return { len: uTz.len + 8, value: ts };
 }
 
 /**
@@ -401,8 +401,8 @@ function amf3encDate(ts) {
 function amf3decArray(buf) {
   let count = amf3decUI29(buf.slice(1));
   let obj = amf3decObject(buf.slice(count.len));
-  if (count.value % 2 == 1) throw new Error("This is a reference to another array, which currently we don't support!");
-  return { len: count.len + obj.len, value: obj.value }
+  if (count.value % 2 == 1) throw new Error('This is a reference to another array, which currently we don\'t support!');
+  return { len: count.len + obj.len, value: obj.value };
 }
 
 /**
@@ -438,7 +438,7 @@ function amf3encObject(o) {
  * @returns {{len: number, value: (*|Number)}}
  */
 function amf0decNumber(buf) {
-  return { len: 9, value: buf.readDoubleBE(1) }
+  return { len: 9, value: buf.readDoubleBE(1) };
 }
 
 /**
@@ -459,7 +459,7 @@ function amf0encNumber(num) {
  * @returns {{len: number, value: boolean}}
  */
 function amf0decBool(buf) {
-  return { len: 2, value: (buf.readUInt8(1) != 0) }
+  return { len: 2, value: (buf.readUInt8(1) != 0) };
 }
 
 /**
@@ -479,7 +479,7 @@ function amf0encBool(num) {
  * @returns {{len: number, value: null}}
  */
 function amf0decNull() {
-  return { len: 1, value: null }
+  return { len: 1, value: null };
 }
 
 /**
@@ -497,7 +497,7 @@ function amf0encNull() {
  * @returns {{len: number, value: undefined}}
  */
 function amf0decUndefined() {
-  return { len: 1, value: undefined }
+  return { len: 1, value: undefined };
 }
 
 /**
@@ -518,7 +518,7 @@ function amf0encUndefined() {
 function amf0decDate(buf) {
   //    let s16 = buf.readInt16BE(1);
   let ts = buf.readDoubleBE(3);
-  return { len: 11, value: ts }
+  return { len: 11, value: ts };
 }
 
 /**
@@ -564,7 +564,7 @@ function amf0decObject(buf) { // TODO: Implement references!
     len += val.len;
     iBuf = iBuf.slice(prop.len + val.len);
   }
-  return { len: len, value: obj }
+  return { len: len, value: obj };
 }
 
 /**
@@ -591,7 +591,7 @@ function amf0encObject(o) {
  */
 function amf0decRef(buf) {
   let index = buf.readUInt16BE(1);
-  return { len: 3, value: 'ref' + index }
+  return { len: 3, value: 'ref' + index };
 }
 
 /**
@@ -613,7 +613,7 @@ function amf0encRef(index) {
  */
 function amf0decString(buf) {
   let sLen = buf.readUInt16BE(1);
-  return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) }
+  return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) };
 }
 
 /**
@@ -623,7 +623,7 @@ function amf0decString(buf) {
  */
 function amf0decUString(buf) {
   let sLen = buf.readUInt16BE(0);
-  return { len: 2 + sLen, value: buf.toString('utf8', 2, 2 + sLen) }
+  return { len: 2 + sLen, value: buf.toString('utf8', 2, 2 + sLen) };
 }
 
 /**
@@ -657,7 +657,7 @@ function amf0encString(str) {
  */
 function amf0decLongString(buf) {
   let sLen = buf.readUInt32BE(1);
-  return { len: 5 + sLen, value: buf.toString('utf8', 5, 5 + sLen) }
+  return { len: 5 + sLen, value: buf.toString('utf8', 5, 5 + sLen) };
 }
 
 /**
@@ -680,7 +680,7 @@ function amf0encLongString(str) {
 function amf0decArray(buf) {
   //    let count = buf.readUInt32BE(1);
   let obj = amf0decObject(buf.slice(4));
-  return { len: 5 + obj.len, value: obj.value }
+  return { len: 5 + obj.len, value: obj.value };
 }
 
 /**
@@ -728,7 +728,7 @@ function amf0cnvObject2Array(oData) {
  */
 function amf0decXmlDoc(buf) {
   let sLen = buf.readUInt16BE(1);
-  return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) }
+  return { len: 3 + sLen, value: buf.toString('utf8', 3, 3 + sLen) };
 }
 
 /**
@@ -757,7 +757,7 @@ function amf0decSArray(buf) {
     a.push(ret.value);
     len += ret.len;
   }
-  return { len: len, value: amf0markSArray(a) }
+  return { len: len, value: amf0markSArray(a) };
 }
 
 /**
@@ -790,7 +790,7 @@ function amf0decTypedObj(buf) {
   let className = amf0decString(buf);
   let obj = amf0decObject(buf.slice(className.len - 1));
   obj.value.__className__ = className.value;
-  return { len: className.len + obj.len - 1, value: obj.value }
+  return { len: className.len + obj.len - 1, value: obj.value };
 }
 
 /**
@@ -807,7 +807,7 @@ function amf0decSwitchAmf3(buf) {
  * AMF0 Encode Typed Object
  */
 function amf0encTypedObj() {
-  throw new Error("Error: SArray encoding is not yet implemented!"); // TODO: Error
+  throw new Error('Error: SArray encoding is not yet implemented!'); // TODO: Error
 }
 
 /**
@@ -937,36 +937,36 @@ function amf0Encode(a) {
 
 
 const rtmpCmdCode = {
-  "_result": ["transId", "cmdObj", "info"],
-  "_error": ["transId", "cmdObj", "info", "streamId"], // Info / Streamid are optional
-  "onStatus": ["transId", "cmdObj", "info"],
-  "releaseStream": ["transId", "cmdObj", "streamName"],
-  "getStreamLength": ["transId", "cmdObj", "streamId"],
-  "getMovLen": ["transId", "cmdObj", "streamId"],
-  "FCPublish": ["transId", "cmdObj", "streamName"],
-  "FCUnpublish": ["transId", "cmdObj", "streamName"],
-  "FCSubscribe": ["transId", "cmdObj", "streamName"],
-  "onFCPublish": ["transId", "cmdObj", "info"],
-  "connect": ["transId", "cmdObj", "args"],
-  "call": ["transId", "cmdObj", "args"],
-  "createStream": ["transId", "cmdObj"],
-  "close": ["transId", "cmdObj"],
-  "play": ["transId", "cmdObj", "streamName", "start", "duration", "reset"],
-  "play2": ["transId", "cmdObj", "params"],
-  "deleteStream": ["transId", "cmdObj", "streamId"],
-  "closeStream": ["transId", "cmdObj"],
-  "receiveAudio": ["transId", "cmdObj", "bool"],
-  "receiveVideo": ["transId", "cmdObj", "bool"],
-  "publish": ["transId", "cmdObj", "streamName", "type"],
-  "seek": ["transId", "cmdObj", "ms"],
-  "pause": ["transId", "cmdObj", "pause", "ms"]
+  '_result': ['transId', 'cmdObj', 'info'],
+  '_error': ['transId', 'cmdObj', 'info', 'streamId'], // Info / Streamid are optional
+  'onStatus': ['transId', 'cmdObj', 'info'],
+  'releaseStream': ['transId', 'cmdObj', 'streamName'],
+  'getStreamLength': ['transId', 'cmdObj', 'streamId'],
+  'getMovLen': ['transId', 'cmdObj', 'streamId'],
+  'FCPublish': ['transId', 'cmdObj', 'streamName'],
+  'FCUnpublish': ['transId', 'cmdObj', 'streamName'],
+  'FCSubscribe': ['transId', 'cmdObj', 'streamName'],
+  'onFCPublish': ['transId', 'cmdObj', 'info'],
+  'connect': ['transId', 'cmdObj', 'args'],
+  'call': ['transId', 'cmdObj', 'args'],
+  'createStream': ['transId', 'cmdObj'],
+  'close': ['transId', 'cmdObj'],
+  'play': ['transId', 'cmdObj', 'streamName', 'start', 'duration', 'reset'],
+  'play2': ['transId', 'cmdObj', 'params'],
+  'deleteStream': ['transId', 'cmdObj', 'streamId'],
+  'closeStream': ['transId', 'cmdObj'],
+  'receiveAudio': ['transId', 'cmdObj', 'bool'],
+  'receiveVideo': ['transId', 'cmdObj', 'bool'],
+  'publish': ['transId', 'cmdObj', 'streamName', 'type'],
+  'seek': ['transId', 'cmdObj', 'ms'],
+  'pause': ['transId', 'cmdObj', 'pause', 'ms']
 };
 
 const rtmpDataCode = {
-  "@setDataFrame": ["method", "dataObj"],
-  "onFI": ["info"],
-  "onMetaData": ["dataObj"],
-  "|RtmpSampleAccess": ["bool1", "bool2"],
+  '@setDataFrame': ['method', 'dataObj'],
+  'onFI': ['info'],
+  'onMetaData': ['dataObj'],
+  '|RtmpSampleAccess': ['bool1', 'bool2'],
 };
 
 
@@ -999,7 +999,7 @@ function decodeAmf0Data(dbuf) {
     }
   }
 
-  return resp
+  return resp;
 }
 
 /**
@@ -1026,7 +1026,7 @@ function decodeAMF0Cmd(dbuf) {
   } else {
     Logger.error('Unknown command', resp);
   }
-  return resp
+  return resp;
 }
 
 /**
@@ -1046,7 +1046,7 @@ function encodeAMF0Cmd(opt) {
     Logger.error('Unknown command', opt);
   }
   // Logger.debug('Encoded as',data.toString('hex'));
-  return data
+  return data;
 }
 
 function encodeAMF0Data(opt) {
@@ -1061,7 +1061,7 @@ function encodeAMF0Data(opt) {
     Logger.error('Unknown data', opt);
   }
   // Logger.debug('Encoded as',data.toString('hex'));
-  return data
+  return data;
 }
 
 /**
@@ -1088,7 +1088,7 @@ function decodeAMF3Cmd(dbuf) {
   } else {
     Logger.error('Unknown command', resp);
   }
-  return resp
+  return resp;
 }
 
 /**
@@ -1107,7 +1107,7 @@ function encodeAMF3Cmd(opt) {
   } else {
     Logger.error('Unknown command', opt);
   }
-  return data
+  return data;
 }
 
 module.exports = {

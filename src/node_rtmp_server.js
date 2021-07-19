@@ -9,7 +9,6 @@ const Tls = require('tls');
 const Fs = require('fs');
 const Net = require('net');
 const NodeRtmpSession = require('./node_rtmp_session');
-const NodeCoreUtils = require('./node_core_utils');
 
 const context = require('./node_core_ctx');
 
@@ -25,7 +24,7 @@ class NodeRtmpServer {
     this.tcpServer = Net.createServer((socket) => {
       let session = new NodeRtmpSession(config, socket);
       session.run();
-    })
+    });
 
     if (config.rtmp.ssl){
       config.rtmp.ssl.port = this.sslPort = config.rtmp.ssl.port ? config.rtmp.ssl.port : RTMPS_PORT;
@@ -34,7 +33,7 @@ class NodeRtmpServer {
         const options = {
           key: Fs.readFileSync(config.rtmp.ssl.key),
           cert: Fs.readFileSync(config.rtmp.ssl.cert)
-        }
+        };
         this.tlsServer = Tls.createServer(options, (socket) => {
           let session = new NodeRtmpSession(config, socket);
           session.run();
@@ -55,7 +54,7 @@ class NodeRtmpServer {
     });
 
     this.tcpServer.on('close', () => {
-      Logger.log(`Node Media Rtmp Server Close.`);
+      Logger.log('Node Media Rtmp Server Close.');
     });
 
     if (this.tlsServer) {
@@ -68,7 +67,7 @@ class NodeRtmpServer {
       });
 
       this.tlsServer.on('close', () => {
-        Logger.log(`Node Media Rtmps Server Close.`);
+        Logger.log('Node Media Rtmps Server Close.');
       });
     }
   }
@@ -87,4 +86,4 @@ class NodeRtmpServer {
   }
 }
 
-module.exports = NodeRtmpServer
+module.exports = NodeRtmpServer;

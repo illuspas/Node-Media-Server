@@ -1,31 +1,54 @@
-const NodeMediaServer = require('./');
+#!/usr/bin/env node 
+
+const NodeMediaServer = require('..');
+let argv = require('minimist')(process.argv.slice(2),
+  {
+    string:['rtmp_port','http_port','https_port'],
+    alias: {
+      'rtmp_port': 'r',
+      'http_port': 'h',
+      'https_port': 's',
+    },
+    default:{
+      'rtmp_port': 1935,
+      'http_port': 8000,
+      'https_port': 8443,
+    }
+  });
+  
+if (argv.help) {
+  console.log('Usage:');
+  console.log('  node-media-server --help // print help information');
+  console.log('  node-media-server --rtmp_port 1935 or -r 1935');
+  console.log('  node-media-server --http_port 8000 or -h 8000');
+  console.log('  node-media-server --https_port 8443 or -s 8443');
+  process.exit(0);
+}
 
 const config = {
   rtmp: {
-    port: 1935,
+    port: argv.rtmp_port,
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
     ping_timeout: 60,
-	/*
-    ssl: {
-      port: 443,
-      key: './privatekey.pem',
-      cert: './certificate.pem',
-    }
-	*/
+    // ssl: {
+    //   port: 443,
+    //   key: __dirname+'/privatekey.pem',
+    //   cert: __dirname+'/certificate.pem',
+    // }
   },
   http: {
-    port: 8000,
-    mediaroot: './media',
-    webroot: './www',
+    port: argv.http_port,
+    mediaroot: __dirname+'/media',
+    webroot: __dirname+'/www',
     allow_origin: '*',
     api: true
   },
   https: {
-    port: 8443,
-    key: './privatekey.pem',
-    cert: './certificate.pem',
+    port: argv.https_port,
+    key: __dirname+'/privatekey.pem',
+    cert: __dirname+'/certificate.pem',
   },
   auth: {
     api: true,
@@ -38,7 +61,7 @@ const config = {
 };
 
 
-let nms = new NodeMediaServer(config)
+let nms = new NodeMediaServer(config);
 nms.run();
 
 nms.on('preConnect', (id, args) => {

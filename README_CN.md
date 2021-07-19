@@ -28,24 +28,23 @@
  - 支持实时多分辨率转码
 
 # 用法 
-## docker 版本
+## npx 运行
 ```bash
-docker run --name nms -d -p 1935:1935 -p 8000:8000 illuspas/node-media-server
+npx node-media-server
 ```
 
-## git 版本
+## 安装为全局程序
 ```bash
-mkdir nms
-cd nms
-git clone https://github.com/illuspas/Node-Media-Server .
-npm i
-node app.js
+npm i node-media-server -g
+node-media-server
 ```
->使用多核模式运行
+
+## docker 运行
+```bash
+docker run --name nms -d -p 1935:1935 -p 8000:8000 -p 8443:8443 illuspas/node-media-server
 ```
-node cluster.js
-```
-## npm 版本(推荐)
+
+## npm 定制开发(推荐)
 ```bash
 mkdir nms
 cd nms
@@ -73,6 +72,11 @@ const config = {
 var nms = new NodeMediaServer(config)
 nms.run();
 ```
+
+```bash
+node app.js
+```
+
 
 # 直播发布
 ## 使用 FFmpeg 推流

@@ -36,7 +36,7 @@ class NodeFissionServer {
 
     let version = await getFFmpegVersion(this.config.fission.ffmpeg);
     if (version === '' || parseInt(version.split('.')[0]) < 4) {
-      Logger.error(`Node Media Fission Server startup failed. ffmpeg requires version 4.0.0 above`);
+      Logger.error('Node Media Fission Server startup failed. ffmpeg requires version 4.0.0 above');
       Logger.error('Download the latest ffmpeg static program:', getFFmpegUrl());
       return;
     }
@@ -52,7 +52,7 @@ class NodeFissionServer {
     for (let task of this.config.fission.tasks) {
       regRes = /(.*)\/(.*)/gi.exec(task.rule);
       let [ruleApp, ruleName] = _.slice(regRes, 1);
-      if ((app === ruleApp || ruleApp === "*") && (name === ruleName || ruleName === "*")) {
+      if ((app === ruleApp || ruleApp === '*') && (name === ruleName || ruleName === '*')) {
         let s = context.sessions.get(id);
         if (s.isLocal && name.split('_')[1]) {
           continue;

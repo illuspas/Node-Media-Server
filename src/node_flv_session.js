@@ -3,11 +3,10 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
-const URL = require("url");
-const AMF = require("./node_core_amf");
-const Logger = require("./node_core_logger");
-const context = require("./node_core_ctx");
-const NodeCoreUtils = require("./node_core_utils");
+const URL = require('url');
+const Logger = require('./node_core_logger');
+const context = require('./node_core_ctx');
+const NodeCoreUtils = require('./node_core_utils');
 
 const FlvPacket = {
   create: (payload = null, type = 0, time = 0) => {
@@ -30,27 +29,27 @@ class NodeFlvSession {
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = this.req.socket.remoteAddress;
 
-    this.playStreamPath = "";
+    this.playStreamPath = '';
     this.playArgs = null;
 
     this.isStarting = false;
     this.isPlaying = false;
     this.isIdling = false;
 
-    if (this.req.nmsConnectionType === "ws") {
+    if (this.req.nmsConnectionType === 'ws') {
       this.res.cork = this.res._socket.cork.bind(this.res._socket);
       this.res.uncork = this.res._socket.uncork.bind(this.res._socket);
-      this.res.on("close", this.onReqClose.bind(this));
-      this.res.on("error", this.onReqError.bind(this));
+      this.res.on('close', this.onReqClose.bind(this));
+      this.res.on('error', this.onReqError.bind(this));
       this.res.write = this.res.send;
       this.res.end = this.res.close;
-      this.TAG = "websocket-flv";
+      this.TAG = 'websocket-flv';
     } else {
       this.res.cork = this.res.socket.cork.bind(this.res.socket);
       this.res.uncork = this.res.socket.uncork.bind(this.res.socket);
-      this.req.socket.on("close", this.onReqClose.bind(this));
-      this.req.on("error", this.onReqError.bind(this));
-      this.TAG = "http-flv";
+      this.req.socket.on('close', this.onReqClose.bind(this));
+      this.req.on('error', this.onReqError.bind(this));
+      this.TAG = 'http-flv';
     }
 
     this.numPlayCache = 0;
@@ -60,19 +59,19 @@ class NodeFlvSession {
   run() {
     let method = this.req.method;
     let urlInfo = URL.parse(this.req.url, true);
-    let streamPath = urlInfo.pathname.split(".")[0];
+    let streamPath = urlInfo.pathname.split('.')[0];
     this.connectCmdObj = { ip: this.ip, method, streamPath, query: urlInfo.query };
     this.connectTime = new Date();
     this.isStarting = true;
     Logger.log(`[${this.TAG} connect] id=${this.id} ip=${this.ip} args=${JSON.stringify(urlInfo.query)}`);
-    context.nodeEvent.emit("preConnect", this.id, this.connectCmdObj);
+    context.nodeEvent.emit('preConnect', this.id, this.connectCmdObj);
     if (!this.isStarting) {
       this.stop();
       return;
     }
-    context.nodeEvent.emit("postConnect", this.id, this.connectCmdObj);
+    context.nodeEvent.emit('postConnect', this.id, this.connectCmdObj);
 
-    if (method === "GET") {
+    if (method === 'GET') {
       this.playStreamPath = streamPath;
       this.playArgs = urlInfo.query;
 
@@ -88,11 +87,11 @@ class NodeFlvSession {
       let publisherId = context.publishers.get(this.playStreamPath);
       if (publisherId != null) {
         context.sessions.get(publisherId).players.delete(this.id);
-        context.nodeEvent.emit("donePlay", this.id, this.playStreamPath, this.playArgs);
+        context.nodeEvent.emit('donePlay', this.id, this.playStreamPath, this.playArgs);
       }
       Logger.log(`[${this.TAG} play] Close stream. id=${this.id} streamPath=${this.playStreamPath}`);
       Logger.log(`[${this.TAG} disconnect] id=${this.id}`);
-      context.nodeEvent.emit("doneConnect", this.id, this.connectCmdObj);
+      context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
       this.res.end();
       context.idlePlayers.delete(this.id);
       context.sessions.delete(this.id);
@@ -113,7 +112,7 @@ class NodeFlvSession {
   }
 
   onPlay() {
-    context.nodeEvent.emit("prePlay", this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit('prePlay', this.id, this.playStreamPath, this.playArgs);
     if (!this.isStarting) {
       return;
     }
@@ -185,7 +184,7 @@ class NodeFlvSession {
     this.isIdling = false;
     this.isPlaying = true;
     Logger.log(`[${this.TAG} play] Join stream. id=${this.id} streamPath=${this.playStreamPath} `);
-    context.nodeEvent.emit("postPlay", this.id, this.playStreamPath, this.playArgs);
+    context.nodeEvent.emit('postPlay', this.id, this.playStreamPath, this.playArgs);
   }
 
   static createFlvTag(packet) {

@@ -4,9 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Crypto = require('crypto');
-const EventEmitter = require('events');
 const { spawn } = require('child_process');
-const readline = require('readline');
 const context = require('./node_core_ctx');
 
 function generateNewSessionID() {
@@ -17,7 +15,7 @@ function generateNewSessionID() {
     for (let i = 0; i < 8; i++) {
       sessionID += possible.charAt((Math.random() * numPossible) | 0);
     }
-  } while (context.sessions.has(sessionID))
+  } while (context.sessions.has(sessionID));
   return sessionID;
 }
 
@@ -92,4 +90,4 @@ module.exports = {
   genRandomName,
   getFFmpegVersion,
   getFFmpegUrl
-}
+};
