@@ -20,7 +20,7 @@ class NodeTransSession extends EventEmitter {
   run() {
     let vc = this.conf.vc || 'copy';
     let ac = this.conf.ac || 'copy';
-    let inPath = 'rtmp://127.0.0.1:' + this.conf.rtmpPort + this.conf.streamPath;
+    let inPath = 'rtmp://127.0.0.1:' + this.conf.rtmpPort + this.conf.streamPath + ((this.conf.args.sign)? `?sign=${this.conf.args.sign}`: '');
     let ouPath = `${this.conf.mediaroot}/${this.conf.streamApp}/${this.conf.streamName}`;
     let mapStr = '';
 
