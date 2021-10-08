@@ -15,19 +15,19 @@ function getStreams(req, res, next) {
 
     let { app, name } = session.conf;
 
-    if (!_.get(stats, [app, name])) {
-      _.set(stats, [app, name], {
+    if (!_.get(stats, ['app', 'name'])) {
+      _.set(stats, ['app', 'name'], {
         relays: []
       });
     }
 
-    _.set(stats, [app, name, 'relays'], {
+		stats.app.name.relays.push({
       app: app,
       name: name,
       url: session.conf.ouPath,
       mode: session.conf.mode,
       id: session.id,
-    });
+		})
   });
 
   res.json(stats);
