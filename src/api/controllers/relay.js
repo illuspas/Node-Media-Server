@@ -21,13 +21,13 @@ function getStreams(req, res, next) {
       });
     }
 
-		stats[app][name]['relays'].push({
+    stats[app][name]['relays'].push({
       app: app,
       name: name,
       url: session.conf.ouPath,
       mode: session.conf.mode,
       id: session.id,
-		});
+    });
   });
 
   res.json(stats);
