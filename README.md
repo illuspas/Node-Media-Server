@@ -13,9 +13,6 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 **If you like this project you can support me.**  
 <a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
 
-# NMSv3
-https://github.com/NodeMedia/NodeMediaServer
-
 # Web Admin Panel Source
 [https://github.com/illuspas/Node-Media-Server-Admin](https://github.com/illuspas/Node-Media-Server-Admin)
 
