@@ -184,7 +184,7 @@ function amf3decUI29(buf) {
   do {
     b = buf.readUInt8(len++);
     val = (val << 7) + (b & 0x7F);
-  } while (len < 5 || b > 0x7F);
+  } while (len < 5 && b > 0x7F);
 
   if (len == 5) val = val | b; // Preserve the major bit of the last byte
 
