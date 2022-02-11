@@ -401,7 +401,7 @@ function amf3encDate(ts) {
 function amf3decArray(buf) {
   let count = amf3decUI29(buf);
   let obj = amf3decObject(buf.slice(count.len));
-  if (count.value % 2 == 1) throw new Error('This is a reference to another array, which currently we don\'t support!');
+  if (count.value & 1) throw new Error('This is a reference to another array, which currently we don\'t support!');
   return { len: count.len + obj.len, value: obj.value };
 }
 
