@@ -33,3 +33,4 @@ node_modules
 *.mpd
 
 .vscode
+.idea
