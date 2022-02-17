@@ -199,6 +199,9 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
+        if (conf.suffix !== undefined) {
+          conf.ouPath += conf.suffix;
+        }
         if (Object.keys(args).length > 0) {
           conf.ouPath += '?';
           conf.ouPath += querystring.encode(args);
