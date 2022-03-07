@@ -33,6 +33,13 @@ class NodeTransSession extends EventEmitter {
         Logger.log('[Transmuxing RTMP] ' + this.conf.streamPath + ' to ' + rtmpOutput);
       }
     }
+    if (this.conf.flv) {
+      this.conf.flvFlags = this.conf.flvFlags ? this.conf.flvFlags : '';
+      let flvFileName = dateFormat('yyyy-mm-dd-HH-MM-ss') + '.flv';
+      let mapFlv = `${this.conf.flvFlags}${ouPath}/${flvFileName}|`;
+      mapStr += mapFlv;
+      Logger.log('[Transmuxing FLV] ' + this.conf.streamPath + ' to ' + ouPath + '/' + flvFileName);
+    }
     if (this.conf.mp4) {
       this.conf.mp4Flags = this.conf.mp4Flags ? this.conf.mp4Flags : '';
       let mp4FileName = dateFormat('yyyy-mm-dd-HH-MM-ss') + '.mp4';
