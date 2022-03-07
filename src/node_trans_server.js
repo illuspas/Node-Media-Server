@@ -20,10 +20,10 @@ class NodeTransServer {
 
   async run() {
     try {
-      mkdirp.sync(this.config.http.mediaroot);
-      fs.accessSync(this.config.http.mediaroot, fs.constants.W_OK);
+      mkdirp.sync(this.config.rtmp.mediaroot);
+      fs.accessSync(this.config.rtmp.mediaroot, fs.constants.W_OK);
     } catch (error) {
-      Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.http.mediaroot} cannot be written.`);
+      Logger.error(`Node Media Trans Server startup failed. MediaRoot:${this.config.rtmp.mediaroot} cannot be written.`);
       return;
     }
 

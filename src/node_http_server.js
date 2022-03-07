@@ -27,7 +27,7 @@ const relayRoute = require('./api/routes/relay');
 class NodeHttpServer {
   constructor(config) {
     this.port = config.http.port || HTTP_PORT;
-    this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
+    this.mediaroot = config.rtmp.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
     let app = Express();
