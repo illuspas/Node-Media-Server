@@ -1,6 +1,6 @@
 #!/usr/bin/env node 
 
-const NodeMediaServer = require('..');
+const NodeMediaServer = require('../src/node_media_server');
 let argv = require('minimist')(process.argv.slice(2),
   {
     string:['rtmp_port','http_port','https_port'],
@@ -32,32 +32,45 @@ const config = {
     gop_cache: true,
     ping: 30,
     ping_timeout: 60,
+    mediaroot:'./media',
     // ssl: {
     //   port: 443,
     //   key: __dirname+'/privatekey.pem',
     //   cert: __dirname+'/certificate.pem',
     // }
   },
-  http: {
-    port: argv.http_port,
-    mediaroot: __dirname+'/media',
-    webroot: __dirname+'/www',
-    allow_origin: '*',
-    api: true
-  },
-  https: {
-    port: argv.https_port,
-    key: __dirname+'/privatekey.pem',
-    cert: __dirname+'/certificate.pem',
-  },
-  auth: {
-    api: true,
-    api_user: 'admin',
-    api_pass: 'admin',
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
+   trans: {
+    ffmpeg: './ffmpeg.exe',
+    tasks: [
+      {
+        app: 'live',
+        vc: "copy",
+        vcParam: [],
+        ac: "aac",
+        acParam: ['-ab', '64k', '-ac', '1', '-ar', '44100'],
+        flv:true,
+      }
+    ]
   }
+  // http: {
+  //   port: argv.http_port,
+  //   webroot: __dirname+'/www',
+  //   allow_origin: '*',
+  //   api: true,
+  // },
+  // https: {
+  //   port: argv.https_port,
+  //   key: __dirname+'/privatekey.pem',
+  //   cert: __dirname+'/certificate.pem',
+  // },
+  // auth: {
+  //   api: true,
+  //   api_user: 'admin',
+  //   api_pass: 'admin',
+  //   play: false,
+  //   publish: false,
+  //   secret: 'nodemedia2017privatekey'
+  // }
 };
 
 
