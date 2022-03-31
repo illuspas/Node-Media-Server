@@ -82,6 +82,18 @@ class NodeTransServer {
       session.end();
     }
   }
+
+  stop() {
+    this.transSessions.forEach((session, id) => {
+      this.transSessions.delete(id);
+    });
+
+    context.sessions.forEach((session, id) => {
+      if (session instanceof NodeTransSession) {
+        context.sessions.delete(id);
+      }
+    });
+  }
 }
 
 module.exports = NodeTransServer;

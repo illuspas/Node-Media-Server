@@ -105,6 +105,9 @@ class NodeMediaServer {
     if (this.nfs) {
       this.nfs.stop();
     }
+    if (this.nts) {
+      this.nts.stop();
+    }
   }
 
   getSession(id) {
