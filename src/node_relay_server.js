@@ -234,6 +234,23 @@ class NodeRelayServer {
 
   stop() {
     clearInterval(this.staticCycle);
+
+    this.staticSessions.forEach((session, id) => {
+      session.end();
+      this.staticSessions.delete(id);
+    });
+
+    this.dynamicSessions.forEach((session, id) => {
+      session.end();
+      this.dynamicSessions.delete(id);
+    });
+
+    context.sessions.forEach((session, id) => {
+      if (session instanceof NodeRelaySession) {
+        session.end();
+        context.sessions.delete(id);
+      }
+    });
   }
 }
 
