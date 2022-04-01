@@ -22,6 +22,9 @@ class NodeMediaServer {
   run() {
     Logger.setLogType(this.config.logType);
     Logger.log(`Node Media Server v${Package.version}`);
+
+    context.nodeEvent.removeAllListeners();
+
     if (this.config.rtmp) {
       this.nrs = new NodeRtmpServer(this.config);
       this.nrs.run();
