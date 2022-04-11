@@ -61,6 +61,15 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, ['-c:a', ac]);
     Array.prototype.push.apply(argv, this.conf.acParam);
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
+    if (this.conf.wav) {
+      let wavFileName = dateFormat('yyyy-mm-dd-HH-MM-ss') + '.wav';
+      let mapWav = `${ouPath}/${wavFileName}`;
+      if (this.conf.wavArgs) {
+        Array.prototype.push.apply(argv, this.conf.wavArgs);
+      }
+      Array.prototype.push.apply(argv, [mapWav]);
+      Logger.log('[Transmuxing wav] ' + this.conf.streamPath + ' to ' + ouPath + '/' + wavFileName);
+    }
     argv = argv.filter((n) => { return n; }); //去空
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
