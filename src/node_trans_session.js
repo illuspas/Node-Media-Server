@@ -77,7 +77,7 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, ['-f', 'tee', mapStr]);
     // Array.prototype.push.apply(argv, ['-f', 'flv', mapStr]);
     argv = argv.filter((n) => { return n; }); //去空
-    Logger.log(`[Transmuxing Start] args=${JSON.stringify(argv)}`);
+    Logger.log('[Transmuxing command] ' + argv);
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
