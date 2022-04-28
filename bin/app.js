@@ -33,12 +33,17 @@ const config = {
     ping: 30,
     ping_timeout: 60,
     mediaroot:'./media',
+  },
+
+  http: {
+    port: argv.http_port,
+    allow_origin: '*',
+  },
     // ssl: {
     //   port: 443,
     //   key: __dirname+'/privatekey.pem',
     //   cert: __dirname+'/certificate.pem',
     // }
-  },
    trans: {
     ffmpeg: './ffmpeg.exe',
     tasks: [
