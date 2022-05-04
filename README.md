@@ -107,7 +107,7 @@ Stream Type : Custom Streaming Server
 
 URL : rtmp://localhost/live
 
-Stream key : STREAM_NAME
+Stream key : STREAM_NAME?sign=expires-HashValue (sign parameter required only if publish auth is enabled)
 
 # Accessing the live stream
 ## RTMP 
