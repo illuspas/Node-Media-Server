@@ -141,7 +141,7 @@ function getStream(req, res, next) {
   streamStats.startTime = streamStats.isLive
     ? publisherSession.connectTime
     : null;
-  streamStats.arguments = publisherSession?.publishArgs ?? {};
+  streamStats.arguments = !!publisherSession ? publisherSession.publishArgs : {};
 
   res.json(streamStats);
 }
