@@ -5,7 +5,8 @@
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
   "scripts": {
-    "start": "node bin/app.js"
+    "start": "node bin/app.js",
+    "test": "node test/test_run.js"
   },
   "repository": {
     "type": "git",
