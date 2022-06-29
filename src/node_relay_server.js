@@ -76,12 +76,15 @@ class NodeRelayServer {
   }
 
   //从远端拉推到本地
-  onRelayPull(url, app, name) {
+  onRelayPull(url, app, name, rtsp_transport) {
     let conf = {};
     conf.app = app;
     conf.name = name;
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
+    if (rtsp_transport){
+      conf.rtsp_transport = rtsp_transport
+    }
     conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
     let session = new NodeRelaySession(conf);
     const id = session.id;
