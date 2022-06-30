@@ -51,8 +51,8 @@ const VIDEO_CODEC_NAME = [
   'H264',
   '',
   '',
-  '',
-  '',
+  'VP8',
+  'VP9',
   'H265'
 ];
 
