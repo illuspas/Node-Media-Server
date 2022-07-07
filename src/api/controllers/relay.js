@@ -17,11 +17,11 @@ function getStreams(req, res, next) {
 
     if (!_.get(stats, [app, name])) {
       _.set(stats, [app, name], {
-        relays: []
+        relays: [],
       });
     }
 
-    _.set(stats, [app, name, 'relays'], {
+    stats[app][name]['relays'].push({
       app: app,
       name: name,
       url: session.conf.ouPath,
@@ -31,6 +31,31 @@ function getStreams(req, res, next) {
   });
 
   res.json(stats);
+}
+
+function getStream(req, res, next) {
+  let relay = {};
+  let relayPath = `${req.params.app}/${req.params.name}`;
+
+  this.sessions.forEach(function (session, id) {
+    if (session.constructor.name !== 'NodeRelaySession') {
+      return;
+    }
+
+    let { app, name } = session.conf;
+    if (relayPath === `${app}/${name}`) {
+      relay = {
+        app: app,
+        name: name,
+        url: session.conf.ouPath,
+        mode: session.conf.mode,
+        id: session.id,
+      };
+      return;
+    }
+  });
+
+  res.json(relay);
 }
 
 function pullStream(req, res, next) {
@@ -57,8 +82,42 @@ function pushStream(req, res, next) {
   }
 }
 
+function delStream(req, res, next) {
+  let relay = {};
+  let relayExists = false;
+  let relayPath = `${req.params.app}/${req.params.name}`;
+
+  this.sessions.forEach(function (session, id) {
+    if (session.constructor.name !== 'NodeRelaySession') {
+      return;
+    }
+
+    let { app, name } = session.conf;
+    if (relayPath === `${app}/${name}`) {
+      session.end();
+      relay = {
+        app: app,
+        name: name,
+        url: session.conf.ouPath,
+        mode: session.conf.mode,
+        id: session.id,
+      };
+      relayExists = true;
+      return;
+    }
+  });
+
+  if (relayExists) {
+    res.json(relay);
+  } else {
+    res.sendStatus(400);
+  }
+}
+
 module.exports = {
   getStreams,
+  getStream,
   pullStream,
-  pushStream
+  pushStream,
+  delStream,
 };
