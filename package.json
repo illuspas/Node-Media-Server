@@ -1,11 +1,12 @@
 {
   "name": "node-media-server",
-  "version": "2.3.8",
+  "version": "2.4.1",
   "description": "A Node.js implementation of RTMP Server",
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
   "scripts": {
-    "start": "node bin/app.js"
+    "start": "node bin/app.js",
+    "test": "node test/test_run.js"
   },
   "repository": {
     "type": "git",
