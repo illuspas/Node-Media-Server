@@ -3,11 +3,10 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2019 Nodemedia. All rights reserved.
 //
-const _ = require('lodash');
+const { get, set } = require('lodash');
 
 function getStreams(req, res, next) {
   let stats = {};
-
   this.sessions.forEach(function (session, id) {
     if (session.constructor.name !== 'NodeRelaySession') {
       return;
@@ -15,19 +14,19 @@ function getStreams(req, res, next) {
 
     let { app, name } = session.conf;
 
-    if (!_.get(stats, [app, name])) {
-      _.set(stats, [app, name], {
+    if (!get(stats, [app, name])) {
+      set(stats, [app, name], {
         relays: []
       });
     }
 
-    _.set(stats, [app, name, 'relays'], {
+    stats[app][name]['relays'].push({
       app: app,
       name: name,
       url: session.conf.ouPath,
       mode: session.conf.mode,
       id: session.id,
-    });
+    })
   });
 
   res.json(stats);
