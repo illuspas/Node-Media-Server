@@ -56,8 +56,19 @@ function pushStream(req, res, next) {
   }
 }
 
+function delStream(req, res, next) {
+  let relaySession = this.sessions.get(req.params.id);
+  if (relaySession) {
+    relaySession.end();
+    res.json('Ok');
+  } else {
+    res.json({ error: 'relay not found' }, 404);
+  }
+}
+
 module.exports = {
   getStreams,
   pullStream,
-  pushStream
+  pushStream,
+  delStream
 };
