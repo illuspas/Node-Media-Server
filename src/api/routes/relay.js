@@ -6,5 +6,6 @@ module.exports = (context) => {
   router.get('/', relayController.getStreams.bind(context));
   router.post('/pull', relayController.pullStream.bind(context));
   router.post('/push', relayController.pushStream.bind(context));
+  router.delete('/:id', relayController.delStream.bind(context));
   return router;
 };
