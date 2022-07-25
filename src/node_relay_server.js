@@ -66,6 +66,7 @@ class NodeRelayServer {
         session.id = i;
         session.streamPath = `/${conf.app}/${conf.name}`;
         session.on('end', (id) => {
+          context.sessions.delete(id);
           this.staticSessions.delete(id);
         });
         this.staticSessions.set(i, session);
@@ -80,6 +81,7 @@ class NodeRelayServer {
     let conf = {};
     conf.app = app;
     conf.name = name;
+    conf.mode = 'pull';
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
     if (rtsp_transport){
@@ -90,6 +92,7 @@ class NodeRelayServer {
     const id = session.id;
     context.sessions.set(id, session);
     session.on('end', (id) => {
+      context.sessions.delete(id);
       this.dynamicSessions.delete(id);
     });
     this.dynamicSessions.set(id, session);
@@ -103,6 +106,7 @@ class NodeRelayServer {
     let conf = {};
     conf.app = app;
     conf.name = name;
+    conf.mode = 'push';
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
     conf.ouPath = url;
@@ -110,6 +114,7 @@ class NodeRelayServer {
     const id = session.id;
     context.sessions.set(id, session);
     session.on('end', (id) => {
+      context.sessions.delete(id);
       this.dynamicSessions.delete(id);
     });
     this.dynamicSessions.set(id, session);

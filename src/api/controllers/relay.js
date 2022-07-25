@@ -25,7 +25,7 @@ function getStreams(req, res, next) {
       name: name,
       url: session.conf.ouPath,
       mode: session.conf.mode,
-      id: session.id,
+      id: id,
     })
   });
 
