@@ -23,6 +23,7 @@ function getStreams(req, res, next) {
     stats[app][name]['relays'].push({
       app: app,
       name: name,
+      path: session.conf.inPath,
       url: session.conf.ouPath,
       mode: session.conf.mode,
       id: id,
@@ -32,7 +33,24 @@ function getStreams(req, res, next) {
   res.json(stats);
 }
 
-function getStream(req, res, next) {
+function getStreamByID(req, res, next) {
+  const relaySession = Array.from(this.sessions.values()).filter(
+    (session) =>
+      session.constructor.name === 'NodeRelaySession' &&
+      req.params.id === session.id
+  );
+  const relays = relaySession.map((item) => ({
+    app: item.conf.app,
+    name: item.conf.name,
+    path: item.conf.inPath,
+    url: item.conf.ouPath,
+    mode: item.conf.mode,
+    id: item.id,
+  }));
+  res.json(relays);
+}
+
+function getStreamByName(req, res, next) {
   const relaySession = Array.from(this.sessions.values()).filter(
     (session) =>
       session.constructor.name === 'NodeRelaySession' &&
@@ -47,6 +65,17 @@ function getStream(req, res, next) {
     id: item.id,
   }));
   res.json(relays);
+}
+
+function relayStream(req, res, next) {
+  let path = req.body.path;
+  let url = req.body.url;
+  if (path && url) {
+    this.nodeEvent.emit('relayTask', path, url);
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
 }
 
 function pullStream(req, res, next) {
@@ -85,7 +114,9 @@ function delStream(req, res, next) {
 
 module.exports = {
   getStreams,
-  getStream,
+  getStreamByID,
+  getStreamByName,
+  relayStream,
   pullStream,
   pushStream,
   delStream,
