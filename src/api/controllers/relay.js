@@ -26,6 +26,7 @@ function getStreams(req, res, next) {
       path: session.conf.inPath,
       url: session.conf.ouPath,
       mode: session.conf.mode,
+      ts: session.ts,
       id: id,
     });
   });
@@ -45,6 +46,7 @@ function getStreamByID(req, res, next) {
     path: item.conf.inPath,
     url: item.conf.ouPath,
     mode: item.conf.mode,
+    ts: item.ts,
     id: item.id,
   }));
   res.json(relays);
@@ -62,6 +64,7 @@ function getStreamByName(req, res, next) {
     name: item.conf.name,
     url: item.conf.ouPath,
     mode: item.conf.mode,
+    ts: item.ts,
     id: item.id,
   }));
   res.json(relays);
