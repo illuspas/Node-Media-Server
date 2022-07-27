@@ -94,7 +94,7 @@ class NodeRelayServer {
     this.dynamicSessions.set(id, session);
     session.run();
     Logger.log('[relay dynamic task] start id=' + id, conf.inPath, 'to', conf.ouPath);
-    return id;
+    context.nodeEvent.emit("relayTaskDone", id);
   }
 
   //从远端拉推到本地
@@ -116,7 +116,8 @@ class NodeRelayServer {
     this.dynamicSessions.set(id, session);
     session.run();
     Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
-    return id;
+    context.nodeEvent.emit("relayPullDone", id);
+    
   }
 
   //从本地拉推到远端
@@ -138,6 +139,7 @@ class NodeRelayServer {
     this.dynamicSessions.set(id, session);
     session.run();
     Logger.log('[relay dynamic push] start id=' + id, conf.inPath, 'to', conf.ouPath);
+    context.nodeEvent.emit("relayPushDone", id);
   }
 
   onPrePlay(id, streamPath, args) {
