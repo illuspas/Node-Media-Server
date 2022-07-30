@@ -24,9 +24,10 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 
 # Features
  - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265(flv_id=12)/AAC/MP3/SPEEX/NELLYMOSER/G.711/OPUS(flv_id=13)
+ - Support H.264/AAC/MP3/SPEEX/NELLYMOSER/G.711
+ - Extension support H.265(flv_id=12)/VP8(flv_id=10)/VP9(flv_id=11)/OPUS(flv_id=13)
  - Support GOP cache
- - Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
+ - Support remux to LIVE-HTTP/WS-FLV, Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
  - Support remux to HLS/DASH/MP4
  - Support xycdn style authentication
  - Support event callback
@@ -252,10 +253,11 @@ const config = {
 > The 'sign' keyword can not be modified
 
 # H.265 over RTMP
-H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
-Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
 Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
 Pure JavaScrip live stream player: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
+
+# VP8 VP9 OPUS over RTMP
+[Extension ffmpeg](https://github.com/NodeMedia/ffmpeg)
 
 # Event callback
 ```js
