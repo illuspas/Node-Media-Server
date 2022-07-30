@@ -62,6 +62,9 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, this.conf.acParam);
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
     argv = argv.filter((n) => { return n; }); //去空
+
+    Logger.log(`[Transmuxing start] args=${JSON.stringify(argv)}`);
+    
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
@@ -78,19 +81,19 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      fs.readdir(ouPath, function (err, files) {
-        if (!err) {
-          files.forEach((filename) => {
-            if (filename.endsWith('.ts')
-              || filename.endsWith('.m3u8')
-              || filename.endsWith('.mpd')
-              || filename.endsWith('.m4s')
-              || filename.endsWith('.tmp')) {
-              fs.unlinkSync(ouPath + '/' + filename);
-            }
-          });
-        }
-      });
+      // fs.readdir(ouPath, function (err, files) {
+      //   if (!err) {
+      //     files.forEach((filename) => {
+      //       if (filename.endsWith('.ts')
+      //         || filename.endsWith('.m3u8')
+      //         || filename.endsWith('.mpd')
+      //         || filename.endsWith('.m4s')
+      //         || filename.endsWith('.tmp')) {
+      //         fs.unlinkSync(ouPath + '/' + filename);
+      //       }
+      //     });
+      //   }
+      // });
     });
   }
 
