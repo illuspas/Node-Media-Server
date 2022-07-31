@@ -11,6 +11,9 @@ const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
 
+const isHlsFile = (filename) => filename.endsWith('.ts') || filename.endsWith('.m3u8')
+const isTemFiles = (filename) => filename.endsWith('.mpd') || filename.endsWith('.m4s') || filename.endsWith('.tmp')
+
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
     super();
@@ -63,7 +66,7 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
     argv = argv.filter((n) => { return n; }); //去空
 
-    Logger.log(`[Transmuxing start] args=${JSON.stringify(argv)}`);
+    Logger.log(`[Transmuxing Start] args=${JSON.stringify(argv)}`);
     
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
@@ -81,24 +84,35 @@ class NodeTransSession extends EventEmitter {
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[Transmuxing end] ' + this.conf.streamPath);
       this.emit('end');
-      // fs.readdir(ouPath, function (err, files) {
-      //   if (!err) {
-      //     files.forEach((filename) => {
-      //       if (filename.endsWith('.ts')
-      //         || filename.endsWith('.m3u8')
-      //         || filename.endsWith('.mpd')
-      //         || filename.endsWith('.m4s')
-      //         || filename.endsWith('.tmp')) {
-      //         fs.unlinkSync(ouPath + '/' + filename);
-      //       }
-      //     });
-      //   }
-      // });
+      this.cleanTempFiles(ouPath)
+      this.deleteHlsFiles(ouPath)
     });
   }
 
   end() {
     this.ffmpeg_exec.kill();
+  }
+
+  // delete hls files
+  deleteHlsFiles (ouPath) {
+    if ((!ouPath && !this.conf.hls) || this.conf.hlsKeep) return
+    fs.readdir(ouPath, function (err, files) {
+      if (err) return
+      files.filter((filename) => isHlsFile(filename)).forEach((filename) => {
+        fs.unlinkSync(`${ouPath}/${filename}`);
+      });
+    });
+  }
+
+  // delete the other files
+  cleanTempFiles (ouPath) {
+    if (!ouPath) return
+    fs.readdir(ouPath, function (err, files) {
+      if (err) return
+      files.filter((filename) => isTemFiles(filename)).forEach((filename) => {
+        fs.unlinkSync(`${ouPath}/${filename}`);
+      });
+    });
   }
 }
 
