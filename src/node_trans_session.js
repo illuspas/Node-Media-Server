@@ -18,6 +18,12 @@ class NodeTransSession extends EventEmitter {
   constructor(conf) {
     super();
     this.conf = conf;
+    this.getConfig = (key = null) => {
+      if (!key) return
+      if (typeof this.conf != 'object') return
+      if (this.conf.args && typeof this.conf.args === 'object' && this.conf.args[key]) return this.conf.args[key]
+      return this.conf[key]
+    }
   }
 
   run() {
@@ -44,7 +50,7 @@ class NodeTransSession extends EventEmitter {
       Logger.log('[Transmuxing MP4] ' + this.conf.streamPath + ' to ' + ouPath + '/' + mp4FileName);
     }
     if (this.conf.hls) {
-      this.conf.hlsFlags = this.conf.hlsFlags ? this.conf.hlsFlags : '';
+      this.conf.hlsFlags = this.getConfig('hlsFlags') || '';
       let hlsFileName = 'index.m3u8';
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
       mapStr += mapHls;
@@ -98,7 +104,7 @@ class NodeTransSession extends EventEmitter {
 
   // delete hls files
   deleteHlsFiles (ouPath) {
-    if ((!ouPath && !this.conf.hls) || this.conf.hlsKeep) return
+    if ((!ouPath && !this.conf.hls) || this.getConfig('hlsKeep')) return
     fs.readdir(ouPath, function (err, files) {
       if (err) return
       files.filter((filename) => isHlsFile(filename)).forEach((filename) => {
