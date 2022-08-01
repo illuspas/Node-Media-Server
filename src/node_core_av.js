@@ -373,6 +373,10 @@ function HEVCParseSPS(SPS, hevc) {
   psps.pic_width_in_luma_samples = rbspBitop.read_golomb();
   psps.pic_height_in_luma_samples = rbspBitop.read_golomb();
   psps.conformance_window_flag = rbspBitop.read(1);
+  psps.conf_win_left_offset = 0;
+  psps.conf_win_right_offset = 0;
+  psps.conf_win_top_offset = 0;
+  psps.conf_win_bottom_offset = 0;
   if (psps.conformance_window_flag) {
     let vert_mult = 1 + (psps.chroma_format_idc < 2);
     let horiz_mult = 1 + (psps.chroma_format_idc < 3);
