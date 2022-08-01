@@ -118,10 +118,12 @@ async function pullStream(req, res, next) {
   let url = req.body.url;
   let app = req.body.app;
   let name = req.body.name;
+  let rtsp_transport = req.body.rtsp_transport ? req.body.rtsp_transport : null;
   if (url && app && name) {
-    process.nextTick(() => this.nodeEvent.emit('relayPull', url, app, name));
+  process.nextTick(() => this.nodeEvent.emit('relayPull', url, app, name, rtsp_transport));
     let ret = await once(this.nodeEvent, "relayPullDone");
     res.send(ret[0])
+
   } else {
     res.sendStatus(400);
   }
