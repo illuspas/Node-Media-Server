@@ -13,12 +13,15 @@ const fs = require('fs');
 const querystring = require('querystring');
 const _ = require('lodash');
 
+const DYNAMIC_PUSH_AUTO_RETRY_TIME_MS = 5000;
+
 class NodeRelayServer {
   constructor(config) {
     this.config = config;
     this.staticCycle = null;
     this.staticSessions = new Map();
     this.dynamicSessions = new Map();
+    this.dynamicPushRetryHandlers = new Map();;
   }
 
   async run() {
@@ -206,7 +209,20 @@ class NodeRelayServer {
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
+          const handler = this.dynamicPushRetryHandlers.get(id);
+          if (handler) clearTimeout(handler);
           this.dynamicSessions.delete(id);
+          this.dynamicPushRetryHandlers.delete(id);
+        });
+        session.on('retry', (id) => {
+          Logger.log('[relay dynamic push] [retry] start after' + DYNAMIC_PUSH_AUTO_RETRY_TIME_MS + 'id=' + id, conf.inPath, 'to', conf.ouPath);
+          const handler = setTimeout(
+            () => {
+              session.run();
+              Logger.log('[relay dynamic push] [retry] start,  id=' + id, conf.inPath, 'to', conf.ouPath);
+            },
+            DYNAMIC_PUSH_AUTO_RETRY_TIME_MS);
+          this.dynamicPushRetryHandlers.set(id, handler);
         });
         this.dynamicSessions.set(id, session);
         session.run();

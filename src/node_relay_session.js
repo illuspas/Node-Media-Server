@@ -5,6 +5,7 @@
 //
 const Logger = require('./node_core_logger');
 const NodeCoreUtils = require('./node_core_utils');
+const context = require('./node_core_ctx');
 
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
@@ -52,7 +53,15 @@ class NodeRelaySession extends EventEmitter {
 
     this.ffmpeg_exec.on('close', (code) => {
       Logger.log('[relay end] id=' + this.id, 'code=' + code);
-      this.emit('end', this.id);
+      const publisherAlive = context.sessions.get(this.id)?.isPublishing;
+      if (this.conf.autoRetry) {
+        Logger.log('[relay end - detect autoRetry] publisher if alive: ' + !!publisherAlive);
+        if (publisherAlive && this.conf.mode === 'push') {
+          this.emit('retry', this.id);
+        }
+      } else {
+        this.emit('end', this.id);
+      }
     });
   }
 
