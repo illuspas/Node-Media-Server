@@ -653,6 +653,7 @@ relay: {
 ## Dynamic push
 When the local server receives a publish request.
 Automatically push the stream to the edge server.
+Use autoRetry flag to prevent relay end from edge disconnection when publisher is still alive.
 
 ```
 relay: {
@@ -662,6 +663,7 @@ relay: {
       app: 'live',
       mode: 'push',
       edge: 'rtmp://192.168.0.10',
+      autoRetry: true
     }
   ]
 }
