@@ -12,7 +12,8 @@ const mkdirp = require('mkdirp');
 const fs = require('fs');
 
 const isHlsFile = (filename) => filename.endsWith('.ts') || filename.endsWith('.m3u8')
-const isTemFiles = (filename) => filename.endsWith('.mpd') || filename.endsWith('.m4s') || filename.endsWith('.tmp')
+const isTemFiles = (filename) => filename.endsWith('.tmp')
+const isDashFile = (filename) => filename.endsWith('.mpd') || filename.endsWith('.m4s')
 
 class NodeTransSession extends EventEmitter {
   constructor(conf) {
@@ -116,11 +117,19 @@ class NodeTransSession extends EventEmitter {
   // delete the other files
   cleanTempFiles (ouPath) {
     if (!ouPath) return
+    var _this = this;
     fs.readdir(ouPath, function (err, files) {
       if (err) return
-      files.filter((filename) => isTemFiles(filename)).forEach((filename) => {
-        fs.unlinkSync(`${ouPath}/${filename}`);
-      });
+      if(_this.getConfig('dashKeep')){
+        files.filter((filename) => isTemFiles(filename)).forEach((filename) => {
+          fs.unlinkSync(`${ouPath}/${filename}`);
+        });
+      }
+      else {
+        files.filter((filename) => isTemFiles(filename)||isDashFile(filename)).forEach((filename) => {
+          fs.unlinkSync(`${ouPath}/${filename}`);
+        });
+      }
     });
   }
 }
