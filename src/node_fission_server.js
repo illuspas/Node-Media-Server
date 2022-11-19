@@ -65,7 +65,7 @@ class NodeFissionServer {
         conf.streamApp = app;
         conf.streamName = name;
         conf.args = args;
-        let session = new NodeFissionSession(conf);
+        let session = new NodeFissionSession(id, conf);
         this.fissionSessions.set(id, session);
         session.on('end', () => {
           this.fissionSessions.delete(id);

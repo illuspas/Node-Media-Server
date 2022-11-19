@@ -602,7 +602,7 @@ nms.run();
 ```
 
 # Rtsp/Rtmp Relay
-NodeMediaServer implement RTSP and RTMP relay with ffmpeg.
+NodeMediaServer implements RTSP and RTMP relay with ffmpeg.
 
 ## Static pull
 The static pull mode is executed at service startup and reconnect after failure.
@@ -668,6 +668,22 @@ relay: {
 }
 ```
 
+## Transcoding Options
+FFmpeg output options could be added for the pull/push modes above. Default behavior is `-c copy`.
+```
+relay: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'live',
+      mode: 'push',
+      options: ['-vf', 'scale=1920:-1', '-c:v', 'libx264', '-b:v', '2m', '-c:a', 'copy'],
+      edge: 'rtmp://192.168.0.10',
+    }
+  ]
+}
+```
+
 # Fission
 Real-time transcoding multi-resolution output
 ![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
@@ -721,6 +737,29 @@ fission: {
         },
       ]
     },
+  ]
+}
+```
+
+## Custom Transcoding Options
+Custom FFmpeg output options could be specified directly. In this case, a suffix should also be provided for the transcoded stream.
+```
+fission: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      rule: 'live/*',
+      model: [
+        {
+          options: ['-c:v', 'hevc_nvenc', '-b:v', '10m', '-vf', 'scale=3840:-1', '-c:a', 'copy'],
+          suffix: 'uhd5'
+        },
+        {
+          options: ['-c:v', 'libx264', '-b:v', '4m', '-vf', 'scale=1920:-1', '-c:a', 'copy'],
+          suffix: 'hd4'
+        }
+      ]
+    }
   ]
 }
 ```

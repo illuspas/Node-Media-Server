@@ -31,6 +31,7 @@ function getStreams(req, res, next) {
     stats[app][name]['relays'].push({
       app: app,
       name: name,
+      options: session.conf.options,
       path: session.conf.inPath,
       url: session.conf.ouPath,
       mode: session.conf.mode,
@@ -56,6 +57,7 @@ function getStreamByID(req, res, next) {
   const relays = relaySession.map((item) => ({
     app: item.conf.app,
     name: item.conf.name,
+    options: item.conf.options,
     path: item.conf.inPath,
     url: item.conf.ouPath,
     mode: item.conf.mode,
@@ -81,6 +83,7 @@ function getStreamByName(req, res, next) {
   const relays = relaySession.map((item) => ({
     app: item.conf.app,
     name: item.conf.name,
+    options: item.conf.options,
     url: item.conf.ouPath,
     mode: item.conf.mode,
     ts: item.ts,
@@ -118,9 +121,10 @@ async function pullStream(req, res, next) {
   let url = req.body.url;
   let app = req.body.app;
   let name = req.body.name;
+  let options = req.body.options ? req.body.options : null;
   let rtsp_transport = req.body.rtsp_transport ? req.body.rtsp_transport : null;
   if (url && app && name) {
-    process.nextTick(() => this.nodeEvent.emit('relayPull', url, app, name, rtsp_transport));
+    process.nextTick(() => this.nodeEvent.emit('relayPull', url, app, name, options, rtsp_transport));
     let ret = await once(this.nodeEvent, 'relayPullDone');
     res.send(ret[0]);
 
@@ -139,8 +143,9 @@ async function pushStream(req, res, next) {
   let url = req.body.url;
   let app = req.body.app;
   let name = req.body.name;
+  let options = req.body.options ? req.body.options : null;
   if (url && app && name) {
-    process.nextTick(() => this.nodeEvent.emit('relayPush', url, app, name));
+    process.nextTick(() => this.nodeEvent.emit('relayPush', url, app, name, options));
     let ret = await once(this.nodeEvent, 'relayPushDone');
     res.send(ret[0]);
   } else {

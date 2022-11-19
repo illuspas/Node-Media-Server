@@ -562,6 +562,22 @@ relay: {
 }
 ```
 
+## 转码选项
+可以为上面的推流和拉流模式配置FFmpeg输出选项。默认值是 `-c copy`.
+```
+relay: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      app: 'live',
+      mode: 'push',
+      options: ['-vf', 'scale=1920:-1', '-c:v', 'libx264', '-b:v', '2m', '-c:a', 'copy'],
+      edge: 'rtmp://192.168.0.10',
+    }
+  ]
+}
+```
+
 # 实时多分辨率转码
 ![fission](https://raw.githubusercontent.com/illuspas/resources/master/img/admin_panel_fission.png)
 ```
@@ -614,6 +630,29 @@ fission: {
         },
       ]
     },
+  ]
+}
+```
+
+## 自定义FFmpeg选项
+可以直接配置FFmpeg输出选项，同时需要为转码后的流设置后缀。
+```
+fission: {
+  ffmpeg: '/usr/local/bin/ffmpeg',
+  tasks: [
+    {
+      rule: 'live/*',
+      model: [
+        {
+          options: ['-c:v', 'hevc_nvenc', '-b:v', '10m', '-vf', 'scale=3840:-1', '-c:a', 'copy'],
+          suffix: 'uhd5'
+        },
+        {
+          options: ['-c:v', 'libx264', '-b:v', '4m', '-vf', 'scale=1920:-1', '-c:a', 'copy'],
+          suffix: 'hd4'
+        }
+      ]
+    }
   ]
 }
 ```
