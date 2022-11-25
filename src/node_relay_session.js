@@ -57,7 +57,7 @@ class NodeRelaySession extends EventEmitter {
       if (this.conf.autoRetry) {
         Logger.log('[relay end - detect autoRetry] publisher if alive: ' + !!publisherAlive);
         if (publisherAlive && this.conf.mode === 'push') {
-          this.emit('retry', this.id);
+          this.emit('retry', this.id, this.conf.inPath, this.conf.ouPath);
         }
       } else {
         this.emit('end', this.id);

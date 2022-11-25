@@ -215,11 +215,11 @@ class NodeRelayServer {
           this.dynamicPushRetryHandlers.delete(id);
         });
         session.on('retry', (id) => {
-          Logger.log('[relay dynamic push] [retry] start after' + DYNAMIC_PUSH_AUTO_RETRY_TIME_MS + 'id=' + id, conf.inPath, 'to', conf.ouPath);
+          Logger.log('[relay dynamic push] [retry] start after' + DYNAMIC_PUSH_AUTO_RETRY_TIME_MS + 'id=' + id, inPath, 'to', ouPath);
           const handler = setTimeout(
             () => {
               session.run();
-              Logger.log('[relay dynamic push] [retry] start,  id=' + id, conf.inPath, 'to', conf.ouPath);
+              Logger.log('[relay dynamic push] [retry] start, id=' + id, inPath, 'to', conf.ouPath);
             },
             DYNAMIC_PUSH_AUTO_RETRY_TIME_MS);
           this.dynamicPushRetryHandlers.set(id, handler);
