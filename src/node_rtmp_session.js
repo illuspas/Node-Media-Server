@@ -615,12 +615,16 @@ class NodeRtmpSession {
       this.audioChannels = ++sound_type;
 
       if (sound_format == 4) {
+        //Nellymoser 16 kHz 
         this.audioSamplerate = 16000;
-      } else if (sound_format == 5) {
+      } else if (sound_format == 5 || sound_format == 7 || sound_format == 8) {
+        //Nellymoser 8 kHz | G.711 A-law | G.711 mu-law
         this.audioSamplerate = 8000;
       } else if (sound_format == 11) {
+        // Speex
         this.audioSamplerate = 16000;
       } else if (sound_format == 14) {
+        //  MP3 8 kHz
         this.audioSamplerate = 8000;
       }
 
