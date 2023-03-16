@@ -10,7 +10,7 @@ LABEL org.label-schema.build-date="${BUILD_DATE}" \
       org.label-schema.vcs-ref="${VCS_REF}" \
       org.label-schema.vcs-url="https://github.com/illuspas/Node-Media-Server" \
       org.label-schema.vendor="illuspas" \
-      org.label-schema.version="2.3.3" \
+      org.label-schema.version="2.5.0" \
       maintainer="https://github.com/illuspas"
 
 WORKDIR /usr/src/app
