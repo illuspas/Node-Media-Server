@@ -5,13 +5,12 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![logo](https://www.nodemedia.cn/uploads/site_logo.png)
 
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
 [中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
 
-**If you like this project you can support me.**  
-<a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+# NodeMediaServer V3 
+[https://www.nodemedia.cn/product/node-media-server/](https://www.nodemedia.cn/product/node-media-server/)
 
 # Web Admin Panel Source
 [https://github.com/illuspas/Node-Media-Server-Admin](https://github.com/illuspas/Node-Media-Server-Admin)
@@ -756,8 +755,3 @@ http://www.nodemedia.cn/products/node-media-player
 * Only 6MB installation package
 
 http://www.nodemedia.cn/products/node-media-client/win
-
-# Thanks
-Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
-
-Thank you for your support.
