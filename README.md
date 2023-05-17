@@ -743,15 +743,7 @@ https://github.com/NodeMedia/react-native-nodemediaclient
 * Implemented with asm.js / wasm
 * http-flv/ws-flv
 * H.264/H.265 + AAC/Nellymoser/G.711 decoder
-* Ultra low latency (Support for iOS safari browser)
+* Ultra low latency
+* All modern browsers are supported
 
-http://www.nodemedia.cn/products/node-media-player
-
-## Windows browser plugin(ActiveX/NPAPI)
-* H.264/H.265+AAC rtmp publisher
-* Camera/Desktop + Microphone capture
-* Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
-* Ultra low latency rtmp/rtsp/http live player
-* Only 6MB installation package
-
-http://www.nodemedia.cn/products/node-media-client/win
+https://www.nodemedia.cn/product/nodeplayer-js/
