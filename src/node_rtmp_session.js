@@ -776,7 +776,7 @@ class NodeRtmpSession {
         return;
       }
     }
-    
+
     if (this.videoFps === 0) {
       if (this.videoCount++ === 0) {
         setTimeout(() => {
@@ -1220,7 +1220,7 @@ class NodeRtmpSession {
       this.socket.write(chunks);
     }
 
-    if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
+    if (publisher.videoCodec === 7 || publisher.videoCodec === 12 || publisher.videoCodec === 13) {
       let packet = RtmpPacket.create();
       packet.header.fmt = RTMP_CHUNK_TYPE_0;
       packet.header.cid = RTMP_CHANNEL_VIDEO;
@@ -1268,7 +1268,7 @@ class NodeRtmpSession {
           let chunks = this.rtmpChunksCreate(packet);
           this.socket.write(chunks);
         }
-        if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
+        if (publisher.videoCodec === 7 || publisher.videoCodec === 12 || publisher.videoCodec === 13) {
           let packet = RtmpPacket.create();
           packet.header.fmt = RTMP_CHUNK_TYPE_0;
           packet.header.cid = RTMP_CHANNEL_VIDEO;
