@@ -726,6 +726,12 @@ class NodeRtmpSession {
     let codec_id = payload[0] & 0x0f;
     let packetType = payload[0] & 0x0f;
     if (isExHeader) {
+      if (packetType == PacketTypeMetadata) {
+
+      }
+      else if (packetType == PacketTypeSequenceEnd) {
+
+      }
       let FourCC = payload.subarray(1, 5);
       if (FourCC.compare(FourCC_HEVC) == 0) {
         codec_id = 12;
@@ -738,20 +744,39 @@ class NodeRtmpSession {
         } else if (packetType == PacketTypeCodedFrames || packetType == PacketTypeCodedFramesX) {
           if (packetType == PacketTypeCodedFrames) {
             payload = payload.subarray(3);
-          }else {
+          } else {
             payload[2] = 0;
             payload[3] = 0;
             payload[4] = 0;
           }
           payload[0] = frame_type << 4 | 0x0c;
           payload[1] = 1;
-        } else if (packetType == PacketTypeSequenceEnd) {
+        }
+      } else if (FourCC.compare(FourCC_AV1) == 0) {
+        codec_id = 13;
+        if (packetType == PacketTypeSequenceStart) {
+          payload[0] = 0x1d;
+          payload[1] = 0;
+          payload[2] = 0;
+          payload[3] = 0;
+          payload[4] = 0;
+          // Logger.log("PacketTypeSequenceStart", payload.subarray(0, 16));
+        } else if (packetType == PacketTypeMPEG2TSSequenceStart) {
+          // Logger.log("PacketTypeMPEG2TSSequenceStart", payload.subarray(0, 16));
+        } else if (packetType == PacketTypeCodedFrames) {
+          // Logger.log("PacketTypeCodedFrames", payload.subarray(0, 16));
+          payload[0] = frame_type << 4 | 0x0d;
+          payload[1] = 1;
+          payload[2] = 0;
+          payload[3] = 0;
+          payload[4] = 0;
         }
       } else {
         Logger.log(`unsupported extension header`);
+        return;
       }
     }
-
+    
     if (this.videoFps === 0) {
       if (this.videoCount++ === 0) {
         setTimeout(() => {
@@ -760,7 +785,7 @@ class NodeRtmpSession {
       }
     }
 
-    if (codec_id == 7 || codec_id == 12) {
+    if (codec_id == 7 || codec_id == 12 || codec_id == 13) {
       //cache avc sequence header
       if (frame_type == 1 && payload[1] == 0) {
         this.avcSequenceHeader = Buffer.alloc(payload.length);
@@ -799,7 +824,7 @@ class NodeRtmpSession {
         this.rtmpGopCacheQueue.clear();
         this.flvGopCacheQueue.clear();
       }
-      if ((codec_id == 7 || codec_id == 12) && frame_type == 1 && payload[1] == 0) {
+      if ((codec_id == 7 || codec_id == 12 || codec_id == 13) && frame_type == 1 && payload[1] == 0) {
         //skip avc sequence header
       } else {
         this.rtmpGopCacheQueue.add(rtmpChunks);
