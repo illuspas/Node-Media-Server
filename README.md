@@ -35,7 +35,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Rtsp/Rtmp relay
  - Support api control relay
  - Support real-time multi-resolution transcoding
- - Support Enhancing RTMP, FLV
+ - Support Enhancing RTMP, FLV (HEVC/AV1 encoding using OBS)
 
 # Usage 
 
@@ -256,6 +256,9 @@ const config = {
 - Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
 - Commercial Pure JavaScrip live stream player: [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js)
 - OpenSource Pure JavaScrip live stream player: [pro-flv.js](https://github.com/illuspas/pro-fiv.js)
+- OBS 29.1+
+
+# AV1 over RTMP
 - OBS 29.1+
 
 # Event callback
