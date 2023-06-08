@@ -16,6 +16,7 @@ class NodeRelaySession extends EventEmitter {
     super();
     this.conf = conf;
     this.id = NodeCoreUtils.generateNewSessionID();
+    this.ts = Date.now() / 1000 | 0;
     this.TAG = 'relay';
   }
 
@@ -33,8 +34,8 @@ class NodeRelaySession extends EventEmitter {
         argv.unshift('-rtsp_transport');
       }
     }
-    
-    Logger.log('[relay task] id='+this.id,'cmd=ffmpeg', argv.join(' '));
+
+    Logger.log('[relay task] id=' + this.id, 'cmd=ffmpeg', argv.join(' '));
 
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
@@ -42,15 +43,15 @@ class NodeRelaySession extends EventEmitter {
     });
 
     this.ffmpeg_exec.stdout.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.ffdebug(`FF_LOG:${data}`);
     });
 
     this.ffmpeg_exec.stderr.on('data', (data) => {
-      Logger.ffdebug(`FF输出：${data}`);
+      Logger.ffdebug(`FF_LOG:${data}`);
     });
 
     this.ffmpeg_exec.on('close', (code) => {
-      Logger.log('[relay end] id='+this.id,'code='+code);
+      Logger.log('[relay end] id=' + this.id, 'code=' + code);
       this.emit('end', this.id);
     });
   }

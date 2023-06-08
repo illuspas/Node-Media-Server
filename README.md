@@ -5,13 +5,12 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![logo](https://www.nodemedia.cn/uploads/site_logo.png)
 
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
 [中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
 
-**If you like this project you can support me.**  
-<a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+# NodeMediaServer V3 
+[https://www.nodemedia.cn/product/node-media-server/](https://www.nodemedia.cn/product/node-media-server/)
 
 # Web Admin Panel Source
 [https://github.com/illuspas/Node-Media-Server-Admin](https://github.com/illuspas/Node-Media-Server-Admin)
@@ -24,9 +23,10 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 
 # Features
  - Cross platform support Windows/Linux/Unix
- - Support H.264/H.265(flv_id=12)/AAC/MP3/SPEEX/NELLYMOSER/G.711/OPUS(flv_id=13)
+ - Support H.264/AAC/MP3/SPEEX/NELLYMOSER/G.711
+ - Extension support H.265(flv_id=12)/OPUS(flv_id=13)
  - Support GOP cache
- - Support remux to LIVE-HTTP/WS-FLV,Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
+ - Support remux to LIVE-HTTP/WS-FLV, Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
  - Support remux to HLS/DASH/MP4
  - Support xycdn style authentication
  - Support event callback
@@ -35,6 +35,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Rtsp/Rtmp relay
  - Support api control relay
  - Support real-time multi-resolution transcoding
+ - Support Enhancing RTMP, FLV (HEVC/AV1 encoding using OBS)
 
 # Usage 
 
@@ -107,7 +108,7 @@ Stream Type : Custom Streaming Server
 
 URL : rtmp://localhost/live
 
-Stream key : STREAM_NAME
+Stream key : STREAM_NAME?sign=expires-HashValue (sign parameter required only if publish auth is enabled)
 
 # Accessing the live stream
 ## RTMP 
@@ -252,10 +253,13 @@ const config = {
 > The 'sign' keyword can not be modified
 
 # H.265 over RTMP
-H.265 does not appear in Adobe's official specification. Id 12 is the standard for most cloud services in China.  
-Publish or Transcode: [ffmpeg-hw-win32](#ffmpeg-hw-win32)  
-Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
-Pure JavaScrip live stream player: [NodePlayer.js](https://github.com/illuspas/NodePlayer.js)
+- Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
+- Commercial Pure JavaScrip live stream player: [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js)
+- OpenSource Pure JavaScrip live stream player: [pro-flv.js](https://github.com/illuspas/pro-fiv.js)
+- OBS 29.1+
+
+# AV1 over RTMP
+- OBS 29.1+
 
 # Event callback
 ```js
@@ -509,8 +513,10 @@ const config = {
         app: 'live',
         hls: true,
         hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        hlsKeep: true, // to prevent hls file delete after end the stream
         dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
+        dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
+        dashKeep: true // to prevent dash file delete after end the stream
       }
     ]
   }
@@ -739,20 +745,7 @@ https://github.com/NodeMedia/react-native-nodemediaclient
 * Implemented with asm.js / wasm
 * http-flv/ws-flv
 * H.264/H.265 + AAC/Nellymoser/G.711 decoder
-* Ultra low latency (Support for iOS safari browser)
+* Ultra low latency
+* All modern browsers are supported
 
-http://www.nodemedia.cn/products/node-media-player
-
-## Windows browser plugin(ActiveX/NPAPI)
-* H.264/H.265+AAC rtmp publisher
-* Camera/Desktop + Microphone capture
-* Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
-* Ultra low latency rtmp/rtsp/http live player
-* Only 6MB installation package
-
-http://www.nodemedia.cn/products/node-media-client/win
-
-# Thanks
-Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
-
-Thank you for your support.
+https://www.nodemedia.cn/product/nodeplayer-js/

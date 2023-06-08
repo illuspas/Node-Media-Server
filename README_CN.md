@@ -5,12 +5,10 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![logo](https://www.nodemedia.cn/uploads/site_logo.png)
-
 一个 Node.js 实现的RTMP/HTTP/WebSocket/HLS/DASH流媒体服务器
 
-## 微信赞赏码
-![zan](https://nodemedia.oss-cn-hangzhou.aliyuncs.com/1531102579211.jpg)
+# NodeMediaServer v3
+[https://www.nodemedia.cn/product/node-media-server/](https://www.nodemedia.cn/product/node-media-server/)
 
 # 特性
  - 跨平台支持 Windows/Linux/Unix
@@ -26,6 +24,7 @@
  - 支持RTMP/RTSP中继
  - 支持API控制中继
  - 支持实时多分辨率转码
+ - 支持加强版RTMP/FLV(2023协议,支持obs推流使用265/av1编码)
 
 # 用法 
 ## npx 运行
@@ -451,8 +450,10 @@ const config = {
         app: 'live',
         hls: true,
         hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+        hlsKeep: true, // to prevent hls file delete after end the stream
         dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]'
+        dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
+        dashKeep: true // to prevent dash file delete after end the stream
       }
     ]
   }
@@ -645,9 +646,3 @@ https://github.com/NodeMedia/react-native-nodemediaclient
 * 只有6M大小的安装包
 
 http://www.nodemedia.cn/products/node-media-client/win/
-
-# 感谢
-Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
-
-感谢你们的大力支持！
-

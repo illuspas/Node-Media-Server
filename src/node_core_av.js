@@ -53,7 +53,8 @@ const VIDEO_CODEC_NAME = [
   '',
   '',
   '',
-  'H265'
+  'H265',
+  'AV1',
 ];
 
 function getObjectType(bitop) {
@@ -373,6 +374,10 @@ function HEVCParseSPS(SPS, hevc) {
   psps.pic_width_in_luma_samples = rbspBitop.read_golomb();
   psps.pic_height_in_luma_samples = rbspBitop.read_golomb();
   psps.conformance_window_flag = rbspBitop.read(1);
+  psps.conf_win_left_offset = 0;
+  psps.conf_win_right_offset = 0;
+  psps.conf_win_top_offset = 0;
+  psps.conf_win_bottom_offset = 0;
   if (psps.conformance_window_flag) {
     let vert_mult = 1 + (psps.chroma_format_idc < 2);
     let horiz_mult = 1 + (psps.chroma_format_idc < 3);
@@ -461,12 +466,24 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
   return info;
 }
 
+// TODO
+function readAV1SpecificConfig(av1SequenceHeader) {
+  let info = {};
+  info.width = 0;
+  info.height = 0;
+  info.profile = 0;
+  info.level = 0;
+  return info;
+}
+
 function readAVCSpecificConfig(avcSequenceHeader) {
   let codec_id = avcSequenceHeader[0] & 0x0f;
   if (codec_id == 7) {
     return readH264SpecificConfig(avcSequenceHeader);
   } else if (codec_id == 12) {
     return readHEVCSpecificConfig(avcSequenceHeader);
+  } else if (codec_id == 13) {
+    return readAV1SpecificConfig(avcSequenceHeader);
   }
 }
 
