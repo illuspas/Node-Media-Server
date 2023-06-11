@@ -31,6 +31,7 @@
     "lodash": "^4.17.21",
     "minimist": "^1.2.8",
     "mkdirp": "^2.1.5",
+    "node-media-server": "^2.6.2",
     "ws": "^8.13.0"
   },
   "engines": {

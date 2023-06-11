@@ -54,9 +54,9 @@ const config = {
     api: true,
     api_user: 'admin',
     api_pass: 'admin',
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
+    play: true,
+    publish: true,
+    secret: 'mxsecret2023'
   }
 };
 
