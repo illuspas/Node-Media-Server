@@ -1128,7 +1128,8 @@ class NodeRtmpSession {
           this.onPublishCallback(context);
         }
       }).catch(err => {
-        Logger.log(`[rtmp publish] Authorization failed. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}. Error:\n${err}`);
+        Logger.log(`[rtmp publish] Authorization failed. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}.\n  ${err}`);
+        this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.publish.Unauthorized', 'Authorization failed.');
       })
     } else {
       this.onPublishCallback(context);
@@ -1182,7 +1183,8 @@ class NodeRtmpSession {
           this.onPlayCallback(context);
         }
       }).catch(err => {
-        Logger.log(`[rtmp play] Authorization failed. id=${this.id} streamPath=${this.playStreamPath} streamId=${this.playStreamId}. Error:\n${err}`);
+        Logger.log(`[rtmp play] Authorization failed. id=${this.id} streamPath=${this.playStreamPath} streamId=${this.playStreamId}.\n  ${err}`);
+        this.sendStatusMessage(this.playStreamId, 'error', 'NetStream.play.Unauthorized', 'Authorization failed.');
       })
     } else {
       this.onPlayCallback(context);

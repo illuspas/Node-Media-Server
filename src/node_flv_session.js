@@ -127,7 +127,7 @@ class NodeFlvSession {
           this.onPlayCallback(context);
         }
       }).catch(err => {
-        Logger.log(`[${this.TAG} play] Authorization failed. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}. Error:\n${err}`);
+        Logger.log(`[${this.TAG} play] Authorization failed. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}.\n  ${err}`);
         this.res.statusCode = 403;
         this.res.end();
       })
