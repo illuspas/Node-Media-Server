@@ -30,10 +30,15 @@ function genRandomName() {
   return name;
 }
 
-function verifyAuth(signStr, streamId, secretKey) {
+async function verifyAuth(signStr, streamId, secretKey, customAuth, action) {
   if (signStr === undefined) {
     return false;
   }
+
+  if (customAuth) {
+    return customAuth(signStr, streamId, secretKey, action);
+  }
+
   let now = Date.now() / 1000 | 0;
   let exp = parseInt(signStr.split('-')[0]);
   let shv = signStr.split('-')[1];

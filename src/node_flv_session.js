@@ -116,16 +116,27 @@ class NodeFlvSession {
     if (!this.isStarting) {
       return;
     }
-    if (this.config.auth !== undefined && this.config.auth.play) {
-      let results = NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret);
-      if (!results) {
-        Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+
+    if (this.config.auth && this.config.auth.play && !this.isLocal) {
+      NodeCoreUtils.verifyAuth(this.playArgs.sign, this.playStreamPath, this.config.auth.secret, this.config.auth.customAuth, 'read').then(results => {
+        if (!results) {
+          Logger.log(`[${this.TAG} play] Unauthorized. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}`);
+          this.res.statusCode = 403;
+          this.res.end();
+        } else {
+          this.onPlayCallback(context);
+        }
+      }).catch(err => {
+        Logger.log(`[${this.TAG} play] Authorization failed. id=${this.id} streamPath=${this.playStreamPath} sign=${this.playArgs.sign}. Error:\n${err}`);
         this.res.statusCode = 403;
         this.res.end();
-        return;
-      }
+      })
+    } else {
+      this.onPlayCallback(context);
     }
+  }
 
+  onPlayCallback(context) {
     if (!context.publishers.has(this.playStreamPath)) {
       Logger.log(`[${this.TAG} play] Stream not found. id=${this.id} streamPath=${this.playStreamPath} `);
       context.idlePlayers.add(this.id);
