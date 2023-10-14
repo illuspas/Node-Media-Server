@@ -217,6 +217,9 @@ class NodeRtmpSession {
       }
 
       Logger.log(`[rtmp disconnect] id=${this.id}`);
+      
+      this.connectCmdObj.bytesWritten = this.socket.bytesWritten;
+      this.connectCmdObj.bytesRead = this.socket.bytesRead;
       context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
 
       context.sessions.delete(this.id);

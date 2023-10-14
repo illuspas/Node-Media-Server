@@ -91,6 +91,8 @@ class NodeFlvSession {
       }
       Logger.log(`[${this.TAG} play] Close stream. id=${this.id} streamPath=${this.playStreamPath}`);
       Logger.log(`[${this.TAG} disconnect] id=${this.id}`);
+      this.connectCmdObj.bytesWritten = this.res.socket.bytesWritten;
+      this.connectCmdObj.bytesRead = this.res.socket.bytesRead;
       context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
       this.res.end();
       context.idlePlayers.delete(this.id);
