@@ -73,8 +73,8 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, this.conf.vcParam);
     Array.prototype.push.apply(argv, ['-c:a', ac]);
     Array.prototype.push.apply(argv, this.conf.acParam);
-    // Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
-    Array.prototype.push.apply(argv, ['-f', 'tee', mapStr]);
+    Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
+    // Array.prototype.push.apply(argv, ['-f', 'tee', mapStr]);
     // Array.prototype.push.apply(argv, ['-f', 'flv', mapStr]);
     argv = argv.filter((n) => { return n; }); //去空
     Logger.log('[Transmuxing command] ' + argv);
