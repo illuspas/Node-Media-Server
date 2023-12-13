@@ -66,13 +66,19 @@ class NodeTransSession extends EventEmitter {
     }
     mkdirp.sync(ouPath);
     let argv = ['-y', '-i', inPath];
+    if (this.conf.i) {
+      Array.prototype.push.apply(argv, this.conf.i);
+    }
     Array.prototype.push.apply(argv, ['-c:v', vc]);
     Array.prototype.push.apply(argv, this.conf.vcParam);
     Array.prototype.push.apply(argv, ['-c:a', ac]);
     Array.prototype.push.apply(argv, this.conf.acParam);
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
+    // Array.prototype.push.apply(argv, ['-f', 'tee', mapStr]);
+    // Array.prototype.push.apply(argv, ['-f', 'flv', mapStr]);
     argv = argv.filter((n) => { return n; }); //去空
-    
+    Logger.log('[Transmuxing command] ' + argv);
+
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
