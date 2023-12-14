@@ -82,6 +82,9 @@ class NodeHttpServer {
         key: Fs.readFileSync(this.config.https.key),
         cert: Fs.readFileSync(this.config.https.cert)
       };
+      if (this.config.https.passphrase) {
+        Object.assign(options, { passphrase: this.config.https.passphrase });
+      }
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
       this.httpsServer = Https.createServer(options, app);
     }
