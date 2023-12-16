@@ -99,16 +99,16 @@
 #### 返回参数
 | 参数名  | 参数类型 | 说明 |
 | :- | :-: | :-: |
-| app | Record<StreamName, Stream> | 应用对象 |
-| stream | Record<String, Relay[]> | 媒体流对象 |
-| Relay | Object | 中继任务实体 |
-| Relay.app | String | 应用名 |
-| Relay.name | String | 媒体流名称 |
-| Relay.path | String | 中继任务源地址 |
-| Relay.url | String | 中继任务目标地址 |
-| Relay.mode | String | 中继任务模式(pull, push, relay) |
-| Relay.ts | Number | 中继任务开始时间 |
-| Relay.id | String | 中继任务ID |
+| app | Object | 应用的名称 |  
+| stream | Object | 流的名称 |  
+| relays | Object | 中继列表 |  
+| relays[].app | String | 应用名称 |  
+| relays[].name | String | 中继任务名称 |  
+| relays[].path | String | 中继任务源地址 |  
+| relays[].url | String | 中继任务目标地址 |  
+| relays[].mode | String | 中继任务模式 |  
+| relays[].ts | Number | 中继任务开始时间 |  
+| relays[].id | String | 中继任务ID |
 
 #### 返回示例
 ```JSON
@@ -122,7 +122,7 @@
                     "path": "",
                     "url": "xxx",
                     "mode": "xxx",
-                    "ts": "xxx",
+                    "ts": ,
                     "id": "xxx"
                 }
             ]
@@ -421,8 +421,8 @@ HTTP status 200
 #### 返回参数
 | 参数名 | 数据类型 | 说明 |
 | :- | :-: | :-: |
-| app | String | 应用的名称。 |  
-| stream | String | 流的名称。 |  
+| app | Object | 应用的名称。 |  
+| stream | Object | 流的名称。 |  
 | publisher.app | String | 发布者应用的名称。 |  
 | publisher.stream | String | 发布者流的名称。 |  
 | publisher.clientId | String | 发布者的客户端ID。 |  
