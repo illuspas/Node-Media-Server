@@ -76,6 +76,8 @@ nms.run();
 node app.js
 ```
 
+## http接口调用
+[接口文档](API_CN.md)
 
 # 直播发布
 ## 使用 FFmpeg 推流
