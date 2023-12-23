@@ -28,10 +28,10 @@ node_modules
 .lock-wscript
 *.m4s
 *.m3u8
-*.ts
 *.mp4
 *.mpd
 
 .vscode
 
 yarn.lock
+dest

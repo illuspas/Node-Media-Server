@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+      "target": "es2016",
+      "module": "commonjs",                                /* Specify what module code is generated. */
+      "rootDir": "./src",
+      "outDir": "./dest", 
+      "allowJs": true,          /* Allow 'import x from y' when a module doesn't have a default export. */
+      "esModuleInterop": true,                        /* Disable resolving symlinks to their realpath. This correlates to the same flag in node. */
+      "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
+      "strict": true,
+      "skipLibCheck": true,
+      "paths": {
+        "@types": ["./src/types"]
+      }
+    },
+    "include": [
+      "src/**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      "**/*.spec.ts"
+    ]
+  }
+  
