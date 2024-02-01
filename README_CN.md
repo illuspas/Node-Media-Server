@@ -547,6 +547,7 @@ relay: {
 
 ### 动态推流
 当本地服务器收到一个发布请求，自动将这个流推送到边缘服务器。
+设置 autoRetry 为 true ，当与边缘服务器断连时，如果请求发布者依然活跃，动态推流会自动重试。
 
 ```
 relay: {
@@ -556,6 +557,7 @@ relay: {
       app: 'live',
       mode: 'push',
       edge: 'rtmp://192.168.0.10',
+      autoRetry: true
     }
   ]
 }
