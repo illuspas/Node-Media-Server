@@ -98,10 +98,11 @@ class NodeRelayServer {
   }
 
   //从远端拉推到本地
-  onRelayPull(url, app, name, rtsp_transport) {
+  onRelayPull(url, app, name, options, rtsp_transport) {
     let conf = {};
     conf.app = app;
     conf.name = name;
+    conf.options = options;
     conf.mode = 'pull';
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
@@ -124,10 +125,11 @@ class NodeRelayServer {
   }
 
   //从本地拉推到远端
-  onRelayPush(url, app, name) {
+  onRelayPush(url, app, name, options) {
     let conf = {};
     conf.app = app;
     conf.name = name;
+    conf.options = options;
     conf.mode = 'push';
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
