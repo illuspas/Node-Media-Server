@@ -50,6 +50,18 @@ const config = {
     key: __dirname+'/privatekey.pem',
     cert: __dirname+'/certificate.pem',
   },
+  trans: {
+    ffmpeg: '/usr/local/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'live',
+        mp4: true,
+        mp4Flags: '[movflags=frag_keyframe+empty_moov]',
+        wav: true,
+        wavArgs: ['-ac', '1', '-ar', '16000'],
+      }
+    ]
+  },
   auth: {
     api: true,
     api_user: 'admin',
