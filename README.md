@@ -5,9 +5,7 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
-[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
 
 # NodeMediaServer V3 
 [https://www.nodemedia.cn/product/node-media-server/](https://www.nodemedia.cn/product/node-media-server/)
@@ -730,7 +728,6 @@ fission: {
 
 ## Android Livestream App
 https://play.google.com/store/apps/details?id=cn.nodemedia.qlive  
-http://www.nodemedia.cn/uploads/qlive-release.apk  
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
