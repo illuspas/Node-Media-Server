@@ -34,8 +34,8 @@ const config = {
     ping_timeout: 60,
     // ssl: {
     //   port: 443,
-    //   key: __dirname+'/privatekey.pem',
-    //   cert: __dirname+'/certificate.pem',
+    //   key: __dirname+'/key.pem',
+    //   cert: __dirname+'/cert.pem',
     // }
   },
   http: {
@@ -47,8 +47,8 @@ const config = {
   },
   https: {
     port: argv.https_port,
-    key: __dirname+'/privatekey.pem',
-    cert: __dirname+'/certificate.pem',
+    key: __dirname+'/key.pem',
+    cert: __dirname+'/cert.pem',
   },
   auth: {
     api: true,
