@@ -185,6 +185,11 @@ There are a total of 4 possible options:
 Modifying the logging type is easy - just add a new value `logType` in the config and set it to a value between 0 and 4.
 By default, this is set to show errors and generic info internally (setting 2).
 
+For custom log handling, see events for log message `logMessage`, `errorMessage`, `debugMessage`, and `ffDebugMessage`.
+
+> The logger events noted above are fired independently of the log level set by `logType`
+
+
 ```js
 const NodeMediaServer = require('node-media-server');
 
@@ -303,6 +308,23 @@ nms.on('postPlay', (id, StreamPath, args) => {
 
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('logMessage', (...args) => {
+  // custom logger log message handler
+});
+
+nms.on('errorMessage', (...args) => {
+  // custom logger error message handler
+});
+
+nms.on('debugMessage', (...args) => {
+  // custom logger debug message handler
+});
+
+
+nms.on('ffDebugMessage', (...args) => {
+  // custom logger ffmpeg debug message handler
 });
 ```
 # Https/Wss
