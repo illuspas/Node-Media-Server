@@ -169,7 +169,7 @@ class NodeRtmpSession {
     this.inAckSize = 0;
     this.inLastAck = 0;
 
-    this.appname = '';
+    this.appname = config.appname || "live";
     this.streams = 0;
 
     this.playStreamId = 0;
