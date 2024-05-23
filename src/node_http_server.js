@@ -8,9 +8,10 @@
 const Fs = require('fs');
 const path = require('path');
 const Http = require('http');
-const Https = require('https');
+const Http2 = require('http2');
 const WebSocket = require('ws');
 const Express = require('express');
+const H2EBridge = require('http2-express-bridge');
 const bodyParser = require('body-parser');
 const basicAuth = require('basic-auth-connect');
 const NodeFlvSession = require('./node_flv_session');
@@ -30,7 +31,7 @@ class NodeHttpServer {
     this.mediaroot = config.http.mediaroot || HTTP_MEDIAROOT;
     this.config = config;
 
-    let app = Express();
+    let app = H2EBridge(Express);
     app.use(bodyParser.json());
 
     app.use(bodyParser.urlencoded({ extended: true }));
@@ -81,7 +82,7 @@ class NodeHttpServer {
         Object.assign(options, { passphrase: this.config.https.passphrase });
       }
       this.sport = config.https.port ? config.https.port : HTTPS_PORT;
-      this.httpsServer = Https.createServer(options, app);
+      this.httpsServer = Http2.createSecureServer(options, app);
     }
   }
 
