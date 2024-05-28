@@ -9,8 +9,9 @@ const EventEmitter = require('events');
 const { spawn } = require('child_process');
 
 class NodeFissionSession extends EventEmitter {
-  constructor(conf) {
+  constructor(id, conf) {
     super();
+    this.id = id;
     this.conf = conf;
   }
 
@@ -18,15 +19,24 @@ class NodeFissionSession extends EventEmitter {
     let inPath = 'rtmp://127.0.0.1:' + this.conf.rtmpPort + this.conf.streamPath;
     let argv = ['-i', inPath];
     for (let m of this.conf.model) {
-      let x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency', '-maxrate', m.vb, '-bufsize', m.vb, '-g', parseInt(m.vf) * 2, '-r', m.vf, '-s', m.vs];
-      let aac = ['-c:a', 'aac', '-b:a', m.ab];
-      let outPath = ['-f', 'flv', 'rtmp://127.0.0.1:' + this.conf.rtmpPort + '/' + this.conf.streamApp + '/' + this.conf.streamName + '_' + m.vs.split('x')[1]];
-      argv.splice(argv.length, 0, ...x264);
-      argv.splice(argv.length, 0, ...aac);
-      argv.splice(argv.length, 0, ...outPath);
+      if (m.options) {
+        argv.splice(argv.length, 0, ...m.options);
+        let outPath = ['-f', 'flv', 'rtmp://127.0.0.1:' + this.conf.rtmpPort + '/' + this.conf.streamApp + '/' + this.conf.streamName + '_' + m.suffix];
+        argv.splice(argv.length, 0, ...outPath);
+      } else {
+        let x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency', '-maxrate', m.vb, '-bufsize', m.vb, '-g', parseInt(m.vf) * 2, '-r', m.vf, '-s', m.vs];
+        let aac = ['-c:a', 'aac', '-b:a', m.ab];
+        let outPath = ['-f', 'flv', 'rtmp://127.0.0.1:' + this.conf.rtmpPort + '/' + this.conf.streamApp + '/' + this.conf.streamName + '_' + m.vs.split('x')[1]];
+        argv.splice(argv.length, 0, ...x264);
+        argv.splice(argv.length, 0, ...aac);
+        argv.splice(argv.length, 0, ...outPath);
+      }
     }
 
     argv = argv.filter((n) => { return n; });
+
+    Logger.log('[fission task] id=' + this.id, 'cmd=ffmpeg', argv.join(' '));
+
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
