@@ -51,9 +51,10 @@ const VIDEO_CODEC_NAME = [
   'H264',
   '',
   '',
-  'VP8',
-  'VP9',
-  'H265'
+  '',
+  '',
+  'H265',
+  'AV1',
 ];
 
 function getObjectType(bitop) {
@@ -465,12 +466,24 @@ function readHEVCSpecificConfig(hevcSequenceHeader) {
   return info;
 }
 
+// TODO
+function readAV1SpecificConfig(av1SequenceHeader) {
+  let info = {};
+  info.width = 0;
+  info.height = 0;
+  info.profile = 0;
+  info.level = 0;
+  return info;
+}
+
 function readAVCSpecificConfig(avcSequenceHeader) {
   let codec_id = avcSequenceHeader[0] & 0x0f;
   if (codec_id == 7) {
     return readH264SpecificConfig(avcSequenceHeader);
   } else if (codec_id == 12) {
     return readHEVCSpecificConfig(avcSequenceHeader);
+  } else if (codec_id == 13) {
+    return readAV1SpecificConfig(avcSequenceHeader);
   }
 }
 

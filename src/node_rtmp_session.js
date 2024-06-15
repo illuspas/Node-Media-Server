@@ -82,6 +82,19 @@ const STREAM_DRY = 0x02;
 const STREAM_EMPTY = 0x1f;
 const STREAM_READY = 0x20;
 
+// Enhancing RTMP, FLV  2023-03-v1.0.0-B.9
+// https://github.com/veovera/enhanced-rtmp
+const FourCC_AV1 = Buffer.from('av01');
+const FourCC_VP9 = Buffer.from('vp09');
+const FourCC_HEVC = Buffer.from('hvc1');
+
+const PacketTypeSequenceStart = 0;
+const PacketTypeCodedFrames = 1;
+const PacketTypeSequenceEnd = 2;
+const PacketTypeCodedFramesX = 3;
+const PacketTypeMetadata = 4;
+const PacketTypeMPEG2TSSequenceStart = 5
+
 const RtmpPacket = {
   create: (fmt = 0, cid = 0) => {
     return {
@@ -204,6 +217,7 @@ class NodeRtmpSession {
       }
 
       Logger.log(`[rtmp disconnect] id=${this.id}`);
+      
       context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
 
       context.sessions.delete(this.id);
@@ -708,8 +722,61 @@ class NodeRtmpSession {
 
   rtmpVideoHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    let frame_type = (payload[0] >> 4) & 0x0f;
+    let isExHeader = (payload[0] >> 4 & 0b1000) !== 0;
+    let frame_type = payload[0] >> 4 & 0b0111;
     let codec_id = payload[0] & 0x0f;
+    let packetType = payload[0] & 0x0f;
+    if (isExHeader) {
+      if (packetType == PacketTypeMetadata) {
+
+      }
+      else if (packetType == PacketTypeSequenceEnd) {
+
+      }
+      let FourCC = payload.subarray(1, 5);
+      if (FourCC.compare(FourCC_HEVC) == 0) {
+        codec_id = 12;
+        if (packetType == PacketTypeSequenceStart) {
+          payload[0] = 0x1c;
+          payload[1] = 0;
+          payload[2] = 0;
+          payload[3] = 0;
+          payload[4] = 0;
+        } else if (packetType == PacketTypeCodedFrames || packetType == PacketTypeCodedFramesX) {
+          if (packetType == PacketTypeCodedFrames) {
+            payload = payload.subarray(3);
+          } else {
+            payload[2] = 0;
+            payload[3] = 0;
+            payload[4] = 0;
+          }
+          payload[0] = frame_type << 4 | 0x0c;
+          payload[1] = 1;
+        }
+      } else if (FourCC.compare(FourCC_AV1) == 0) {
+        codec_id = 13;
+        if (packetType == PacketTypeSequenceStart) {
+          payload[0] = 0x1d;
+          payload[1] = 0;
+          payload[2] = 0;
+          payload[3] = 0;
+          payload[4] = 0;
+          // Logger.log("PacketTypeSequenceStart", payload.subarray(0, 16));
+        } else if (packetType == PacketTypeMPEG2TSSequenceStart) {
+          // Logger.log("PacketTypeMPEG2TSSequenceStart", payload.subarray(0, 16));
+        } else if (packetType == PacketTypeCodedFrames) {
+          // Logger.log("PacketTypeCodedFrames", payload.subarray(0, 16));
+          payload[0] = frame_type << 4 | 0x0d;
+          payload[1] = 1;
+          payload[2] = 0;
+          payload[3] = 0;
+          payload[4] = 0;
+        }
+      } else {
+        Logger.log(`unsupported extension header`);
+        return;
+      }
+    }
 
     if (this.videoFps === 0) {
       if (this.videoCount++ === 0) {
@@ -719,7 +786,7 @@ class NodeRtmpSession {
       }
     }
 
-    if (codec_id == 7 || codec_id == 12) {
+    if (codec_id == 7 || codec_id == 12 || codec_id == 13) {
       //cache avc sequence header
       if (frame_type == 1 && payload[1] == 0) {
         this.avcSequenceHeader = Buffer.alloc(payload.length);
@@ -758,7 +825,7 @@ class NodeRtmpSession {
         this.rtmpGopCacheQueue.clear();
         this.flvGopCacheQueue.clear();
       }
-      if ((codec_id == 7 || codec_id == 12) && frame_type == 1 && payload[1] == 0) {
+      if ((codec_id == 7 || codec_id == 12 || codec_id == 13) && frame_type == 1 && payload[1] == 0) {
         //skip avc sequence header
       } else {
         this.rtmpGopCacheQueue.add(rtmpChunks);
@@ -1154,7 +1221,7 @@ class NodeRtmpSession {
       this.socket.write(chunks);
     }
 
-    if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
+    if (publisher.videoCodec === 7 || publisher.videoCodec === 12 || publisher.videoCodec === 13) {
       let packet = RtmpPacket.create();
       packet.header.fmt = RTMP_CHUNK_TYPE_0;
       packet.header.cid = RTMP_CHANNEL_VIDEO;
@@ -1202,7 +1269,7 @@ class NodeRtmpSession {
           let chunks = this.rtmpChunksCreate(packet);
           this.socket.write(chunks);
         }
-        if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
+        if (publisher.videoCodec === 7 || publisher.videoCodec === 12 || publisher.videoCodec === 13) {
           let packet = RtmpPacket.create();
           packet.header.fmt = RTMP_CHUNK_TYPE_0;
           packet.header.cid = RTMP_CHANNEL_VIDEO;

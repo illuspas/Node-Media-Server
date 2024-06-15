@@ -5,13 +5,10 @@
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 [![Join the chat at https://gitter.im/Illuspas/Node-Media-Server](https://badges.gitter.im/Illuspas/Node-Media-Server.svg)](https://gitter.im/Illuspas/Node-Media-Server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![logo](https://www.nodemedia.cn/uploads/site_logo.png)
-
 A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server  
-[中文介绍](https://github.com/illuspas/Node-Media-Server/blob/master/README_CN.md)  
 
-**If you like this project you can support me.**  
-<a href="https://www.buymeacoffee.com/illuspas" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-white.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+# NodeMediaServer V3 
+[https://www.nodemedia.cn/product/node-media-server/](https://www.nodemedia.cn/product/node-media-server/)
 
 # Web Admin Panel Source
 [https://github.com/illuspas/Node-Media-Server-Admin](https://github.com/illuspas/Node-Media-Server-Admin)
@@ -25,7 +22,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
 # Features
  - Cross platform support Windows/Linux/Unix
  - Support H.264/AAC/MP3/SPEEX/NELLYMOSER/G.711
- - Extension support H.265(flv_id=12)/VP8(flv_id=10)/VP9(flv_id=11)/OPUS(flv_id=13)
+ - Extension support H.265(flv_id=12)/OPUS(flv_id=13)
  - Support GOP cache
  - Support remux to LIVE-HTTP/WS-FLV, Support [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js) playback
  - Support remux to HLS/DASH/MP4
@@ -36,6 +33,7 @@ A Node.js implementation of RTMP/HTTP-FLV/WS-FLV/HLS/DASH Media Server
  - Support Rtsp/Rtmp relay
  - Support api control relay
  - Support real-time multi-resolution transcoding
+ - Support Enhancing RTMP, FLV (HEVC/AV1 encoding using OBS)
 
 # Usage 
 
@@ -187,6 +185,11 @@ There are a total of 4 possible options:
 Modifying the logging type is easy - just add a new value `logType` in the config and set it to a value between 0 and 4.
 By default, this is set to show errors and generic info internally (setting 2).
 
+For custom log handling, see events for log message `logMessage`, `errorMessage`, `debugMessage`, and `ffDebugMessage`.
+
+> The logger events noted above are fired independently of the log level set by `logType`
+
+
 ```js
 const NodeMediaServer = require('node-media-server');
 
@@ -256,9 +259,10 @@ const config = {
 - Play:[NodeMediaClient-Android](#android) and [NodeMediaClient-iOS](#ios)  
 - Commercial Pure JavaScrip live stream player: [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js)
 - OpenSource Pure JavaScrip live stream player: [pro-flv.js](https://github.com/illuspas/pro-fiv.js)
+- OBS 29.1+
 
-# VP8 VP9 OPUS over RTMP
-[Extension ffmpeg](https://github.com/NodeMedia/ffmpeg)
+# AV1 over RTMP
+- OBS 29.1+
 
 # Event callback
 ```js
@@ -305,14 +309,29 @@ nms.on('postPlay', (id, StreamPath, args) => {
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
+
+nms.on('logMessage', (...args) => {
+  // custom logger log message handler
+});
+
+nms.on('errorMessage', (...args) => {
+  // custom logger error message handler
+});
+
+nms.on('debugMessage', (...args) => {
+  // custom logger debug message handler
+});
+
+
+nms.on('ffDebugMessage', (...args) => {
+  // custom logger ffmpeg debug message handler
+});
 ```
 # Https/Wss
 
 ## Generate certificate
 ```bash
-openssl genrsa -out privatekey.pem 1024
-openssl req -new -key privatekey.pem -out certrequest.csr 
-openssl x509 -req -in certrequest.csr -signkey privatekey.pem -out certificate.pem
+openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out cert.pem
 ```
 
 ## Config https
@@ -333,8 +352,8 @@ const config = {
   },
   https: {
     port: 8443,
-    key:'./privatekey.pem',
-    cert:'./certificate.pem',
+    key:'./key.pem',
+    cert:'./cert.pem',
   }
 };
 
@@ -729,7 +748,6 @@ fission: {
 
 ## Android Livestream App
 https://play.google.com/store/apps/details?id=cn.nodemedia.qlive  
-http://www.nodemedia.cn/uploads/qlive-release.apk  
 
 ## Android SDK
 https://github.com/NodeMedia/NodeMediaClient-Android
@@ -744,20 +762,7 @@ https://github.com/NodeMedia/react-native-nodemediaclient
 * Implemented with asm.js / wasm
 * http-flv/ws-flv
 * H.264/H.265 + AAC/Nellymoser/G.711 decoder
-* Ultra low latency (Support for iOS safari browser)
+* Ultra low latency
+* All modern browsers are supported
 
-http://www.nodemedia.cn/products/node-media-player
-
-## Windows browser plugin(ActiveX/NPAPI)
-* H.264/H.265+AAC rtmp publisher
-* Camera/Desktop + Microphone capture
-* Nvidia/AMD/Intel Hardware acceleration Encoder/Decoder
-* Ultra low latency rtmp/rtsp/http live player
-* Only 6MB installation package
-
-http://www.nodemedia.cn/products/node-media-client/win
-
-# Thanks
-Sorng Sothearith, standifer1023, floatflower, Christopher Thomas, strive, jaysonF, 匿名, 李勇, 巴草根, ZQL, 陈勇至, -Y, 高山流水, 老郭, 孙建, 不说本可以, Jacky, 人走茶凉，树根, 疯狂的台灯, 枫叶, lzq, 番茄, smicroz , kasra.shahram, 熊科辉, Ken Lee , Erik Herz, Javier Gomez, trustfarm, leeoxiang, Aaron Turner， Anonymous  
-
-Thank you for your support.
+https://www.nodemedia.cn/product/nodeplayer-js/
