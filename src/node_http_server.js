@@ -24,6 +24,8 @@ const context = require('./node_core_ctx');
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
 const relayRoute = require('./api/routes/relay');
+const { uploadFileToS3 } = require('./node_storage_upload');
+const dotenv = require('./node_flv_session');
 
 class NodeHttpServer {
   constructor(config) {
@@ -49,7 +51,7 @@ class NodeHttpServer {
       this.onConnect(req, res);
     });
 
-    let adminEntry = path.join(__dirname + '/public/admin/index.html');
+    let adminEntry = path.join(process.cwd(), 'nodeMediaServer/public/admin/index.html');
     if (Fs.existsSync(adminEntry)) {
       app.get('/admin/*', (req, res) => {
         res.sendFile(adminEntry);
@@ -65,11 +67,30 @@ class NodeHttpServer {
       app.use('/api/relay', relayRoute(context));
     }
 
-    app.use(Express.static(path.join(__dirname + '/public')));
-    app.use(Express.static(this.mediaroot));
-    if (config.http.webroot) {
-      app.use(Express.static(config.http.webroot));
-    }
+    app.use(Express.static(path.join(process.cwd(), 'nodeMediaServer/public')));
+
+    // app.use(Express.static(this.mediaroot));
+    // 기존 express.static을 커스텀 핸들러로 대체
+    app.use((req, res, next) => {
+      // Object Storage 업로드 로직
+      const uploadFilePath = path.join(process.cwd(), this.mediaroot, req.path);
+
+      Fs.access(uploadFilePath, Fs.constants.F_OK, (err) => {
+        const destPath = req.path.replace(/^\/+/, ''); // /live/web22 같이 들어왔을 때, live/web22 로 경로 바꿔주기 위해서 replace
+        if (err) {
+          console.log(`File not found: ${uploadFilePath}`);
+          res.status(404).send('File not found');
+        } else {
+          console.log('object storage upload');
+          uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, req.path.replace(/^\/+/, ''), uploadFilePath).then((r) => {
+            console.log('upload completed');
+          });
+          console.log(`uploadFilePath : ${uploadFilePath}`);
+          res.sendFile(uploadFilePath);
+        }
+      });
+    });
+
 
     this.httpServer = Http.createServer(app);
 
