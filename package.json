@@ -1,9 +1,10 @@
 {
   "name": "node-media-server",
   "version": "2.7.0",
-  "description": "A Node.js implementation of RTMP Server",
+  "description": "A Node.js implementation of RTMP Server for naver boostcamp project : liboo",
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
+  "types" : "types/index.d.ts",
   "scripts": {
     "start": "node bin/app.js",
     "test": "node test/test_run.js"
@@ -24,6 +25,8 @@
   },
   "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.685.0",
+    "aws-sdk": "^2.1691.0",
     "basic-auth-connect": "^1.0.0",
     "chalk": "^4.1.0",
     "dateformat": "^4.6.3",
@@ -36,5 +39,8 @@
   },
   "engines": {
     "node": ">=8.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
   }
 }
