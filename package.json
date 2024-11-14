@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "version": "2.7.28",
+  "version": "2.7.29",
   "description": "A Node.js implementation of RTMP Server for naver boostcamp project : liboo",
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
@@ -30,7 +30,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.688.0",
     "@types/node": "^22.9.0",
-    "aws-sdk": "^2.1692.0",
     "basic-auth-connect": "^1.0.0",
     "body-parser": "1.20.3",
     "chalk": "^4.1.0",
@@ -47,5 +46,6 @@
   },
   "devDependencies": {
     "prettier": "^3.3.3"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
