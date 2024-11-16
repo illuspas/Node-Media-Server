@@ -1,9 +1,6 @@
 {
   "name": "@hoeeeeeh/node-media-server",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
-  "version": "2.7.29",
+  "version": "2.7.33",
   "description": "A Node.js implementation of RTMP Server for naver boostcamp project : liboo",
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
