@@ -529,8 +529,8 @@ function amf0decDate(buf) {
 function amf0encDate(ts) {
   let buf = Buffer.alloc(11);
   buf.writeUInt8(0x0B, 0);
-  buf.writeInt16BE(0, 1);
-  buf.writeDoubleBE(ts, 3);
+  buf.writeDoubleBE(ts, 1);
+  buf.writeInt16BE(0, 9);
   return buf;
 }
 
