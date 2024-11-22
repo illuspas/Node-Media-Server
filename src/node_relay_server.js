@@ -151,14 +151,14 @@ class NodeRelayServer {
     }
     let regRes = /\/(.*)\/(.*)/gi.exec(streamPath);
     let [app, stream] = _.slice(regRes, 1);
-    let i = this.config.relay.tasks.length;
-    while (i--) {
-      let conf = this.config.relay.tasks[i];
+
+    let conf = this.config.relay.tasks.find((config) => config.name === stream);
+    if (conf) {
       let isPull = conf.mode === 'pull';
       if (isPull && app === conf.app && !context.publishers.has(streamPath)) {
         let hasApp = conf.edge.match(/rtmp:\/\/([^\/]+)\/([^\/]+)/);
         conf.ffmpeg = this.config.relay.ffmpeg;
-        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
+        conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}`;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         if (Object.keys(args).length > 0) {
           conf.inPath += '?';
@@ -173,11 +173,12 @@ class NodeRelayServer {
         session.run();
         Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
       }
+
     }
   }
 
   onDonePlay(id, streamPath, args) {
-    let session = this.dynamicSessions.get(id);
+    let session = Array.from(this.dynamicSessions, ([name, value]) => value ).find((session)=>{return session.conf.name === streamPath.split('/')[2]});
     let publisher = context.sessions.get(context.publishers.get(streamPath));
     if (session && publisher.players.size == 0) {
       session.end();
