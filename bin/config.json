@@ -1,0 +1,19 @@
+{
+    "rtmp": {
+        "port": 1935
+    },
+    "http": {
+        "bind": "0.0.0.0",
+        "port": 8000,
+        "webroot": "./www",
+        "mediaroot": "./media",
+        "allow_origin": "*",
+        "api": true
+    },
+    "https": {
+        "bind": "0.0.0.0",
+        "port": 8443,
+        "key": "./bin/key.pem",
+        "cert": "./bin/cert.pem"
+    }
+}
