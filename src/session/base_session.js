@@ -1,3 +1,4 @@
+// @ts-check
 //
 //  Created by Chen Mingliang on 23/11/30.
 //  illuspas@msn.com
@@ -5,7 +6,9 @@
 //
 
 import { customAlphabet } from "nanoid";
+
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 16);
+
 
 export default class BaseSession {
   constructor() {
@@ -29,6 +32,7 @@ export default class BaseSession {
   }
 
   /**
+   * @abstract
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {

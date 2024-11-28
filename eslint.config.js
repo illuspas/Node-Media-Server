@@ -12,12 +12,12 @@ export default [
       jsdoc,
     },
     rules: {
-      "jsdoc/require-returns-description": "off",
       "jsdoc/valid-types": "error",
       "jsdoc/check-types": "error",
+      "jsdoc/require-returns-description": "off",
       "jsdoc/require-param-description": "off",
       "no-unused-vars": "off",
-      "no-undef": "warn",
+      "no-undef": "error",
       "semi": [2, "always"],
       "quotes": [2, "double"]
     }

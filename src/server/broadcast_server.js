@@ -1,4 +1,4 @@
-
+// @ts-check
 //
 //  Created by Chen Mingliang on 23/11/30.
 //  illuspas@msn.com
@@ -11,7 +11,7 @@ import BaseSession from "../session/base_session.js";
 
 export default class BroadcastServer {
   constructor() {
-    /** @type {BaseSession} */
+    /** @type {BaseSession | null} */
     this.publisher = null;
 
     /** @type {Map<string, BaseSession>} */
@@ -20,13 +20,13 @@ export default class BroadcastServer {
     /** @type {Buffer} */
     this.flvHeader = Flv.createHeader(true, true);
 
-    /** @type {Buffer} */
+    /** @type {Buffer | null} */
     this.flvMetaData = null;
 
-    /** @type {Buffer} */
+    /** @type {Buffer | null} */
     this.flvAudioHeader = null;
 
-    /** @type {Buffer} */
+    /** @type {Buffer | null} */
     this.flvVideoHeader = null;
   }
 
@@ -61,7 +61,7 @@ export default class BroadcastServer {
 
   /**
    * @param {BaseSession} session
-   * @returns {string}
+   * @returns {string | null}
    */
   postPush = (session) => {
     if (this.publisher == null) {

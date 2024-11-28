@@ -1,3 +1,4 @@
+// @ts-check
 //
 //  Created by Chen Mingliang on 23/12/01.
 //  illuspas@msn.com
@@ -28,6 +29,10 @@ const PacketTypeCodedFramesX = 3;
 const PacketTypeMetadata = 4;
 const PacketTypeMPEG2TSSequenceStart = 5;
 
+/**
+ * @class
+ * @augments EventEmitter
+ */
 export default class Flv extends EventEmitter {
   constructor() {
     super();

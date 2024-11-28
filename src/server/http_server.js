@@ -1,3 +1,10 @@
+// @ts-check
+//
+//  Created by Chen Mingliang on 23/12/01.
+//  illuspas@msn.com
+//  Copyright (c) 2023 Nodemedia. All rights reserved.
+//
+
 import fs from "node:fs";
 import http from "node:http";
 import http2 from "node:http2";
@@ -5,8 +12,12 @@ import express from "express";
 import http2Express from "http2-express-bridge";
 import FlvSession from "../session/flv_session.js";
 import logger from "../core/logger.js";
+import Context from "../core/context.js";
 
 export default class NodeHttpServer {
+    /**
+     * @param {Context} ctx 
+     */
     constructor(ctx) {
         this.ctx = ctx;
         const app = http2Express(express);

@@ -1,3 +1,4 @@
+// @ts-check
 //
 //  Created by Chen Mingliang on 23/11/30.
 //  illuspas@msn.com
@@ -10,19 +11,24 @@ import BroadcastServer from "../server/broadcast_server.js";
 import Flv from "../protocol/flv.js";
 import AMF from "../protocol/amf.js";
 import logger from "../core/logger.js";
+import Context from "../core/context.js";
 
+/**
+ * @class
+ * @augments BaseSession
+ */
 export default class FlvSession extends BaseSession {
   /**
-   * @param {*} ctx
+   * @param {Context} ctx
    * @param {express.Request} req
    * @param {express.Response} res
    */
   constructor(ctx, req, res) {
-    super(ctx);
+    super();
     this.ctx = ctx;
     this.req = req;
     this.res = res;
-    this.ip = req.ip;
+    this.ip = req.ip ?? "0.0.0.0";
     this.protocol = "flv";
     this.streamHost = req.hostname;
     this.streamApp = req.params.app;
@@ -35,16 +41,8 @@ export default class FlvSession extends BaseSession {
     req.on("error", this.onError);
     req.socket.on("close", this.onClose);
 
-    /** @type {Map<string, BaseSession>} */
-    this.sessions = this.ctx.sessions;
-    this.sessions.set(this.id, this);
-
-    /** @type {Map<string, BaseSession>} */
-    this.broadcasts = this.ctx.broadcasts;
-
-    /** @type {BroadcastServer} */
-    this.broadcast = this.broadcasts.has(this.streamPath) ? this.broadcasts.get(this.streamPath) : new BroadcastServer();
-    this.broadcasts.set(this.streamPath, this.broadcast);
+    this.broadcast = this.ctx.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.ctx.broadcasts.set(this.streamPath, this.broadcast);
   }
 
   doPlay = () => {
@@ -80,6 +78,10 @@ export default class FlvSession extends BaseSession {
     }
   };
 
+  /**
+   * 
+   * @param {string} err 
+   */
   onError = (err) => {
     logger.info(`FLV session ${this.id} ${this.ip} error, ${err}`);
   };
@@ -113,6 +115,7 @@ export default class FlvSession extends BaseSession {
   };
 
   /**
+   * @override
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {
