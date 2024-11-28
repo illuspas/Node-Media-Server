@@ -5,9 +5,14 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
+import Context from "../core/context.js";
+
 export default class NodeRtmpServer {
-    constructor(config) {
-        this.config = config;
+    /**
+     * @param {Context} ctx 
+     */
+    constructor(ctx) {
+        this.ctx = ctx;
     }
 
     run = () => {
