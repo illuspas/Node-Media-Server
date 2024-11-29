@@ -31,11 +31,9 @@ const PacketTypeMPEG2TSSequenceStart = 5;
 
 /**
  * @class
- * @augments EventEmitter
  */
-export default class Flv extends EventEmitter {
+export default class Flv {
   constructor() {
-    super();
     this.parserBuffer = Buffer.alloc(13);
     this.parserState = FLV_PARSE_INIT;
     this.parserHeaderBytes = 0;
@@ -49,7 +47,16 @@ export default class Flv extends EventEmitter {
   }
 
   /**
+   * @abstract
+   * @param {AVPacket} avpacket 
+   */
+  onPacketCallback = (avpacket) => {
+
+  };
+
+  /**
    * @param {Buffer} buffer
+   * @returns {string | null} error
    */
   parserData = (buffer) => {
     let s = buffer.length;
@@ -110,14 +117,16 @@ export default class Flv extends EventEmitter {
             this.parserPreviousBytes = 0;
             const parserPreviousNSize = this.parserBuffer.readUint32BE();
             if (parserPreviousNSize === this.parserTagSize + 11) {
-              this.emit("flvtag", this.parserTagType, this.parserTagSize, this.parserTagTime, this.parserTagData);
+              let packet = Flv.parserTag(this.parserTagType, this.parserTagTime, this.parserTagSize, this.parserTagData);
+              this.onPacketCallback(packet);
             } else {
-              logger.error("flv tag parser error");
+              return "flv tag parser error";
             }
           }
           break;
       }
     }
+    return null;
   };
 
   /**
@@ -125,7 +134,6 @@ export default class Flv extends EventEmitter {
    */
   parserTagAlloc = (size) => {
     if (this.parserTagCapacity < size) {
-      logger.debug("parserTagAlloc " + size);
       this.parserTagCapacity = size * 2;
       const newBuffer = Buffer.alloc(this.parserTagCapacity);
       this.parserTagData.copy(newBuffer);
@@ -169,7 +177,6 @@ export default class Flv extends EventEmitter {
     buffer.writeUint32BE(11 + size, 11 + size);
     return buffer;
   };
-
 
   /**
    * @param {number} type

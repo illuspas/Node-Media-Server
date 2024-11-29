@@ -12,6 +12,7 @@ import Flv from "../protocol/flv.js";
 import AMF from "../protocol/amf.js";
 import logger from "../core/logger.js";
 import Context from "../core/context.js";
+import AVPacket from "../core/avpacket.js";
 
 /**
  * @class
@@ -54,10 +55,10 @@ export default class FlvSession extends BaseSession {
   doPush = () => {
     logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
     this.isPublisher = true;
-    this.flv.on("flvtag", this.onFlvTag);
+    this.flv.onPacketCallback = this.onPacket;
     const err = this.broadcast.postPush(this);
     if (err != null) {
-      logger.error(`FLV session ${this.id} ${this.ip} error push ${this.streamPath}, ${err}`);
+      logger.error(`FLV session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
       this.res.end();
     }
   };
@@ -66,7 +67,11 @@ export default class FlvSession extends BaseSession {
    * @param {Buffer} data
    */
   onData = (data) => {
-    this.flv.parserData(data);
+    let err = this.flv.parserData(data);
+    if (err != null) {
+      logger.error(`FLV session ${this.id} ${this.ip} parserData error, ${err}`);
+      this.res.end();
+    }
   };
 
   onClose = () => {
@@ -83,19 +88,16 @@ export default class FlvSession extends BaseSession {
    * @param {string} err 
    */
   onError = (err) => {
-    logger.info(`FLV session ${this.id} ${this.ip} error, ${err}`);
+    logger.error(`FLV session ${this.id} ${this.ip} socket error, ${err}`);
   };
 
   /**
-   * @param {number} type
-   * @param {number} size
-   * @param {number} time
-   * @param {Buffer} data
+   * @param {AVPacket} packet 
    */
-  onFlvTag = (type, size, time, data) => {
-    if (type === 18) {
-      const metadata = AMF.parseScriptData(data.buffer, 0, size);
-      if (metadata != null) {
+  onPacket = (packet) => {
+    if (packet.codec_type === 18) {
+      const metadata = AMF.parseScriptData(packet.data.buffer, 0, packet.size);
+      if (metadata !== null) {
         this.videoCodec = metadata.videocodecid;
         this.videoWidth = metadata.width;
         this.videoHeight = metadata.height;
@@ -107,10 +109,6 @@ export default class FlvSession extends BaseSession {
         this.audioDatarate = metadata.audiodatarate;
       }
     }
-    let packet = Flv.parserTag(type, time, size, data);
-    // if (packet.codec_type == 9) {
-    //   logger.debug(`flv parser get packet time:${time} type:${packet.codec_type} pts:${packet.pts} dts:${packet.dts} size:${packet.size}`);
-    // }
     this.broadcast.broadcastMessage(packet);
   };
 
