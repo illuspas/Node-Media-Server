@@ -1,3 +1,10 @@
+// @ts-check
+//
+//  Created by Chen Mingliang on 24/11/28.
+//  illuspas@msn.com
+//  Copyright (c) 2024 NodeMedia. All rights reserved.
+//
+
 import NodeHttpServer from "./server/http_server.js";
 import NodeRtmpServer from "./server/rtmp_server.js";
 import { createRequire } from "module";

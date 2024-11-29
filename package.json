@@ -18,6 +18,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/node": "^22.10.1",
     "eslint": "^9.15.0",
     "eslint-plugin-jsdoc": "50.6.0",
     "globals": "^15.12.0"
