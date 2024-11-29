@@ -91,13 +91,13 @@ export default class BroadcastServer {
     const flvMessage = Flv.createMessage(packet.codec_type, packet.dts, packet.size, packet.data);
     switch (packet.flags) {
       case 0:
-        this.flvAudioHeader = flvMessage;
+        this.flvAudioHeader = Buffer.from(flvMessage);
         break;
       case 2:
-        this.flvVideoHeader = flvMessage;
+        this.flvVideoHeader = Buffer.from(flvMessage);
         break;
       case 5:
-        this.flvMetaData = flvMessage;
+        this.flvMetaData = Buffer.from(flvMessage);
         break;
     }
 

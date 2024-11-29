@@ -5,9 +5,9 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
-import EventEmitter from "events";
 import logger from "../core/logger.js";
 import AVPacket from "../core/avpacket.js";
+import AMF from "./amf.js";
 
 const FLV_MEDIA_TYPE_AUDIO = 8;
 const FLV_MEDIA_TYPE_VIDEO = 9;
@@ -17,6 +17,37 @@ const FLV_PARSE_INIT = 0;
 const FLV_PARSE_HEAD = 1;
 const FLV_PARSE_TAGS = 2;
 const FLV_PARSE_PREV = 3;
+
+const FLV_FRAME_KEY = 1;///< key frame (for AVC, a seekable frame)
+const FLV_FRAME_INTER = 2; ///< inter frame (for AVC, a non-seekable frame)
+const FLV_FRAME_DISP_INTER = 3; ///< disposable inter frame (H.263 only)
+const FLV_FRAME_GENERATED_KEY = 4;///< generated key frame (reserved for server use only)
+const FLV_FRAME_VIDEO_INFO_CMD = 5; ///< video info/command frame
+
+const FLV_AVC_SEQUENCE_HEADER = 0;
+const FLV_AVC_NALU = 1;
+const FLV_AVC_END_OF_SEQUENCE = 2;
+
+const FLV_CODECID_PCM = 0;
+const FLV_CODECID_ADPCM = 1;
+const FLV_CODECID_MP3 = 2;
+const FLV_CODECID_PCM_LE = 3;
+const FLV_CODECID_NELLYMOSER_16KHZ_MONO = 4;
+const FLV_CODECID_NELLYMOSER_8KHZ_MONO = 5;
+const FLV_CODECID_NELLYMOSER = 6;
+const FLV_CODECID_PCM_ALAW = 7;
+const FLV_CODECID_PCM_MULAW = 8;
+const FLV_CODECID_AAC = 10;
+const FLV_CODECID_SPEEX = 11;
+
+const FLV_CODECID_H263 = 2;
+const FLV_CODECID_SCREEN = 3;
+const FLV_CODECID_VP6 = 4;
+const FLV_CODECID_VP6A = 5;
+const FLV_CODECID_SCREEN2 = 6;
+const FLV_CODECID_H264 = 7;
+const FLV_CODECID_REALH263 = 8;
+const FLV_CODECID_MPEG4 = 9;
 
 const FOURCC_AV1 = Buffer.from("av01");
 const FOURCC_VP9 = Buffer.from("vp09");
@@ -188,49 +219,66 @@ export default class Flv {
   static parserTag = (type, time, size, data) => {
     let packet = new AVPacket();
     packet.codec_type = type;
-    packet.flags = 1;
     packet.pts = time;
     packet.dts = time;
     packet.size = size;
     packet.data = data;
     if (type === FLV_MEDIA_TYPE_AUDIO) {
       const codecID = data[0] >> 4;
-      if (codecID === 10 && data[1] === 0) {
-        packet.flags = 0;
-      }
       packet.codec_id = codecID;
+      packet.flags = 1;
+      if (codecID === FLV_CODECID_AAC) {
+        if (data[1] === 0) {
+          packet.flags = 0;
+        }
+      }
     } else if (type === FLV_MEDIA_TYPE_VIDEO) {
       const frameType = data[0] >> 4 & 0b0111;
       const codecID = data[0] & 0x0f;
       const isExHeader = (data[0] >> 4 & 0b1000) !== 0;
-      packet.codec_id = codecID;
+
       if (isExHeader) {
         const packetType = data[0] & 0x0f;
         const fourCC = data.subarray(1, 5);
-        if (fourCC.compare(FOURCC_HEVC) === 0) {
-          const cts = data[5] << 16 | data[6] << 8 | data[7];
-          // console.log(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
-          packet.pts = packet.dts + cts;
-        }
         if (fourCC.compare(FOURCC_AV1) === 0 || fourCC.compare(FOURCC_VP9) === 0 || fourCC.compare(FOURCC_HEVC) === 0) {
-          if (frameType === 1 && packetType === PacketTypeSequenceStart) {
+          packet.codec_id = fourCC.readUint32BE();
+          if (packetType === PacketTypeSequenceStart) {
             packet.flags = 2;
-          } else if (frameType === 1) {
-            packet.flags = 3;
-          } else {
-            packet.flags = 4;
+          } else if (packetType === PacketTypeMPEG2TSSequenceStart) {
+          } else if (packetType === PacketTypeCodedFrames || packetType === PacketTypeCodedFramesX) {
+            if (frameType === FLV_FRAME_KEY) {
+              packet.flags = 3;
+            } else {
+              packet.flags = 4;
+            }
+          } else if (packetType === PacketTypeMetadata) {
+            const hdrMetadata = AMF.parseScriptData(packet.data.buffer, 5, packet.size);
+            logger.debug(`hdrMetadata:${JSON.stringify(hdrMetadata)}`);
+            packet.flags = 6;
+          }
+
+          if (fourCC.compare(FOURCC_HEVC) === 0) {
+            if (packetType === PacketTypeCodedFrames) {
+              const cts = data.readUintBE(5, 3);
+              packet.pts = packet.dts + cts;
+            }
           }
         }
       } else {
-        const cts = data[2] << 16 | data[3] << 8 | data[4];
+        const cts = data.readUintBE(2, 3);
+        const packetType = data[1];
+        packet.codec_id = codecID;
         packet.pts = packet.dts + cts;
-        if (codecID === 7) {
-          if (frameType === 1 && data[1] === 0) {
+        packet.flags = 4;
+        if (codecID === FLV_CODECID_H264) {
+          if (packetType === FLV_AVC_SEQUENCE_HEADER) {
             packet.flags = 2;
-          } else if (frameType === 1 && data[1] === 1) {
-            packet.flags = 3;
           } else {
-            packet.flags = 4;
+            if (frameType === FLV_FRAME_KEY) {
+              packet.flags = 3;
+            } else {
+              packet.flags = 4;
+            }
           }
         }
       }
