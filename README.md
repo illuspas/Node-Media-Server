@@ -2,7 +2,7 @@
 
 ## Introduction
 Node-Media-Server is a high-performance open-source live broadcast server developed based on Nodejs.  
-v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.
+v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.  
 v4 is no longer compatible with the cn_cdn extension id flv_265 standard.
 
 ## Installation
@@ -39,7 +39,7 @@ ffmpeg -re -i test_265.mp4 -c copy -f flv http://localhost:8000/live/test_265.fl
 ffmpeg -re -i test_av1.mp4 -c copy -f flv http://localhost:8000/live/test_av1.flv
 ```
 
-### play Streaming
+### Play Streaming
 ```
 ffplay http://localhost:8000/live/test_265.flv
 ```
