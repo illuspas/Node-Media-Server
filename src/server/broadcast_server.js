@@ -35,18 +35,18 @@ export default class BroadcastServer {
    */
   postPlay = (session) => {
     switch (session.protocol) {
-      case "flv":
-        session.sendBuffer(this.flvHeader);
-        if (this.flvMetaData != null) {
-          session.sendBuffer(this.flvMetaData);
-        }
-        if (this.flvAudioHeader != null) {
-          session.sendBuffer(this.flvAudioHeader);
-        }
-        if (this.flvVideoHeader != null) {
-          session.sendBuffer(this.flvVideoHeader);
-        }
-        break;
+    case "flv":
+      session.sendBuffer(this.flvHeader);
+      if (this.flvMetaData != null) {
+        session.sendBuffer(this.flvMetaData);
+      }
+      if (this.flvAudioHeader != null) {
+        session.sendBuffer(this.flvAudioHeader);
+      }
+      if (this.flvVideoHeader != null) {
+        session.sendBuffer(this.flvVideoHeader);
+      }
+      break;
     }
 
     this.subscribers.set(session.id, session);
@@ -90,22 +90,22 @@ export default class BroadcastServer {
   broadcastMessage = (packet) => {
     const flvMessage = Flv.createMessage(packet.codec_type, packet.dts, packet.size, packet.data);
     switch (packet.flags) {
-      case 0:
-        this.flvAudioHeader = Buffer.from(flvMessage);
-        break;
-      case 2:
-        this.flvVideoHeader = Buffer.from(flvMessage);
-        break;
-      case 5:
-        this.flvMetaData = Buffer.from(flvMessage);
-        break;
+    case 0:
+      this.flvAudioHeader = Buffer.from(flvMessage);
+      break;
+    case 2:
+      this.flvVideoHeader = Buffer.from(flvMessage);
+      break;
+    case 5:
+      this.flvMetaData = Buffer.from(flvMessage);
+      break;
     }
 
     this.subscribers.forEach((v, k) => {
       switch (v.protocol) {
-        case "flv":
-          v.sendBuffer(flvMessage);
-          break;
+      case "flv":
+        v.sendBuffer(flvMessage);
+        break;
       }
     });
   };

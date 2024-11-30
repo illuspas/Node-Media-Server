@@ -15,19 +15,19 @@ const require = createRequire(import.meta.url);
 const Package = require("../package.json");
 
 export default class NodeMediaServer {
-    constructor(config) {
-        logger.level = "debug";
-        logger.info(`Node-Media-Server v${Package.version}`);
-        logger.info(`Homepage: ${Package.homepage}`);
-        logger.info(`License: ${Package.license}`);
-        logger.info(`Author: ${Package.author}`);
-        this.ctx = new Context(config);
-        this.httpServer = new NodeHttpServer(this.ctx);
-        this.rtmpServer = new NodeRtmpServer(this.ctx);
-    }
+  constructor(config) {
+    logger.level = "debug";
+    logger.info(`Node-Media-Server v${Package.version}`);
+    logger.info(`Homepage: ${Package.homepage}`);
+    logger.info(`License: ${Package.license}`);
+    logger.info(`Author: ${Package.author}`);
+    this.ctx = new Context(config);
+    this.httpServer = new NodeHttpServer(this.ctx);
+    this.rtmpServer = new NodeRtmpServer(this.ctx);
+  }
 
-    run() {
-        this.httpServer.run();
-        this.rtmpServer.run();
-    }
+  run() {
+    this.httpServer.run();
+    this.rtmpServer.run();
+  }
 }

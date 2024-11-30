@@ -95,66 +95,66 @@ export default class Flv {
     let p = 0;
     while (s > 0) {
       switch (this.parserState) {
-        case FLV_PARSE_INIT:
-          n = 13 - this.parserHeaderBytes;
-          n = n <= s ? n : s;
-          buffer.copy(this.parserBuffer, this.parserHeaderBytes, p, p + n);
-          this.parserHeaderBytes += n;
-          s -= n;
-          p += n;
-          if (this.parserHeaderBytes === 13) {
-            this.parserState = FLV_PARSE_HEAD;
-            this.parserHeaderBytes = 0;
+      case FLV_PARSE_INIT:
+        n = 13 - this.parserHeaderBytes;
+        n = n <= s ? n : s;
+        buffer.copy(this.parserBuffer, this.parserHeaderBytes, p, p + n);
+        this.parserHeaderBytes += n;
+        s -= n;
+        p += n;
+        if (this.parserHeaderBytes === 13) {
+          this.parserState = FLV_PARSE_HEAD;
+          this.parserHeaderBytes = 0;
+        }
+        break;
+      case FLV_PARSE_HEAD:
+        n = 11 - this.parserHeaderBytes;
+        n = n <= s ? n : s;
+        buffer.copy(this.parserBuffer, this.parserHeaderBytes, p, p + n);
+        this.parserHeaderBytes += n;
+        s -= n;
+        p += n;
+        if (this.parserHeaderBytes === 11) {
+          this.parserState = FLV_PARSE_TAGS;
+          this.parserHeaderBytes = 0;
+          this.parserTagType = this.parserBuffer[0];
+          this.parserTagSize = this.parserBuffer.readUintBE(1, 3);
+          this.parserTagTime = (this.parserBuffer[4] << 16) | (this.parserBuffer[5] << 8) | this.parserBuffer[6] | (this.parserBuffer[7] << 24);
+          logger.trace(`parser tag type=${this.parserTagType} time=${this.parserTagTime} size=${this.parserTagSize} `);
+        }
+        break;
+      case FLV_PARSE_TAGS:
+        this.parserTagAlloc(this.parserTagSize);
+        n = this.parserTagSize - this.parserTagBytes;
+        n = n <= s ? n : s;
+        buffer.copy(this.parserTagData, this.parserTagBytes, p, p + n);
+        this.parserTagBytes += n;
+        s -= n;
+        p += n;
+        if (this.parserTagBytes === this.parserTagSize) {
+          this.parserState = FLV_PARSE_PREV;
+          this.parserTagBytes = 0;
+        }
+        break;
+      case FLV_PARSE_PREV:
+        n = 4 - this.parserPreviousBytes;
+        n = n <= s ? n : s;
+        buffer.copy(this.parserBuffer, this.parserPreviousBytes, p, p + n);
+        this.parserPreviousBytes += n;
+        s -= n;
+        p += n;
+        if (this.parserPreviousBytes === 4) {
+          this.parserState = FLV_PARSE_HEAD;
+          this.parserPreviousBytes = 0;
+          const parserPreviousNSize = this.parserBuffer.readUint32BE();
+          if (parserPreviousNSize === this.parserTagSize + 11) {
+            let packet = Flv.parserTag(this.parserTagType, this.parserTagTime, this.parserTagSize, this.parserTagData);
+            this.onPacketCallback(packet);
+          } else {
+            return "flv tag parser error";
           }
-          break;
-        case FLV_PARSE_HEAD:
-          n = 11 - this.parserHeaderBytes;
-          n = n <= s ? n : s;
-          buffer.copy(this.parserBuffer, this.parserHeaderBytes, p, p + n);
-          this.parserHeaderBytes += n;
-          s -= n;
-          p += n;
-          if (this.parserHeaderBytes === 11) {
-            this.parserState = FLV_PARSE_TAGS;
-            this.parserHeaderBytes = 0;
-            this.parserTagType = this.parserBuffer[0];
-            this.parserTagSize = this.parserBuffer.readUintBE(1, 3);
-            this.parserTagTime = (this.parserBuffer[4] << 16) | (this.parserBuffer[5] << 8) | this.parserBuffer[6] | (this.parserBuffer[7] << 24);
-            logger.trace(`parser tag type=${this.parserTagType} time=${this.parserTagTime} size=${this.parserTagSize} `);
-          }
-          break;
-        case FLV_PARSE_TAGS:
-          this.parserTagAlloc(this.parserTagSize);
-          n = this.parserTagSize - this.parserTagBytes;
-          n = n <= s ? n : s;
-          buffer.copy(this.parserTagData, this.parserTagBytes, p, p + n);
-          this.parserTagBytes += n;
-          s -= n;
-          p += n;
-          if (this.parserTagBytes === this.parserTagSize) {
-            this.parserState = FLV_PARSE_PREV;
-            this.parserTagBytes = 0;
-          }
-          break;
-        case FLV_PARSE_PREV:
-          n = 4 - this.parserPreviousBytes;
-          n = n <= s ? n : s;
-          buffer.copy(this.parserBuffer, this.parserPreviousBytes, p, p + n);
-          this.parserPreviousBytes += n;
-          s -= n;
-          p += n;
-          if (this.parserPreviousBytes === 4) {
-            this.parserState = FLV_PARSE_HEAD;
-            this.parserPreviousBytes = 0;
-            const parserPreviousNSize = this.parserBuffer.readUint32BE();
-            if (parserPreviousNSize === this.parserTagSize + 11) {
-              let packet = Flv.parserTag(this.parserTagType, this.parserTagTime, this.parserTagSize, this.parserTagData);
-              this.onPacketCallback(packet);
-            } else {
-              return "flv tag parser error";
-            }
-          }
-          break;
+        }
+        break;
       }
     }
     return null;

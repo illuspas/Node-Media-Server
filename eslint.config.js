@@ -19,7 +19,8 @@ export default [
       "no-unused-vars": "off",
       "no-undef": "error",
       "semi": [2, "always"],
-      "quotes": [2, "double"]
+      "quotes": [2, "double"],
+      "indent": ["error", 2]
     }
   },
 ];

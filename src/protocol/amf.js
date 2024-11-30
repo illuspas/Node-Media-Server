@@ -254,96 +254,96 @@ export default class AMF {
 
     try {
       switch (type) {
-        case 0: // Number(Double) type
-          value = v.getFloat64(1, !le);
-          offset += 8;
-          break;
-        case 1: { // Boolean type
-          const b = v.getUint8(1);
-          value = !!b;
-          offset += 1;
-          break;
+      case 0: // Number(Double) type
+        value = v.getFloat64(1, !le);
+        offset += 8;
+        break;
+      case 1: { // Boolean type
+        const b = v.getUint8(1);
+        value = !!b;
+        offset += 1;
+        break;
+      }
+      case 2: { // String type
+        const amfstr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
+        value = amfstr.data;
+        offset += amfstr.size;
+        break;
+      }
+      case 3: { // Object(s) type
+        value = {};
+        let terminal = 0; // workaround for malformed Objects which has missing ScriptDataObjectEnd
+        if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
+          terminal = 3;
         }
-        case 2: { // String type
-          const amfstr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
-          value = amfstr.data;
-          offset += amfstr.size;
-          break;
+        while (offset < dataSize - 4) { // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
+          const amfobj = AMF.parseObject(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
+          if (amfobj.objectEnd) { break; }
+          value[amfobj.data.name] = amfobj.data.value;
+          offset += amfobj.size;
         }
-        case 3: { // Object(s) type
-          value = {};
-          let terminal = 0; // workaround for malformed Objects which has missing ScriptDataObjectEnd
-          if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
-            terminal = 3;
+        if (offset <= dataSize - 3) {
+          const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
+          if (marker === 9) {
+            offset += 3;
           }
-          while (offset < dataSize - 4) { // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
-            const amfobj = AMF.parseObject(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
-            if (amfobj.objectEnd) { break; }
-            value[amfobj.data.name] = amfobj.data.value;
-            offset += amfobj.size;
-          }
-          if (offset <= dataSize - 3) {
-            const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
-            if (marker === 9) {
-              offset += 3;
-            }
-          }
-          break;
         }
-        case 8: { // ECMA array type (Mixed array)
-          value = {};
-          offset += 4; // ECMAArrayLength(UI32)
-          let terminal = 0; // workaround for malformed MixedArrays which has missing ScriptDataObjectEnd
-          if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
-            terminal = 3;
-          }
-          while (offset < dataSize - 8) { // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
-            const amfvar = AMF.parseVariable(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
-            if (amfvar.objectEnd) { break; }
-            value[amfvar.data.name] = amfvar.data.value;
-            offset += amfvar.size;
-          }
-          if (offset <= dataSize - 3) {
-            const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
-            if (marker === 9) {
-              offset += 3;
-            }
-          }
-          break;
+        break;
+      }
+      case 8: { // ECMA array type (Mixed array)
+        value = {};
+        offset += 4; // ECMAArrayLength(UI32)
+        let terminal = 0; // workaround for malformed MixedArrays which has missing ScriptDataObjectEnd
+        if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
+          terminal = 3;
         }
-        case 9: // ScriptDataObjectEnd
-          value = undefined;
-          offset = 1;
-          objectEnd = true;
-          break;
-        case 10: { // Strict array type
-          // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
-          value = [];
-          const strictArrayLength = v.getUint32(1, !le);
-          offset += 4;
-          for (let i = 0; i < strictArrayLength; i++) {
-            const val = AMF.parseValue(arrayBuffer, dataOffset + offset, dataSize - offset);
-            value.push(val.data);
-            offset += val.size;
+        while (offset < dataSize - 8) { // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
+          const amfvar = AMF.parseVariable(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
+          if (amfvar.objectEnd) { break; }
+          value[amfvar.data.name] = amfvar.data.value;
+          offset += amfvar.size;
+        }
+        if (offset <= dataSize - 3) {
+          const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
+          if (marker === 9) {
+            offset += 3;
           }
-          break;
         }
-        case 11: { // Date type
-          const date = AMF.parseDate(arrayBuffer, dataOffset + 1, dataSize - 1);
-          value = date.data;
-          offset += date.size;
-          break;
+        break;
+      }
+      case 9: // ScriptDataObjectEnd
+        value = undefined;
+        offset = 1;
+        objectEnd = true;
+        break;
+      case 10: { // Strict array type
+        // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
+        value = [];
+        const strictArrayLength = v.getUint32(1, !le);
+        offset += 4;
+        for (let i = 0; i < strictArrayLength; i++) {
+          const val = AMF.parseValue(arrayBuffer, dataOffset + offset, dataSize - offset);
+          value.push(val.data);
+          offset += val.size;
         }
-        case 12: { // Long string type
-          const amfLongStr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
-          value = amfLongStr.data;
-          offset += amfLongStr.size;
-          break;
-        }
-        default:
-          // ignore and skip
-          offset = dataSize;
-          logger.warn("AMF", "Unsupported AMF value type " + type);
+        break;
+      }
+      case 11: { // Date type
+        const date = AMF.parseDate(arrayBuffer, dataOffset + 1, dataSize - 1);
+        value = date.data;
+        offset += date.size;
+        break;
+      }
+      case 12: { // Long string type
+        const amfLongStr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
+        value = amfLongStr.data;
+        offset += amfLongStr.size;
+        break;
+      }
+      default:
+        // ignore and skip
+        offset = dataSize;
+        logger.warn("AMF", "Unsupported AMF value type " + type);
       }
     } catch (e) {
       logger.error("AMF", e.toString());

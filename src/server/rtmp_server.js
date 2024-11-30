@@ -8,14 +8,14 @@
 import Context from "../core/context.js";
 
 export default class NodeRtmpServer {
-    /**
-     * @param {Context} ctx 
-     */
-    constructor(ctx) {
-        this.ctx = ctx;
-    }
+  /**
+   * @param {Context} ctx 
+   */
+  constructor(ctx) {
+    this.ctx = ctx;
+  }
 
-    run = () => {
+  run = () => {
 
-    };
+  };
 }
