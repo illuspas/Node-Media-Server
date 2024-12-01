@@ -17,22 +17,25 @@ npx node-media-server
 ```
 
 ## Features
-* HTTP/HTTP2-flv
+* HTTP/HTTP2-flv Push/Play
+* RTMP Push
 
 ## Roadmap
-* WS/WSS-flv 
-* RTMP
+* RTMP Play
 * HTTP-API
 * Authentication
 * Notification
-
+* WebManager
+* Relay
 
 ## Usage
-ffmpeg6.1 or above is required
+* obs_29.1 or above is required
+* ffmpeg_6.1 or above is required
 
 ### Push Streaming
+
 ```
-ffmpeg -re -i test_265.mp4 -c copy -f flv http://localhost:8000/live/test_265.flv
+ffmpeg -re -i test_265.mp4 -c copy -f flv rtmp://localhost/live/test_265
 ```
 
 ```
