@@ -24,7 +24,7 @@ const context = require('./node_core_ctx');
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
 const relayRoute = require('./api/routes/relay');
-const { uploadFileToS3 } = require('./node_storage_upload');
+const { uploadFileToS3, extractThumbnail } = require('./node_storage_upload');
 const dotenv = require('./node_flv_session');
 
 class NodeHttpServer {
@@ -77,6 +77,7 @@ class NodeHttpServer {
 
       Fs.access(uploadFilePath, Fs.constants.F_OK, (err) => {
         const destPath = req.path.replace(/^\/+/, ''); // /live/web22 같이 들어왔을 때, live/web22 로 경로 바꿔주기 위해서 replace
+        const tsRegex = /\.ts$/;
         if (err) {
           console.log(`File not found: ${uploadFilePath}`);
           res.status(404).send('File not found');
@@ -85,6 +86,14 @@ class NodeHttpServer {
           uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, req.path.replace(/^\/+/, ''), uploadFilePath).then((r) => {
             console.log('upload completed');
           });
+          if (destPath.match(tsRegex)) {
+            const thumbnailPath = destPath.split('/').slice(0, -1).join('');
+            console.log(thumbnailPath);
+            extractThumbnail(destPath, thumbnailPath);
+            uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, req.path.replace(/^\/+/, ''), `${thumbnailPath}/thumbnail.png`).then((r) => {
+              console.log('thumbnail upload completed');
+            });  
+          }
           console.log(`uploadFilePath : ${uploadFilePath}`);
           res.sendFile(uploadFilePath);
         }

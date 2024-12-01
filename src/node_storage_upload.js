@@ -38,4 +38,22 @@ const uploadFileToS3 = async (bucketName, key, filePath) => {
   }
 };
 
-export { uploadFileToS3 };
+const extractThumbnail = (tsFilePath, ouPath) => {
+  const thumbnailPath = path.join(ouPath, 'thumbnail.png');
+  const argv = ['-y', '-i', tsFilePath, '-vf', 'fps=1,scale=-1:480',  '-vframes', '1', thumbnailPath];
+  const ffmpeg = spawn(this.conf.ffmpeg, argv);
+
+  ffmpeg.on('error', (e) => {
+    Logger.error(`[Thumbnail Extraction] Error: ${e.message}`);
+  });
+
+  ffmpeg.on('close', (code) => {
+    if (code === 0) {
+      Logger.log(`[Thumbnail Extraction] Thumbnail created: ${thumbnailPath}`);
+    } else {
+      Logger.error(`[Thumbnail Extraction] Failed to create thumbnail for ${tsFilePath}`);
+    }
+  });
+}
+
+export { uploadFileToS3, extractThumbnail};
