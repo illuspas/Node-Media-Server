@@ -73,7 +73,7 @@ class NodeHttpServer {
     // 기존 express.static을 커스텀 핸들러로 대체
     app.use((req, res, next) => {
       // Object Storage 업로드 로직
-      const uploadFilePath = path.join(process.cwd(), this.mediaroot, req.path);
+      const uploadFilePath = path.join(this.mediaroot, req.path);
 
       Fs.access(uploadFilePath, Fs.constants.F_OK, (err) => {
         const destPath = req.path.replace(/^\/+/, ''); // /live/web22 같이 들어왔을 때, live/web22 로 경로 바꿔주기 위해서 replace
@@ -87,10 +87,9 @@ class NodeHttpServer {
             console.log('upload completed');
           });
           if (destPath.match(tsRegex)) {
-            const thumbnailPath = destPath.split('/').slice(0, -1).join('');
-            console.log(thumbnailPath);
-            extractThumbnail(destPath, thumbnailPath);
-            uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, req.path.replace(/^\/+/, ''), `${thumbnailPath}/thumbnail.png`).then((r) => {
+            const thumbnailPath = uploadFilePath.split('/').slice(0, -1).join('/');
+            const thumbnailStoragePath = destPath.split('/').slice(0, -1).join('/') + '/thumbnail.png';
+            uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, thumbnailStoragePath, `${thumbnailPath}/thumbnail.png`).then((r) => {
               console.log('thumbnail upload completed');
             });  
           }

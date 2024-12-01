@@ -10,6 +10,7 @@ const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
 const mkdirp = require('mkdirp');
 const fs = require('fs');
+const path = require('path');
 
 const isHlsFile = (filename) => filename.endsWith('.ts') || filename.endsWith('.m3u8')
 const isTemFiles = (filename) => filename.endsWith('.tmp')
@@ -74,6 +75,8 @@ class NodeTransSession extends EventEmitter {
     argv = argv.filter((n) => { return n; });
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
 
+    this.watchHlsSegments(ouPath);
+
     // fs.watch(ouPath, (eventType, filename) => {
     //   if (filename && filename === 'index.m3u8') {
     //     if (eventType === 'rename') {
@@ -103,6 +106,45 @@ class NodeTransSession extends EventEmitter {
       this.deleteHlsFiles(ouPath)
     });
   }
+
+
+  watchHlsSegments(ouPath) {
+    fs.watch(ouPath, (eventType, filename) => {
+      if (filename && filename.endsWith('.ts') && eventType === 'rename') {
+        const tsFilePath = path.join(ouPath, filename);
+        Logger.log(`[Thumbnail Extraction] New TS file detected: ${filename}`);
+        this.extractThumbnail(tsFilePath, ouPath);
+      }
+    });
+  }
+
+  extractThumbnail(tsFilePath, ouPath) {
+    const thumbnailPath = path.join(ouPath, 'thumbnail.png');
+    const argv = [
+      '-y',
+      '-i',
+      tsFilePath,
+      '-vf',
+      'fps=1,scale=-1:480',
+      '-vframes',
+      '1',
+      thumbnailPath,
+    ];
+    const ffmpeg = spawn(this.conf.ffmpeg, argv);
+
+    ffmpeg.on('error', (e) => {
+      Logger.error(`[Thumbnail Extraction] Error: ${e.message}`);
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        Logger.log(`[Thumbnail Extraction] Thumbnail created: ${thumbnailPath}`);
+      } else {
+        Logger.error(`[Thumbnail Extraction] Failed to create thumbnail for ${tsFilePath}`);
+      }
+    });
+  }
+
 
   end() {
     this.ffmpeg_exec.kill();
