@@ -69,6 +69,7 @@ export default class RtmpSession extends BaseSession {
     const err = this.broadcast.postPush(this);
     if (err != null) {
       logger.error(`RTMP session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
+      this.socket.end();
     }
   };
 
