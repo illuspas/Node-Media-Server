@@ -27,8 +27,7 @@ export default class NodeHttpServer {
       allowHTTP1: true
     };
 
-    app.get("/:app/:name.flv", this.handleFlvPlay);
-    app.post("/:app/:name.flv", this.handleFlvPush);
+    app.all("/:app/:name.flv", this.handleFlv);
 
     this.server1 = http.createServer(app);
     this.server2 = http2.createSecureServer(opt, app);
@@ -47,17 +46,8 @@ export default class NodeHttpServer {
    * @param {express.Request} req
    * @param {express.Response} res
    */
-  handleFlvPlay = (req, res) => {
+  handleFlv = (req, res) => {
     const session = new FlvSession(this.ctx, req, res);
-    session.doPlay();
-  };
-
-  /**
-   * @param {express.Request} req
-   * @param {express.Response} res
-   */
-  handleFlvPush = (req, res) => {
-    const session = new FlvSession(this.ctx, req, res);
-    session.doPush();
+    session.run();
   };
 }

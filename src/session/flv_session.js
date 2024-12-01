@@ -9,7 +9,6 @@ import express from "express";
 import BaseSession from "./base_session.js";
 import BroadcastServer from "../server/broadcast_server.js";
 import Flv from "../protocol/flv.js";
-import AMF from "../protocol/amf.js";
 import logger from "../core/logger.js";
 import Context from "../core/context.js";
 import AVPacket from "../core/avpacket.js";
@@ -30,29 +29,35 @@ export default class FlvSession extends BaseSession {
     this.req = req;
     this.res = res;
     this.ip = req.ip ?? "0.0.0.0";
+    this.flv = new Flv();
     this.protocol = "flv";
     this.streamHost = req.hostname;
     this.streamApp = req.params.app;
     this.streamName = req.params.name;
     this.streamPath = "/" + this.streamApp + "/" + this.streamName;
     this.streamQuery = req.query;
-    this.flv = new Flv();
-
-    req.on("data", this.onData);
-    req.on("error", this.onError);
-    req.socket.on("close", this.onClose);
-
     this.broadcast = this.ctx.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     this.ctx.broadcasts.set(this.streamPath, this.broadcast);
   }
 
-  doPlay = () => {
+  run = ()=> {
+    this.req.on("data", this.onData);
+    this.req.on("error", this.onError);
+    this.req.socket.on("close", this.onClose);
+    if(this.req.method === "GET") {
+      this.onPlay();
+    }else if(this.req.method === "POST") {
+      this.onPush();
+    }
+  };
+
+  onPlay = () => {
     logger.info(`FLV session ${this.id} ${this.ip} start play ${this.streamPath}`);
     this.isPublisher = false;
     this.broadcast.postPlay(this);
   };
 
-  doPush = () => {
+  onPush = () => {
     logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
     this.isPublisher = true;
     this.flv.onPacketCallback = this.onPacket;
@@ -95,20 +100,6 @@ export default class FlvSession extends BaseSession {
    * @param {AVPacket} packet 
    */
   onPacket = (packet) => {
-    if (packet.codec_type === 18) {
-      const metadata = AMF.parseScriptData(packet.data.buffer, 0, packet.size);
-      if (metadata !== null) {
-        this.videoCodec = metadata.videocodecid;
-        this.videoWidth = metadata.width;
-        this.videoHeight = metadata.height;
-        this.videoFramerate = metadata.framerate;
-        this.videoDatarate = metadata.videodatarate;
-        this.audioCodec = metadata.audiocodecid;
-        this.audioChannels = metadata.stereo ? 2 : 1;
-        this.audioSamplerate = metadata.audiosamplerate;
-        this.audioDatarate = metadata.audiodatarate;
-      }
-    }
     this.broadcast.broadcastMessage(packet);
   };
 

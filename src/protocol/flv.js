@@ -7,7 +7,7 @@
 
 import logger from "../core/logger.js";
 import AVPacket from "../core/avpacket.js";
-import AMF from "./amf.js";
+import * as AMF from "./amf.js";
 
 const FLV_MEDIA_TYPE_AUDIO = 8;
 const FLV_MEDIA_TYPE_VIDEO = 9;
@@ -244,7 +244,6 @@ export default class Flv {
           packet.codec_id = fourCC.readUint32BE();
           if (packetType === PacketTypeSequenceStart) {
             packet.flags = 2;
-          } else if (packetType === PacketTypeMPEG2TSSequenceStart) {
           } else if (packetType === PacketTypeCodedFrames || packetType === PacketTypeCodedFramesX) {
             if (frameType === FLV_FRAME_KEY) {
               packet.flags = 3;
@@ -252,8 +251,8 @@ export default class Flv {
               packet.flags = 4;
             }
           } else if (packetType === PacketTypeMetadata) {
-            const hdrMetadata = AMF.parseScriptData(packet.data.buffer, 5, packet.size);
-            logger.debug(`hdrMetadata:${JSON.stringify(hdrMetadata)}`);
+            // const hdrMetadata = AMF.parseScriptData(packet.data.buffer, 5, packet.size);
+            // logger.debug(`hdrMetadata:${JSON.stringify(hdrMetadata)}`);
             packet.flags = 6;
           }
 

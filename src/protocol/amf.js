@@ -1,358 +1,678 @@
 /**
- * Copyright (C) 2016 Bilibili. All Rights Reserved.
- * @author zheng qian &lt;xqq@xqq.im>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created by delian on 3/12/14.
+ * This module provides encoding and decoding of the AMF0 format
  */
 
 import logger from "../core/logger.js";
 
-/**
- *
- * @param {Uint8Array} uint8array
- * @param {number} start
- * @param {number} checkLength
- * @returns {boolean}
- */
-function checkContinuation(uint8array, start, checkLength) {
-  const array = uint8array;
-  if (start + checkLength < array.length) {
-    while (checkLength--) {
-      if ((array[++start] & 0xC0) !== 0x80) { return false; }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
+
+const amf0dRules = {
+  0x00: amf0decNumber,
+  0x01: amf0decBool,
+  0x02: amf0decString,
+  0x03: amf0decObject,
+  //    0x04: amf0decMovie, // Reserved
+  0x05: amf0decNull,
+  0x06: amf0decUndefined,
+  0x07: amf0decRef,
+  0x08: amf0decArray,
+  // 0x09: amf0decObjEnd, // Should never happen normally
+  0x0A: amf0decSArray,
+  0x0B: amf0decDate,
+  0x0C: amf0decLongString,
+  //    0x0D: amf0decUnsupported, // Has been never originally implemented by Adobe!
+  //    0x0E: amf0decRecSet, // Has been never originally implemented by Adobe!
+  0x0F: amf0decXmlDoc,
+  0x10: amf0decTypedObj,
+};
+
+const amf0eRules = {
+  "string": amf0encString,
+  "integer": amf0encNumber,
+  "double": amf0encNumber,
+  "xml": amf0encXmlDoc,
+  "object": amf0encObject,
+  "array": amf0encArray,
+  "sarray": amf0encSArray,
+  "binary": amf0encString,
+  "true": amf0encBool,
+  "false": amf0encBool,
+  "undefined": amf0encUndefined,
+  "null": amf0encNull
+};
 
 /**
  *
- * @param {Uint8Array} uint8array
+ * @param {any} o
  * @returns {string}
  */
-function decodeUTF8(uint8array) {
-  const out = [];
-  const input = uint8array;
-  let i = 0;
-  const length = uint8array.length;
+function amfType(o) {
+  let jsType = typeof o;
 
-  while (i < length) {
-    if (input[i] < 0x80) {
-      out.push(String.fromCharCode(input[i]));
-      ++i;
-      continue;
-    } else if (input[i] < 0xC0) {
-      // fallthrough
-    } else if (input[i] < 0xE0) {
-      if (checkContinuation(input, i, 1)) {
-        const ucs4 = (input[i] & 0x1F) << 6 | (input[i + 1] & 0x3F);
-        if (ucs4 >= 0x80) {
-          out.push(String.fromCharCode(ucs4 & 0xFFFF));
-          i += 2;
-          continue;
-        }
-      }
-    } else if (input[i] < 0xF0) {
-      if (checkContinuation(input, i, 2)) {
-        const ucs4 = (input[i] & 0xF) << 12 | (input[i + 1] & 0x3F) << 6 | input[i + 2] & 0x3F;
-        if (ucs4 >= 0x800 && (ucs4 & 0xF800) !== 0xD800) {
-          out.push(String.fromCharCode(ucs4 & 0xFFFF));
-          i += 3;
-          continue;
-        }
-      }
-    } else if (input[i] < 0xF8) {
-      if (checkContinuation(input, i, 3)) {
-        let ucs4 = (input[i] & 0x7) << 18 | (input[i + 1] & 0x3F) << 12 |
-          (input[i + 2] & 0x3F) << 6 | (input[i + 3] & 0x3F);
-        if (ucs4 > 0x10000 && ucs4 < 0x110000) {
-          ucs4 -= 0x10000;
-          out.push(String.fromCharCode((ucs4 >>> 10) | 0xD800));
-          out.push(String.fromCharCode((ucs4 & 0x3FF) | 0xDC00));
-          i += 4;
-          continue;
-        }
-      }
-    }
-    out.push(String.fromCharCode(0xFFFD));
-    ++i;
+  if (o === null) return "null";
+  if (jsType == "undefined") return "undefined";
+  if (jsType == "number") {
+    if (parseInt(o) == o) return "integer";
+    return "double";
   }
-
-  return out.join("");
+  if (jsType == "boolean") return o ? "true" : "false";
+  if (jsType == "string") return "string";
+  if (jsType == "object") {
+    if (o instanceof Array) {
+      if (o.sarray) return "sarray";
+      return "array";
+    }
+    return "object";
+  }
+  throw new Error("Unsupported type!");
 }
 
-class RuntimeException {
-  constructor(message) {
-    this._message = message;
-  }
+// AMF0 Implementation
 
-  get name() {
-    return "RuntimeException";
-  }
-
-  get message() {
-    return this._message;
-  }
-
-  toString() {
-    return this.name + ": " + this.message;
-  }
+/**
+ * AMF0 Decode Number
+ * @param {Buffer} buf
+ * @returns {{len: number, value: (* | number)}}
+ */
+function amf0decNumber(buf) {
+  return { len: 9, value: buf.readDoubleBE(1) };
 }
 
-class IllegalStateException extends RuntimeException {
-  constructor(message) {
-    super(message);
-  }
-
-  get name() {
-    return "IllegalStateException";
-  }
+/**
+ * AMF0 Encode Number
+ * @param {number} num
+ * @returns {Buffer}
+ */
+function amf0encNumber(num) {
+  let buf = Buffer.alloc(9);
+  buf.writeUInt8(0x00, 0);
+  buf.writeDoubleBE(num, 1);
+  return buf;
 }
 
-class InvalidArgumentException extends RuntimeException {
-  constructor(message) {
-    super(message);
-  }
-
-  get name() {
-    return "InvalidArgumentException";
-  }
+/**
+ * AMF0 Decode Boolean
+ * @param {Buffer} buf
+ * @returns {{len: number, value: boolean}}
+ */
+function amf0decBool(buf) {
+  return { len: 2, value: (buf.readUInt8(1) != 0) };
 }
 
-class NotImplementedException extends RuntimeException {
-  constructor(message) {
-    super(message);
-  }
-
-  get name() {
-    return "NotImplementedException";
-  }
+/**
+ * AMF0 Encode Boolean
+ * @param {number} num
+ * @returns {Buffer}
+ */
+function amf0encBool(num) {
+  let buf = Buffer.alloc(2);
+  buf.writeUInt8(0x01, 0);
+  buf.writeUInt8((num ? 1 : 0), 1);
+  return buf;
 }
 
-const le = (function () {
-  const buf = new ArrayBuffer(2);
-  (new DataView(buf)).setInt16(0, 256, true); // little-endian write
-  return (new Int16Array(buf))[0] === 256; // platform-spec read, if equal then LE
-})();
+/**
+ * AMF0 Decode Null
+ * @returns {{len: number, value: null}}
+ */
+function amf0decNull() {
+  return { len: 1, value: null };
+}
 
+/**
+ * AMF0 Encode Null
+ * @returns {Buffer}
+ */
+function amf0encNull() {
+  let buf = Buffer.alloc(1);
+  buf.writeUInt8(0x05, 0);
+  return buf;
+}
 
-export default class AMF {
-  static parseScriptData(arrayBuffer, dataOffset, dataSize) {
-    const data = {};
+/**
+ * AMF0 Decode Undefined
+ * @returns {{len: number, value: undefined}}
+ */
+function amf0decUndefined() {
+  return { len: 1, value: undefined };
+}
 
-    try {
-      const name = AMF.parseValue(arrayBuffer, dataOffset, dataSize);
-      const value = AMF.parseValue(arrayBuffer, dataOffset + name.size, dataSize - name.size);
+/**
+ * AMF0 Encode Undefined
+ * @returns {Buffer}
+ */
+function amf0encUndefined() {
+  let buf = Buffer.alloc(1);
+  buf.writeUInt8(0x06, 0);
+  return buf;
+}
 
-      data[name.data] = value.data;
-    } catch (e) {
-      logger.error("AMF", e.toString());
+/**
+ * AMF0 Decode Date
+ * @param {Buffer} buf
+ * @returns {{len: number, value: (* | number)}}
+ */
+function amf0decDate(buf) {
+  //    let s16 = buf.readInt16BE(1);
+  let ts = buf.readDoubleBE(3);
+  return { len: 11, value: ts };
+}
+
+/**
+ * AMF0 Encode Date
+ * @param ts
+ * @returns {Buffer}
+ */
+function amf0encDate(ts) {
+  let buf = Buffer.alloc(11);
+  buf.writeUInt8(0x0B, 0);
+  buf.writeInt16BE(0, 1);
+  buf.writeDoubleBE(ts, 3);
+  return buf;
+}
+
+/**
+ * AMF0 Decode Object
+ * @param {Buffer} buf
+ * @returns {{len: number, value: {}}}
+ */
+function amf0decObject(buf) { // TODO: Implement references!
+  let obj = {};
+  let iBuf = buf.slice(1);
+  let len = 1;
+  //    logger.debug('ODec',iBuf.readUInt8(0));
+  while (iBuf.readUInt8(0) != 0x09) {
+    // logger.debug('Field', iBuf.readUInt8(0), iBuf);
+    let prop = amf0decUString(iBuf);
+    // logger.debug('Got field for property', prop);
+    len += prop.len;
+    if (iBuf.length < prop.len) {
+      break;
     }
-
-    return data;
+    if (iBuf.slice(prop.len).readUInt8(0) == 0x09) {
+      len++;
+      // logger.debug('Found the end property');
+      break;
+    } // END Object as value, we shall leave
+    if (prop.value == "") break;
+    let val = amf0DecodeOne(iBuf.slice(prop.len));
+    // logger.debug('Got field for value', val);
+    obj[prop.value] = val.value;
+    len += val.len;
+    iBuf = iBuf.slice(prop.len + val.len);
   }
+  return { len: len, value: obj };
+}
 
-  static parseObject(arrayBuffer, dataOffset, dataSize) {
-    if (dataSize < 3) {
-      throw new IllegalStateException("Data not enough when parse ScriptDataObject");
-    }
-    const name = AMF.parseString(arrayBuffer, dataOffset, dataSize);
-    const value = AMF.parseValue(arrayBuffer, dataOffset + name.size, dataSize - name.size);
-    const isObjectEnd = value.objectEnd;
+/**
+ * AMF0 Encode Object
+ * @param {object} o
+ * @returns {Buffer} 
+ */
+function amf0encObject(o) {
+  if (typeof o !== "object") return null;
 
-    return {
-      data: {
-        name: name.data,
-        value: value.data
-      },
-      size: name.size + value.size,
-      objectEnd: isObjectEnd
-    };
+  let data = Buffer.alloc(1);
+  data.writeUInt8(0x03, 0); // Type object
+  let k;
+  for (k in o) {
+    data = Buffer.concat([data, amf0encUString(k), amf0EncodeOne(o[k])]);
   }
+  let termCode = Buffer.alloc(1);
+  termCode.writeUInt8(0x09, 0);
+  return Buffer.concat([data, amf0encUString(""), termCode]);
+}
 
-  static parseVariable(arrayBuffer, dataOffset, dataSize) {
-    return AMF.parseObject(arrayBuffer, dataOffset, dataSize);
+/**
+ * AMF0 Decode Reference
+ * @param buf
+ * @returns {{len: number, value: string}}
+ */
+function amf0decRef(buf) {
+  let index = buf.readUInt16BE(1);
+  return { len: 3, value: "ref" + index };
+}
+
+/**
+ * AMF0 Encode Reference
+ * @param index
+ * @returns {Buffer}
+ */
+function amf0encRef(index) {
+  let buf = Buffer.alloc(3);
+  buf.writeUInt8(0x07, 0);
+  buf.writeUInt16BE(index, 1);
+  return buf;
+}
+
+/**
+ * AMF0 Decode String
+ * @param {Buffer} buf
+ * @returns {{len: *, value: (* | string | string)}}
+ */
+function amf0decString(buf) {
+  let sLen = buf.readUInt16BE(1);
+  return { len: 3 + sLen, value: buf.toString("utf8", 3, 3 + sLen) };
+}
+
+/**
+ * AMF0 Decode Untyped (without the type byte) String
+ * @param {Buffer} buf
+ * @returns {{len: *, value: (* | string | string)}}
+ */
+function amf0decUString(buf) {
+  let sLen = buf.readUInt16BE(0);
+  return { len: 2 + sLen, value: buf.toString("utf8", 2, 2 + sLen) };
+}
+
+/**
+ * Do AMD0 Encode of Untyped String
+ * @param {string} str
+ * @returns {Buffer}
+ */
+function amf0encUString(str) {
+  let data = Buffer.from(str, "utf8");
+  let sLen = Buffer.alloc(2);
+  sLen.writeUInt16BE(data.length, 0);
+  return Buffer.concat([sLen, data]);
+}
+
+/**
+ * AMF0 Encode String
+ * @param str
+ * @returns {Buffer}
+ */
+function amf0encString(str) {
+  let buf = Buffer.alloc(3);
+  buf.writeUInt8(0x02, 0);
+  buf.writeUInt16BE(str.length, 1);
+  return Buffer.concat([buf, Buffer.from(str, "utf8")]);
+}
+
+/**
+ * AMF0 Decode Long String
+ * @param {Buffer} buf
+ * @returns {{len: *, value: (* | string | string)}}
+ */
+function amf0decLongString(buf) {
+  let sLen = buf.readUInt32BE(1);
+  return { len: 5 + sLen, value: buf.toString("utf8", 5, 5 + sLen) };
+}
+
+/**
+ * AMF0 Encode Long String
+ * @param str
+ * @returns {Buffer}
+ */
+function amf0encLongString(str) {
+  let buf = Buffer.alloc(5);
+  buf.writeUInt8(0x0C, 0);
+  buf.writeUInt32BE(str.length, 1);
+  return Buffer.concat([buf, Buffer.from(str, "utf8")]);
+}
+
+/**
+ * AMF0 Decode Array
+ * @param {Buffer} buf
+ * @returns {{len: *, value: ({}|*)}}
+ */
+function amf0decArray(buf) {
+  //    let count = buf.readUInt32BE(1);
+  let obj = amf0decObject(buf.slice(4));
+  return { len: 5 + obj.len, value: obj.value };
+}
+
+/**
+ * AMF0 Encode Array
+ * @param a
+ */
+function amf0encArray(a) {
+  let l = 0;
+  if (a instanceof Array) l = a.length; else l = Object.keys(a).length;
+  logger.debug("Array encode", l, a);
+  let buf = Buffer.alloc(5);
+  buf.writeUInt8(8, 0);
+  buf.writeUInt32BE(l, 1);
+  let data = amf0encObject(a);
+  return Buffer.concat([buf, data.slice(1)]);
+}
+
+/**
+ * AMF0 Encode Binary Array into binary Object
+ * @param aData
+ * @returns {Buffer}
+ */
+function amf0cnletray2Object(aData) {
+  let buf = Buffer.alloc(1);
+  buf.writeUInt8(0x3, 0); // Object id
+  return Buffer.concat([buf, aData.slice(5)]);
+}
+
+/**
+ * AMF0 Encode Binary Object into binary Array
+ * @param {Buffer} oData
+ * @returns {Buffer}
+ */
+function amf0cnvObject2Array(oData) {
+  let buf = Buffer.alloc(5);
+  let o = amf0decObject(oData);
+  let l = Object.keys(o).length;
+  buf.writeUInt32BE(l, 1);
+  return Buffer.concat([buf, oData.slice(1)]);
+}
+
+/**
+ * AMF0 Decode XMLDoc
+ * @param {Buffer} buf
+ * @returns {{len: *, value: (* | string | string)}}
+ */
+function amf0decXmlDoc(buf) {
+  let sLen = buf.readUInt16BE(1);
+  return { len: 3 + sLen, value: buf.toString("utf8", 3, 3 + sLen) };
+}
+
+/**
+ * AMF0 Encode XMLDoc
+ * @param str
+ * @returns {Buffer}
+ */
+function amf0encXmlDoc(str) { // Essentially it is the same as string
+  let buf = Buffer.alloc(3);
+  buf.writeUInt8(0x0F, 0);
+  buf.writeUInt16BE(str.length, 1);
+  return Buffer.concat([buf, Buffer.from(str, "utf8")]);
+}
+
+/**
+ * AMF0 Decode Strict Array
+ * @param {Buffer} buf
+ * @returns {{len: number, value: Array}}
+ */
+function amf0decSArray(buf) {
+  let a = [];
+  let len = 5;
+  let ret;
+  for (let count = buf.readUInt32BE(1); count; count--) {
+    ret = amf0DecodeOne(buf.slice(len));
+    a.push(ret.value);
+    len += ret.len;
   }
+  return { len: len, value: amf0markSArray(a) };
+}
 
-  static parseString(arrayBuffer, dataOffset, dataSize) {
-    if (dataSize < 2) {
-      throw new IllegalStateException("Data not enough when parse String");
-    }
-    const v = new DataView(arrayBuffer, dataOffset, dataSize);
-    const length = v.getUint16(0, !le);
-
-    let str;
-    if (length > 0) {
-      str = decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 2, length));
-    } else {
-      str = "";
-    }
-
-    return {
-      data: str,
-      size: 2 + length
-    };
+/**
+ * AMF0 Encode Strict Array
+ * @param {Array} a Array
+ * @returns {Buffer}
+ */
+function amf0encSArray(a) {
+  logger.debug("Do strict array!");
+  let buf = Buffer.alloc(5);
+  buf.writeUInt8(0x0A, 0);
+  buf.writeUInt32BE(a.length, 1);
+  let i;
+  for (i = 0; i < a.length; i++) {
+    buf = Buffer.concat([buf, amf0EncodeOne(a[i])]);
   }
+  return buf;
+}
 
-  static parseLongString(arrayBuffer, dataOffset, dataSize) {
-    if (dataSize < 4) {
-      throw new IllegalStateException("Data not enough when parse LongString");
-    }
-    const v = new DataView(arrayBuffer, dataOffset, dataSize);
-    const length = v.getUint32(0, !le);
+/**
+ *
+ * @param a
+ */
+function amf0markSArray(a) {
+  Object.defineProperty(a, "sarray", { value: true });
+  return a;
+}
 
-    let str;
-    if (length > 0) {
-      str = decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 4, length));
-    } else {
-      str = "";
-    }
+/**
+ * AMF0 Decode Typed Object
+ * @param {Buffer} buf
+ * @returns {{len: number, value: ({}|*)}}
+ */
+function amf0decTypedObj(buf) {
+  let className = amf0decString(buf);
+  let obj = amf0decObject(buf.slice(className.len - 1));
+  obj.value.__className__ = className.value;
+  return { len: className.len + obj.len - 1, value: obj.value };
+}
 
-    return {
-      data: str,
-      size: 4 + length
-    };
+
+/**
+ * AMF0 Encode Typed Object
+ */
+function amf0encTypedObj() {
+  throw new Error("Error: SArray encoding is not yet implemented!"); // TODO: Error
+}
+
+/**
+ * Decode one value from the Buffer according to the applied rules
+ * @param rules
+ * @param {Buffer} buffer
+ * @returns {*}
+ */
+function amfXDecodeOne(rules, buffer) {
+  if (!rules[buffer.readUInt8(0)]) {
+    logger.error("Unknown field", buffer.readUInt8(0));
+    return null;
   }
+  return rules[buffer.readUInt8(0)](buffer);
+}
 
-  static parseDate(arrayBuffer, dataOffset, dataSize) {
-    if (dataSize < 10) {
-      throw new IllegalStateException("Data size invalid when parse Date");
-    }
-    const v = new DataView(arrayBuffer, dataOffset, dataSize);
-    let timestamp = v.getFloat64(0, !le);
-    const localTimeOffset = v.getInt16(8, !le);
-    timestamp += localTimeOffset * 60 * 1000; // get UTC time
+/**
+ * Decode one AMF0 value
+ * @param {Buffer} buffer
+ * @returns {*}
+ */
+function amf0DecodeOne(buffer) {
+  return amfXDecodeOne(amf0dRules, buffer);
+}
 
-    return {
-      data: new Date(timestamp),
-      size: 8 + 2
-    };
+
+/**
+ * Decode a whole buffer of AMF values according to rules and return in array
+ * @param rules
+ * @param {Buffer} buffer
+ * @returns {Array}
+ */
+function amfXDecode(rules, buffer) {
+  // We shall receive clean buffer and will respond with an array of values
+  let resp = [];
+  let res;
+  for (let i = 0; i < buffer.length;) {
+    res = amfXDecodeOne(rules, buffer.slice(i));
+    i += res.len;
+    resp.push(res.value); // Add the response
   }
+  return resp;
+}
 
-  static parseValue(arrayBuffer, dataOffset, dataSize) {
-    if (dataSize < 1) {
-      throw new IllegalStateException("Data not enough when parse Value");
-    }
+/**
+ * Decode a buffer of AMF0 values
+ * @param {Buffer} buffer
+ * @returns {Array}
+ */
+function amf0Decode(buffer) {
+  return amfXDecode(amf0dRules, buffer);
+}
 
-    const v = new DataView(arrayBuffer, dataOffset, dataSize);
+/**
+ * Encode one AMF value according to rules
+ * @param rules
+ * @param o
+ * @returns {*}
+ */
+function amfXEncodeOne(rules, o) {
+  //    logger.debug('amfXEncodeOne type',o,amfType(o),rules[amfType(o)]);
+  let f = rules[amfType(o)];
+  if (f) return f(o);
+  throw new Error("Unsupported type for encoding!");
+}
 
-    let offset = 1;
-    const type = v.getUint8(0);
-    let value;
-    let objectEnd = false;
+/**
+ * Encode one AMF0 value
+ * @param o
+ * @returns {*}
+ */
+function amf0EncodeOne(o) {
+  return amfXEncodeOne(amf0eRules, o);
+}
 
-    try {
-      switch (type) {
-      case 0: // Number(Double) type
-        value = v.getFloat64(1, !le);
-        offset += 8;
-        break;
-      case 1: { // Boolean type
-        const b = v.getUint8(1);
-        value = !!b;
-        offset += 1;
-        break;
-      }
-      case 2: { // String type
-        const amfstr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
-        value = amfstr.data;
-        offset += amfstr.size;
-        break;
-      }
-      case 3: { // Object(s) type
-        value = {};
-        let terminal = 0; // workaround for malformed Objects which has missing ScriptDataObjectEnd
-        if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
-          terminal = 3;
-        }
-        while (offset < dataSize - 4) { // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
-          const amfobj = AMF.parseObject(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
-          if (amfobj.objectEnd) { break; }
-          value[amfobj.data.name] = amfobj.data.value;
-          offset += amfobj.size;
-        }
-        if (offset <= dataSize - 3) {
-          const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
-          if (marker === 9) {
-            offset += 3;
+/**
+ * Encode an array of values into a buffer
+ * @param a
+ * @returns {Buffer}
+ */
+function amf0Encode(a) {
+  let buf = Buffer.alloc(0);
+  a.forEach(function (o) {
+    buf = Buffer.concat([buf, amf0EncodeOne(o)]);
+  });
+  return buf;
+}
+
+
+const rtmpCmdCode = {
+  "_result": ["transId", "cmdObj", "info"],
+  "_error": ["transId", "cmdObj", "info", "streamId"], // Info / Streamid are optional
+  "onStatus": ["transId", "cmdObj", "info"],
+  "releaseStream": ["transId", "cmdObj", "streamName"],
+  "getStreamLength": ["transId", "cmdObj", "streamId"],
+  "getMovLen": ["transId", "cmdObj", "streamId"],
+  "FCPublish": ["transId", "cmdObj", "streamName"],
+  "FCUnpublish": ["transId", "cmdObj", "streamName"],
+  "FCSubscribe": ["transId", "cmdObj", "streamName"],
+  "onFCPublish": ["transId", "cmdObj", "info"],
+  "connect": ["transId", "cmdObj", "args"],
+  "call": ["transId", "cmdObj", "args"],
+  "createStream": ["transId", "cmdObj"],
+  "close": ["transId", "cmdObj"],
+  "play": ["transId", "cmdObj", "streamName", "start", "duration", "reset"],
+  "play2": ["transId", "cmdObj", "params"],
+  "deleteStream": ["transId", "cmdObj", "streamId"],
+  "closeStream": ["transId", "cmdObj"],
+  "receiveAudio": ["transId", "cmdObj", "bool"],
+  "receiveVideo": ["transId", "cmdObj", "bool"],
+  "publish": ["transId", "cmdObj", "streamName", "type"],
+  "seek": ["transId", "cmdObj", "ms"],
+  "pause": ["transId", "cmdObj", "pause", "ms"]
+};
+
+const rtmpDataCode = {
+  "@setDataFrame": ["method", "dataObj"],
+  "onFI": ["info"],
+  "onMetaData": ["dataObj"],
+  "|RtmpSampleAccess": ["bool1", "bool2"],
+};
+
+
+/**
+ * Decode a data!
+ * @param {Buffer} dbuf
+ * @returns {{cmd: (* | string | string | *), value: *}}
+ */
+function decodeAmf0Data(dbuf) {
+  let buffer = dbuf;
+  let resp = {};
+
+  let cmd = amf0DecodeOne(buffer);
+  if (cmd) {
+    resp.cmd = cmd.value;
+    buffer = buffer.slice(cmd.len);
+
+    if (rtmpDataCode[cmd.value]) {
+      rtmpDataCode[cmd.value].forEach(function (n) {
+        if (buffer.length > 0) {
+          let r = amf0DecodeOne(buffer);
+          if (r) {
+            buffer = buffer.slice(r.len);
+            resp[n] = r.value;
           }
         }
-        break;
-      }
-      case 8: { // ECMA array type (Mixed array)
-        value = {};
-        offset += 4; // ECMAArrayLength(UI32)
-        let terminal = 0; // workaround for malformed MixedArrays which has missing ScriptDataObjectEnd
-        if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
-          terminal = 3;
-        }
-        while (offset < dataSize - 8) { // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
-          const amfvar = AMF.parseVariable(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
-          if (amfvar.objectEnd) { break; }
-          value[amfvar.data.name] = amfvar.data.value;
-          offset += amfvar.size;
-        }
-        if (offset <= dataSize - 3) {
-          const marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
-          if (marker === 9) {
-            offset += 3;
-          }
-        }
-        break;
-      }
-      case 9: // ScriptDataObjectEnd
-        value = undefined;
-        offset = 1;
-        objectEnd = true;
-        break;
-      case 10: { // Strict array type
-        // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
-        value = [];
-        const strictArrayLength = v.getUint32(1, !le);
-        offset += 4;
-        for (let i = 0; i < strictArrayLength; i++) {
-          const val = AMF.parseValue(arrayBuffer, dataOffset + offset, dataSize - offset);
-          value.push(val.data);
-          offset += val.size;
-        }
-        break;
-      }
-      case 11: { // Date type
-        const date = AMF.parseDate(arrayBuffer, dataOffset + 1, dataSize - 1);
-        value = date.data;
-        offset += date.size;
-        break;
-      }
-      case 12: { // Long string type
-        const amfLongStr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
-        value = amfLongStr.data;
-        offset += amfLongStr.size;
-        break;
-      }
-      default:
-        // ignore and skip
-        offset = dataSize;
-        logger.warn("AMF", "Unsupported AMF value type " + type);
-      }
-    } catch (e) {
-      logger.error("AMF", e.toString());
+      });
+    } else {
+      logger.error("Unknown command", resp);
     }
-
-    return {
-      data: value,
-      size: offset,
-      objectEnd
-    };
   }
+
+  return resp;
 }
+
+/**
+ * Decode a command!
+ * @param {Buffer} dbuf
+ * @returns {{cmd: (* | string | string | *), value: *}}
+ */
+function decodeAmf0Cmd(dbuf) {
+  let buffer = dbuf;
+  let resp = {};
+
+  let cmd = amf0DecodeOne(buffer);
+  resp.cmd = cmd.value;
+  buffer = buffer.slice(cmd.len);
+
+  if (rtmpCmdCode[cmd.value]) {
+    rtmpCmdCode[cmd.value].forEach(function (n) {
+      if (buffer.length > 0) {
+        let r = amf0DecodeOne(buffer);
+        buffer = buffer.slice(r.len);
+        resp[n] = r.value;
+      }
+    });
+  } else {
+    logger.error("Unknown command", resp);
+  }
+  return resp;
+}
+
+/**
+ * Encode AMF0 Command
+ * @param {object} opt
+ * @returns {*}
+ */
+function encodeAmf0Cmd(opt) {
+  let data = amf0EncodeOne(opt.cmd);
+
+  if (rtmpCmdCode[opt.cmd]) {
+    rtmpCmdCode[opt.cmd].forEach(function (n) {
+      if (Object.prototype.hasOwnProperty.call(opt, n))
+        data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
+    });
+  } else {
+    logger.error("Unknown command", opt);
+  }
+  // logger.debug('Encoded as',data.toString('hex'));
+  return data;
+}
+
+/**
+ *
+ * @param {object} opt
+ */
+function encodeAmf0Data(opt) {
+  let data = amf0EncodeOne(opt.cmd);
+
+  if (rtmpDataCode[opt.cmd]) {
+    rtmpDataCode[opt.cmd].forEach(function (n) {
+      if (Object.prototype.hasOwnProperty.call(opt, n))
+        data = Buffer.concat([data, amf0EncodeOne(opt[n])]);
+    });
+  } else {
+    logger.error("Unknown data", opt);
+  }
+  // logger.debug('Encoded as',data.toString('hex'));
+  return data;
+}
+
+
+export {
+  decodeAmf0Cmd,
+  encodeAmf0Cmd,
+  decodeAmf0Data,
+  encodeAmf0Data,
+  amf0Encode,
+  amf0EncodeOne,
+  amf0Decode,
+  amf0DecodeOne,
+};

@@ -6,6 +6,9 @@
 //
 
 import Context from "../core/context.js";
+import net from "node:net";
+import logger from "../core/logger.js";
+import RtmpSession from "../session/rtmp_session.js";
 
 export default class NodeRtmpServer {
   /**
@@ -13,9 +16,21 @@ export default class NodeRtmpServer {
    */
   constructor(ctx) {
     this.ctx = ctx;
+    this.tcpServer = net.createServer(this.handleRequest);
   }
 
   run = () => {
+    this.tcpServer.listen(this.ctx.config.rtmp.port, this.ctx.config.rtmp.bind, () => {
+      logger.log(`Rtmp Server listening on port ${this.ctx.config.rtmp.bind}:${this.ctx.config.rtmp.port}`);
+    });
 
+  };
+
+  /**
+   * @param {net.Socket} socket 
+   */
+  handleRequest = (socket) => {
+    const session = new RtmpSession(this.ctx, socket);
+    session.run();
   };
 }

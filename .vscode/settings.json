@@ -3,4 +3,5 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "always"
     },
+    "editor.tabSize": 2,
 }
