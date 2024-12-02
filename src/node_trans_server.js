@@ -14,6 +14,7 @@ const mkdirp = require('mkdirp');
 
 class NodeTransServer {
   constructor(config) {
+    console.log('NodeTransServer');
     this.config = config;
     this.transSessions = new Map();
   }
@@ -65,10 +66,13 @@ class NodeTransServer {
       conf.streamApp = app;
       conf.streamName = name;
       conf.args = args;
+
+      console.log(app, conf.app);
       if (app === conf.app) {
         let session = new NodeTransSession(conf);
         this.transSessions.set(id, session);
         session.on('end', () => {
+          console.log('end');
           this.transSessions.delete(id);
         });
         session.run();
@@ -77,6 +81,7 @@ class NodeTransServer {
   }
 
   onDonePublish(id, streamPath, args) {
+    console.log('done');
     let session = this.transSessions.get(id);
     if (session) {
       session.end();

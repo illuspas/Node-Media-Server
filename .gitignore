@@ -35,3 +35,6 @@ node_modules
 .vscode
 
 yarn.lock
+
+.idea
+.env

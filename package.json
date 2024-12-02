@@ -1,16 +1,17 @@
 {
-  "name": "node-media-server",
-  "version": "2.7.0",
-  "description": "A Node.js implementation of RTMP Server",
+  "name": "@hoeeeeeh/node-media-server",
+  "version": "3.0.2",
+  "description": "A Node.js implementation of RTMP Server for naver boostcamp project : liboo",
   "bin": "bin/app.js",
   "main": "src/node_media_server.js",
+  "types": "src/node_media_server.d.ts",
   "scripts": {
     "start": "node bin/app.js",
     "test": "node test/test_run.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/illuspas/Node-Media-Server.git"
+    "url": "https://github.com/hoeeeeeh/Node-Media-Server.git"
   },
   "keywords": [
     "rtmp",
@@ -24,9 +25,13 @@
   },
   "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.688.0",
+    "@types/node": "^22.9.0",
     "basic-auth-connect": "^1.0.0",
+    "body-parser": "1.20.3",
     "chalk": "^4.1.0",
     "dateformat": "^4.6.3",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "http2-express-bridge": "^1.0.7",
     "lodash": "^4.17.21",
@@ -35,6 +40,10 @@
     "ws": "^8.13.0"
   },
   "engines": {
-    "node": ">=8.0.0"
-  }
+    "node": ">=12.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
