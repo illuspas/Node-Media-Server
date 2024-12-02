@@ -1,5 +1,5 @@
-import path from "path";
-import dotenv from "dotenv";
+const path = require("path");
+const dotenv = require("dotenv");
 
 dotenv.config({ path: path.resolve("../.env") });
 
@@ -8,8 +8,8 @@ const secretAccessKey = process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY || "";
 const region = process.env.OBJECT_STORAGE_REGION || "";
 const endpoint = process.env.OBJECT_STORAGE_ENDPOINT || "";
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { createReadStream } from "fs";
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { createReadStream } = require("fs");
 
 // AWS 자격 증명 및 기본 설정
 const s3Client = new S3Client({
@@ -56,4 +56,4 @@ const extractThumbnail = (tsFilePath, ouPath) => {
   });
 }
 
-export { uploadFileToS3, extractThumbnail};
+module.exports = { uploadFileToS3, extractThumbnail};

@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "vhttps://github.com/hoeeeeeh/Node-Media-Server.git"
+    "url": "https://github.com/hoeeeeeh/Node-Media-Server.git"
   },
   "keywords": [
     "rtmp",
@@ -31,6 +31,7 @@
     "body-parser": "1.20.3",
     "chalk": "^4.1.0",
     "dateformat": "^4.6.3",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "http2-express-bridge": "^1.0.7",
     "lodash": "^4.17.21",

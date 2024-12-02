@@ -4,6 +4,8 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
+const API_SERVER_URL = 'https://liboo.kr:3000';
+
 const QueryString = require('querystring');
 const AV = require('./node_core_av');
 const { AUDIO_SOUND_RATE, AUDIO_CODEC_NAME, VIDEO_CODEC_NAME } = require('./node_core_av');
@@ -118,6 +120,7 @@ class NodeRtmpSession {
   constructor(config, socket) {
     this.config = config;
     this.socket = socket;
+    this.streamKey = '';
     this.res = socket;
     this.id = NodeCoreUtils.generateNewSessionID();
     this.ip = socket.remoteAddress;
@@ -221,6 +224,7 @@ class NodeRtmpSession {
       context.nodeEvent.emit('doneConnect', this.id, this.connectCmdObj);
 
       context.sessions.delete(this.id);
+      this.postStreamEnd();
       this.socket.destroy();
     }
   }
@@ -1108,7 +1112,7 @@ class NodeRtmpSession {
     this.respondCreateStream(invokeMessage.transId);
   }
 
-  onPublish(invokeMessage) {
+  async onPublish(invokeMessage) {
     if (typeof invokeMessage.streamName !== 'string') {
       return;
     }
@@ -1137,8 +1141,9 @@ class NodeRtmpSession {
       Logger.log(`[rtmp publish] NetConnection is publishing. id=${this.id} streamPath=${this.publishStreamPath} streamId=${this.publishStreamId}`);
       this.sendStatusMessage(this.publishStreamId, 'error', 'NetStream.Publish.BadConnection', 'Connection already publishing');
     } else {
-      const [_,__, ...streamKey] = this.publishStreamPath.split('/');
-      // streamkey 비교 로직
+      const streamKey = this.publishStreamPath.split('/').pop();
+      this.streamKey = streamKey.trim();
+      await this.getSIDusingStreamKey();
 
       Logger.log(`[rtmp publish] New stream. id=${this.id} streamPath=${this.publishStreamPath} streamkey=${streamKey} streamId=${this.publishStreamId}`);
       context.publishers.set(this.publishStreamPath, this.id);
@@ -1154,6 +1159,53 @@ class NodeRtmpSession {
       }
       context.nodeEvent.emit('postPublish', this.id, this.publishStreamPath, this.publishArgs);
     }
+  }
+
+  async getSIDusingStreamKey(){
+    // streamkey 비교 로직
+    if(context.streamSessions.has(this.streamKey)) throw new Error('이미 존재하는 스트림 키 입니다.');
+    console.log('this.streamkey = ', this.streamKey);
+    // mainserver streamkey -> session id 호출 api
+    await fetch(`${API_SERVER_URL}/host/session?streamKey=${this.streamKey}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    }).then((data) => {
+      console.log(data['session-key']);
+      context.streamSessions.set(this.streamKey, data['session-key']);
+    }).catch((error) => {
+      console.error('Error:', error);
+    });
+  }
+  
+  postStreamEnd(){
+    context.streamSessions.delete(this.streamKey);
+    console.log(this.streamKey);
+    if (!this.streamKey) {
+      return;
+    }
+    fetch(`${API_SERVER_URL}/host/session?streamKey=${this.streamKey}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    }).then((data) => {
+    }).catch((error) => {
+      console.error('Error:', error);
+    });
   }
 
   onPlay(invokeMessage) {

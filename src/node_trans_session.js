@@ -4,7 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Logger = require('./node_core_logger');
-
+const { exec } = require('child_process');
 const EventEmitter = require('events');
 const { spawn } = require('child_process');
 const dateFormat = require('dateformat');
@@ -20,6 +20,7 @@ class NodeTransSession extends EventEmitter {
   constructor(conf) {
     super();
     this.conf = conf;
+    this.thumbnailInterval = null;
     this.getConfig = (key = null) => {
       if (!key) return
       if (typeof this.conf != 'object') return
@@ -55,6 +56,7 @@ class NodeTransSession extends EventEmitter {
       this.conf.hlsFlags = this.getConfig('hlsFlags') || '';
       let hlsFileName = 'index.m3u8';
       let mapHls = `${this.conf.hlsFlags}${ouPath}/${hlsFileName}|`;
+      console.log(mapHls);
       mapStr += mapHls;
       Logger.log('[Transmuxing HLS] ' + this.conf.streamPath + ' to ' + ouPath + '/' + hlsFileName);
     }
@@ -65,6 +67,8 @@ class NodeTransSession extends EventEmitter {
       mapStr += mapDash;
       Logger.log('[Transmuxing DASH] ' + this.conf.streamPath + ' to ' + ouPath + '/' + dashFileName);
     }
+
+    let thumbnailPath = `${ouPath}/thumbnail.png`;
     mkdirp.sync(ouPath);
     let argv = ['-y', '-i', inPath];
     Array.prototype.push.apply(argv, ['-c:v', vc]);
@@ -74,18 +78,6 @@ class NodeTransSession extends EventEmitter {
     Array.prototype.push.apply(argv, ['-f', 'tee', '-map', '0:a?', '-map', '0:v?', mapStr]);
     argv = argv.filter((n) => { return n; });
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
-
-    this.watchHlsSegments(ouPath);
-
-    // fs.watch(ouPath, (eventType, filename) => {
-    //   if (filename && filename === 'index.m3u8') {
-    //     if (eventType === 'rename') {
-    //       console.log(`index.m3u8 파일이 새로 생성되었습니다: ${filename}`);
-    //     } else if (eventType === 'change') {
-    //       console.log(`index.m3u8 파일이 갱신되었습니다: ${filename}`);
-    //     }
-    //   }
-    // });
 
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
@@ -105,49 +97,51 @@ class NodeTransSession extends EventEmitter {
       this.cleanTempFiles(ouPath)
       this.deleteHlsFiles(ouPath)
     });
+
+    this.startThumbnailCapture(inPath, ouPath);
   }
 
-
-  watchHlsSegments(ouPath) {
-    fs.watch(ouPath, (eventType, filename) => {
-      if (filename && filename.endsWith('.ts') && eventType === 'rename') {
-        const tsFilePath = path.join(ouPath, filename);
-        Logger.log(`[Thumbnail Extraction] New TS file detected: ${filename}`);
-        this.extractThumbnail(tsFilePath, ouPath);
-      }
-    });
+  // Start capturing thumbnails
+  startThumbnailCapture(inPath, ouPath) {
+    const thumbnailIntervalMs = 10000; // 10 seconds
+    const thumbnailPath = `${ouPath}/thumbnail.png`;
+    this.thumbnailInterval = setInterval(() => {
+      this.generateThumbnail(inPath, thumbnailPath);
+    }, thumbnailIntervalMs);
   }
 
-  extractThumbnail(tsFilePath, ouPath) {
-    const thumbnailPath = path.join(ouPath, 'thumbnail.png');
-    const argv = [
+  // Generate a single thumbnail
+  generateThumbnail(inPath, thumbnailPath) {
+    const thumbnailArgs = [
       '-y',
-      '-i',
-      tsFilePath,
-      '-vf',
-      'fps=1,scale=-1:480',
-      '-vframes',
-      '1',
+      '-i', inPath,
+      '-frames:v', '1',
+      '-q:v', '2', // Set quality
       thumbnailPath,
     ];
-    const ffmpeg = spawn(this.conf.ffmpeg, argv);
 
-    ffmpeg.on('error', (e) => {
-      Logger.error(`[Thumbnail Extraction] Error: ${e.message}`);
+    const thumbnailProcess = spawn(this.conf.ffmpeg, thumbnailArgs);
+
+    thumbnailProcess.stderr.on('data', (data) => {
+      Logger.ffdebug(`Thumbnail FFmpeg LOG: ${data}`);
     });
 
-    ffmpeg.on('close', (code) => {
+    thumbnailProcess.on('close', (code) => {
       if (code === 0) {
-        Logger.log(`[Thumbnail Extraction] Thumbnail created: ${thumbnailPath}`);
+        Logger.log(`[Thumbnail] Captured: ${thumbnailPath}`);
       } else {
-        Logger.error(`[Thumbnail Extraction] Failed to create thumbnail for ${tsFilePath}`);
+        Logger.error(`[Thumbnail] Failed with code ${code}`);
       }
     });
   }
 
-
   end() {
-    this.ffmpeg_exec.kill();
+    if (this.thumbnailInterval) {
+      clearInterval(this.thumbnailInterval); // Stop thumbnail generation
+    }
+    if (this.ffmpeg_exec) {
+      this.ffmpeg_exec.kill();
+    }
   }
 
   // delete hls files

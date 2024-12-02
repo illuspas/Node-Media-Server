@@ -24,7 +24,7 @@ const context = require('./node_core_ctx');
 const streamsRoute = require('./api/routes/streams');
 const serverRoute = require('./api/routes/server');
 const relayRoute = require('./api/routes/relay');
-const { uploadFileToS3, extractThumbnail } = require('./node_storage_upload');
+const { uploadFileToS3 } = require('./node_storage_upload');
 const dotenv = require('./node_flv_session');
 
 class NodeHttpServer {
@@ -77,18 +77,26 @@ class NodeHttpServer {
 
       Fs.access(uploadFilePath, Fs.constants.F_OK, (err) => {
         const destPath = req.path.replace(/^\/+/, ''); // /live/web22 같이 들어왔을 때, live/web22 로 경로 바꿔주기 위해서 replace
+        const reqPath = destPath.split('/');
+        const streamKey = reqPath[1];
+        const sessionKey = context.streamSessions.get(streamKey);
+        reqPath[1] = sessionKey;
+        const uploadKey = reqPath.join('/');
+        console.log('upload path: ', uploadKey);
+        console.log(destPath, reqPath, streamKey, sessionKey);
+
         const tsRegex = /\.ts$/;
         if (err) {
           console.log(`File not found: ${uploadFilePath}`);
-          res.status(404).send('File not found');
+          res.status(302).send('File is not loaded');
         } else {
           console.log('object storage upload');
-          uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, req.path.replace(/^\/+/, ''), uploadFilePath).then((r) => {
+          uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, uploadKey, uploadFilePath).then((r) => {
             console.log('upload completed');
           });
           if (destPath.match(tsRegex)) {
             const thumbnailPath = uploadFilePath.split('/').slice(0, -1).join('/');
-            const thumbnailStoragePath = destPath.split('/').slice(0, -1).join('/') + '/thumbnail.png';
+            const thumbnailStoragePath = uploadKey.split('/').slice(0, -1).join('/') + '/thumbnail.png';
             uploadFileToS3(process.env.OBJECT_STORAGE_BUCKET_NAME, thumbnailStoragePath, `${thumbnailPath}/thumbnail.png`).then((r) => {
               console.log('thumbnail upload completed');
             });  
