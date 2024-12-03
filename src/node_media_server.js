@@ -67,25 +67,6 @@ class NodeMediaServer {
       process.exit();
     });
 
-    Https.get('https://registry.npmjs.org/node-media-server', function (res) {
-      let size = 0;
-      let chunks = [];
-      res.on('data', function (chunk) {
-        size += chunk.length;
-        chunks.push(chunk);
-      });
-      res.on('end', function () {
-        let data = Buffer.concat(chunks, size);
-        let jsonData = JSON.parse(data.toString());
-        let latestVersion = jsonData['dist-tags']['latest'];
-        let latestVersionNum = latestVersion.split('.')[0] << 16 | latestVersion.split('.')[1] << 8 | latestVersion.split('.')[2] & 0xff;
-        let thisVersionNum = Package.version.split('.')[0] << 16 | Package.version.split('.')[1] << 8 | Package.version.split('.')[2] & 0xff;
-        if (thisVersionNum < latestVersionNum) {
-          Logger.log(`There is a new version ${latestVersion} that can be updated`);
-        }
-      });
-    }).on('error', function (e) {
-    });
   }
 
   on(eventName, listener) {
