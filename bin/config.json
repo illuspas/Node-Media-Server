@@ -10,7 +10,7 @@
     "https": {
         "bind": "0.0.0.0",
         "port": 8443,
-        "key": "./bin/key.pem",
-        "cert": "./bin/cert.pem"
+        "key": "./key.pem",
+        "cert": "./cert.pem"
     }
 }
