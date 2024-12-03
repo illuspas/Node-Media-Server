@@ -24,15 +24,15 @@
   },
   "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
   "dependencies": {
-    "basic-auth-connect": "^1.0.0",
-    "chalk": "^4.1.0",
+    "basic-auth-connect": "^1.1.0",
+    "chalk": "^4.1.2",
     "dateformat": "^4.6.3",
-    "express": "^4.19.2",
+    "express": "^4.21.1",
     "http2-express-bridge": "^1.0.7",
     "lodash": "^4.17.21",
     "minimist": "^1.2.8",
-    "mkdirp": "^2.1.5",
-    "ws": "^8.13.0"
+    "mkdirp": "^2.1.6",
+    "ws": "^8.18.0"
   },
   "engines": {
     "node": ">=8.0.0"
