@@ -5,19 +5,19 @@
 //  Copyright (c) 2024 Nodemedia. All rights reserved.
 //
 
-import net from "node:net";
-import Context from "../core/context.js";
-import BaseSession from "./base_session.js";
-import BroadcastServer from "../server/broadcast_server.js";
-import Rtmp from "../protocol/rtmp.js";
-import logger from "../core/logger.js";
-import AVPacket from "../core/avpacket.js";
+const net = require( "node:net");
+const Context = require( "../core/context.js");
+const BaseSession = require( "./base_session.js");
+const BroadcastServer = require( "../server/broadcast_server.js");
+const Rtmp = require( "../protocol/rtmp.js");
+const logger = require( "../core/logger.js");
+const AVPacket = require( "../core/avpacket.js");
 
 /**
  * @class
  * @augments BaseSession
  */
-export default class RtmpSession extends BaseSession {
+class RtmpSession extends BaseSession {
   /**
    * 
    * @param {Context} ctx 
@@ -127,3 +127,5 @@ export default class RtmpSession extends BaseSession {
     this.socket.write(buffer);
   };
 }
+
+module.exports = RtmpSession;

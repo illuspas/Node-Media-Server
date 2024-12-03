@@ -5,19 +5,19 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-import express from "express";
-import BaseSession from "./base_session.js";
-import BroadcastServer from "../server/broadcast_server.js";
-import Flv from "../protocol/flv.js";
-import logger from "../core/logger.js";
-import Context from "../core/context.js";
-import AVPacket from "../core/avpacket.js";
+const express = require( "express");
+const BaseSession = require( "./base_session.js");
+const BroadcastServer = require( "../server/broadcast_server.js");
+const Flv = require( "../protocol/flv.js");
+const logger = require( "../core/logger.js");
+const Context = require( "../core/context.js");
+const AVPacket = require( "../core/avpacket.js");
 
 /**
  * @class
  * @augments BaseSession
  */
-export default class FlvSession extends BaseSession {
+class FlvSession extends BaseSession {
   /**
    * @param {Context} ctx
    * @param {express.Request} req
@@ -111,3 +111,5 @@ export default class FlvSession extends BaseSession {
     this.res.write(buffer);
   };
 }
+
+module.exports = FlvSession;

@@ -1,11 +1,13 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import jsdoc from "eslint-plugin-jsdoc";
+const eslint = require("eslint");
+const globals = require("globals");
+const pluginJs = require("@eslint/js");
+const jsdoc = require("eslint-plugin-jsdoc");
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
+/** @type {eslint.Linter.Config[]} */
+module.exports = [
   pluginJs.configs.recommended,
   jsdoc.configs["flat/recommended"],
+  { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
   {
     languageOptions: { globals: globals.node },
     plugins: {

@@ -5,9 +5,9 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
-import logger from "../core/logger.js";
-import AVPacket from "../core/avpacket.js";
-import * as AMF from "./amf.js";
+const logger = require("../core/logger.js");
+const AVPacket = require("../core/avpacket.js");
+const AMF = require("./amf.js");
 
 const FLV_MEDIA_TYPE_AUDIO = 8;
 const FLV_MEDIA_TYPE_VIDEO = 9;
@@ -63,7 +63,7 @@ const PacketTypeMPEG2TSSequenceStart = 5;
 /**
  * @class
  */
-export default class Flv {
+class Flv {
   constructor() {
     this.parserBuffer = Buffer.alloc(13);
     this.parserState = FLV_PARSE_INIT;
@@ -285,3 +285,4 @@ export default class Flv {
   };
 }
 
+module.exports = Flv;

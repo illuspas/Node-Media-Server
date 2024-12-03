@@ -5,12 +5,12 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-import AVPacket from "../core/avpacket.js";
-import Flv from "../protocol/flv.js";
-import Rtmp from "../protocol/rtmp.js";
-import BaseSession from "../session/base_session.js";
+const AVPacket = require("../core/avpacket.js");
+const Flv = require("../protocol/flv.js");
+const Rtmp = require("../protocol/rtmp.js");
+const BaseSession = require("../session/base_session.js");
 
-export default class BroadcastServer {
+class BroadcastServer {
   constructor() {
     /** @type {BaseSession | null} */
     this.publisher = null;
@@ -178,3 +178,5 @@ export default class BroadcastServer {
     });
   };
 }
+
+module.exports = BroadcastServer;

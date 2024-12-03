@@ -5,10 +5,10 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-import BaseSession from "../session/base_session.js";
-import BroadcastServer from "../server/broadcast_server.js";
+const BaseSession = require("../session/base_session.js");
+const BroadcastServer = require( "../server/broadcast_server.js");
 
-export default class Context {
+class Context {
   constructor(config) {
     this.config = config;
 
@@ -19,3 +19,5 @@ export default class Context {
     this.broadcasts = new Map();
   }
 }
+
+module.exports = Context;

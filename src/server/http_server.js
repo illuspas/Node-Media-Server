@@ -5,16 +5,16 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
-import fs from "node:fs";
-import http from "node:http";
-import http2 from "node:http2";
-import express from "express";
-import http2Express from "http2-express-bridge";
-import FlvSession from "../session/flv_session.js";
-import logger from "../core/logger.js";
-import Context from "../core/context.js";
+const fs = require("fs");
+const http = require("http");
+const http2 = require("http2");
+const express = require("express");
+const http2Express = require("http2-express-bridge");
+const FlvSession = require("../session/flv_session.js");
+const logger = require("../core/logger.js");
+const Context = require("../core/context.js");
 
-export default class NodeHttpServer {
+class NodeHttpServer {
   /**
    * @param {Context} ctx 
    */
@@ -31,7 +31,7 @@ export default class NodeHttpServer {
       res.header("Access-Control-Allow-Origin", "*");
       req.method === "OPTIONS" ? res.sendStatus(200) : next();
     });
-    
+
     app.all("/:app/:name.flv", this.handleFlv);
 
     this.server1 = http.createServer(app);
@@ -56,3 +56,5 @@ export default class NodeHttpServer {
     session.run();
   };
 }
+
+module.exports = NodeHttpServer;

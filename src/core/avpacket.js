@@ -5,7 +5,7 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-export default class AVPacket {
+class AVPacket {
   constructor() {
     this.codec_id = 0;
     this.codec_type = 0;
@@ -18,3 +18,5 @@ export default class AVPacket {
     this.data = Buffer.alloc(0);
   }
 }
+
+module.exports = AVPacket;

@@ -3,7 +3,7 @@
  * This module provides encoding and decoding of the AMF0 format
  */
 
-import logger from "../core/logger.js";
+const logger = require("../core/logger.js");
 
 
 const amf0dRules = {
@@ -669,7 +669,7 @@ function encodeAmf0Data(opt) {
 }
 
 
-export {
+module.exports = {
   decodeAmf0Cmd,
   encodeAmf0Cmd,
   decodeAmf0Data,

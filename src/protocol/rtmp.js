@@ -5,11 +5,11 @@
 //  Copyright (c) 2024 Nodemedia. All rights reserved.
 //
 
-import crypto from "node:crypto";
-import logger from "../core/logger.js";
-import AVPacket from "../core/avpacket.js";
-import Flv from "./flv.js";
-import * as AMF from "./amf.js";
+const crypto = require("node:crypto");
+const logger = require("../core/logger.js");
+const AVPacket = require("../core/avpacket.js");
+const Flv = require("./flv.js");
+const AMF = require("./amf.js");
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
@@ -237,7 +237,7 @@ class RtmpPacket {
   }
 }
 
-export default class Rtmp {
+class Rtmp {
   constructor() {
     this.handshakePayload = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     this.handshakeState = RTMP_HANDSHAKE_UNINIT;
@@ -851,3 +851,5 @@ export default class Rtmp {
     this.sendRtmpSampleAccess();
   }
 }
+
+module.exports = Rtmp;

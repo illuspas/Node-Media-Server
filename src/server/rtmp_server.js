@@ -5,12 +5,12 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
-import Context from "../core/context.js";
-import net from "node:net";
-import logger from "../core/logger.js";
-import RtmpSession from "../session/rtmp_session.js";
+const Context = require("../core/context.js");
+const net = require("net");
+const logger = require("../core/logger.js");
+const RtmpSession = require("../session/rtmp_session.js");
 
-export default class NodeRtmpServer {
+class NodeRtmpServer {
   /**
    * @param {Context} ctx 
    */
@@ -34,3 +34,5 @@ export default class NodeRtmpServer {
     session.run();
   };
 }
+
+module.exports = NodeRtmpServer;

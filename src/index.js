@@ -5,16 +5,13 @@
 //  Copyright (c) 2024 NodeMedia. All rights reserved.
 //
 
-import NodeHttpServer from "./server/http_server.js";
-import NodeRtmpServer from "./server/rtmp_server.js";
-import { createRequire } from "module";
-import logger from "./core/logger.js";
-import Context from "./core/context.js";
-
-const require = createRequire(import.meta.url);
+const NodeHttpServer = require("./server/http_server.js");
+const NodeRtmpServer = require("./server/rtmp_server.js");
+const logger = require("./core/logger.js");
+const Context = require("./core/context.js");
 const Package = require("../package.json");
 
-export default class NodeMediaServer {
+class NodeMediaServer {
   constructor(config) {
     logger.level = "debug";
     logger.info(`Node-Media-Server v${Package.version}`);
@@ -31,3 +28,5 @@ export default class NodeMediaServer {
     this.rtmpServer.run();
   }
 }
+
+module.exports = NodeMediaServer;
