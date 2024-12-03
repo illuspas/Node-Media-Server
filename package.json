@@ -12,6 +12,8 @@
   "keywords": [
     "rtmp",
     "flv",
+    "rtmp",
+    "livestream",
     "server"
   ],
   "author": "Chen Mingliang",
@@ -28,5 +30,8 @@
     "express": "^4.21.1",
     "http2-express-bridge": "^1.0.7",
     "nanoid": "^5.0.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
