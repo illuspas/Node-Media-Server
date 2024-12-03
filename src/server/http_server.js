@@ -27,6 +27,11 @@ export default class NodeHttpServer {
       allowHTTP1: true
     };
 
+    app.all("*", (req, res, next) => {
+      res.header("Access-Control-Allow-Origin", "*");
+      req.method === "OPTIONS" ? res.sendStatus(200) : next();
+    });
+    
     app.all("/:app/:name.flv", this.handleFlv);
 
     this.server1 = http.createServer(app);

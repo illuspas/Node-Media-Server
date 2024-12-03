@@ -117,6 +117,11 @@ export default class BroadcastServer {
       this.flvMetaData = null;
       this.flvAudioHeader = null;
       this.flvVideoHeader = null;
+      this.rtmpMetaData = null;
+      this.rtmpAudioHeader = null;
+      this.rtmpVideoHeader = null;
+      this.flvGopCache?.clear();
+      this.rtmpGopCache?.clear();
     }
   };
 
@@ -132,43 +137,36 @@ export default class BroadcastServer {
       this.rtmpAudioHeader = Buffer.from(rtmpMessage);
       break;
     case 1:
-      if (this.flvGopCache !== null) {
-        this.flvGopCache.add(flvMessage);
-      }
-      if (this.rtmpGopCache !== null) {
-        this.rtmpGopCache.add(rtmpMessage);
-      }
+      this.flvGopCache?.add(flvMessage);
+      this.rtmpGopCache?.add(rtmpMessage);
       break;
     case 2:
       this.flvVideoHeader = Buffer.from(flvMessage);
       this.rtmpVideoHeader = Buffer.from(rtmpMessage);
       break;
     case 3:
-      if (this.flvGopCache !== null) {
-        this.flvGopCache.clear();
-      }
-      if (this.rtmpGopCache !== null) {
-        this.rtmpGopCache.clear();
-      }
+      this.flvGopCache?.clear();
+      this.rtmpGopCache?.clear();
       this.flvGopCache = new Set();
       this.rtmpGopCache = new Set();
       this.flvGopCache.add(flvMessage);
       this.rtmpGopCache.add(rtmpMessage);
       break;
     case 4:
-      if (this.flvGopCache !== null) {
-        this.flvGopCache.add(flvMessage);
-      }
-      if (this.rtmpGopCache !== null) {
-        this.rtmpGopCache.add(rtmpMessage);
-      }
+      this.flvGopCache?.add(flvMessage);
+      this.rtmpGopCache?.add(rtmpMessage);
       break;
     case 5:
       this.flvMetaData = Buffer.from(flvMessage);
       this.rtmpMetaData = Buffer.from(rtmpMessage);
       break;
     }
-
+    if (this.flvGopCache && this.flvGopCache.size > 4096) {
+      this.flvGopCache.clear();
+    }
+    if (this.rtmpGopCache && this.rtmpGopCache.size > 4096) {
+      this.rtmpGopCache.clear();
+    }
     this.subscribers.forEach((v, k) => {
       switch (v.protocol) {
       case "flv":

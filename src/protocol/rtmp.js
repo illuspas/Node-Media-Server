@@ -664,7 +664,6 @@ export default class Rtmp {
     let payload = this.parserPacket.payload.subarray(offset, this.parserPacket.header.length);
 
     let invokeMessage = AMF.decodeAmf0Cmd(payload);
-    logger.debug(`handle invoke message ${invokeMessage.cmd}`);
     switch (invokeMessage.cmd) {
     case "connect":
       this.onConnect(invokeMessage);
@@ -682,7 +681,7 @@ export default class Rtmp {
       this.onDeleteStream(invokeMessage);
       break;
     default:
-      logger.debug(`unhandle invoke message ${invokeMessage.cmd}`);
+      logger.trace(`unhandle invoke message ${invokeMessage.cmd}`);
       break;
     }
   }
