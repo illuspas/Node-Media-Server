@@ -29,6 +29,14 @@ npx node-media-server
 * Record and Playback
 * Rtmp Proxy
 
+# Supported clients
+|Client   | H.264  | HEVC | VP9 | AV1|
+| ------------ | ------------ |------------ |------------ |------------ |
+|  OBS_29.1+|  ✅   | ✅ |  ❌|  ✅ |
+|  FFmpeg/FFplay_6.1+ |   ✅  |  ✅ |  ✅ |  ✅ |
+|  NodePlayer.js_1.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
+|  NodeMediaClient_3.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
+
 ## Usage
 * obs_29.1 or above is required
 * ffmpeg_6.1 or above is required
