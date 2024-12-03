@@ -19,10 +19,9 @@ npx node-media-server
 
 ## Features
 * HTTP/HTTP2-flv Push/Play
-* RTMP Push
+* RTMP Push/Play
 
 ## Roadmap
-* RTMP Play
 * HTTP-API
 * Authentication
 * Notification

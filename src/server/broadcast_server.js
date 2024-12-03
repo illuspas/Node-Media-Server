@@ -7,6 +7,7 @@
 
 import AVPacket from "../core/avpacket.js";
 import Flv from "../protocol/flv.js";
+import Rtmp from "../protocol/rtmp.js";
 import BaseSession from "../session/base_session.js";
 
 export default class BroadcastServer {
@@ -28,6 +29,15 @@ export default class BroadcastServer {
 
     /** @type {Buffer | null} */
     this.flvVideoHeader = null;
+
+    /** @type {Buffer | null} */
+    this.rtmpMetaData = null;
+
+    /** @type {Buffer | null} */
+    this.rtmpAudioHeader = null;
+
+    /** @type {Buffer | null} */
+    this.rtmpVideoHeader = null;
   }
 
   /**
@@ -47,6 +57,16 @@ export default class BroadcastServer {
         session.sendBuffer(this.flvVideoHeader);
       }
       break;
+    case "rtmp":
+      if (this.rtmpMetaData != null) {
+        session.sendBuffer(this.rtmpMetaData);
+      }
+      if (this.rtmpAudioHeader != null) {
+        session.sendBuffer(this.rtmpAudioHeader);
+      }
+      if (this.rtmpVideoHeader != null) {
+        session.sendBuffer(this.rtmpVideoHeader);
+      }
     }
 
     this.subscribers.set(session.id, session);
@@ -88,16 +108,20 @@ export default class BroadcastServer {
    * @param {AVPacket} packet 
    */
   broadcastMessage = (packet) => {
-    const flvMessage = Flv.createMessage(packet.codec_type, packet.dts, packet.size, packet.data);
+    const flvMessage = Flv.createMessage(packet);
+    const rtmpMessage = Rtmp.createMessage(packet);
     switch (packet.flags) {
     case 0:
       this.flvAudioHeader = Buffer.from(flvMessage);
+      this.rtmpAudioHeader = Buffer.from(rtmpMessage);
       break;
     case 2:
       this.flvVideoHeader = Buffer.from(flvMessage);
+      this.rtmpVideoHeader = Buffer.from(rtmpMessage);
       break;
     case 5:
       this.flvMetaData = Buffer.from(flvMessage);
+      this.rtmpMetaData = Buffer.from(rtmpMessage);
       break;
     }
 
@@ -106,6 +130,8 @@ export default class BroadcastServer {
       case "flv":
         v.sendBuffer(flvMessage);
         break;
+      case "rtmp":
+        v.sendBuffer(rtmpMessage);
       }
     });
   };

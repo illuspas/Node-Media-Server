@@ -231,7 +231,6 @@ class RtmpPacket {
       stream_id: 0
     };
     this.clock = 0;
-    /**@type {Buffer} */
     this.payload = Buffer.alloc(0);
     this.capacity = 0;
     this.bytes = 0;
@@ -350,8 +349,33 @@ export default class Rtmp {
     return null;
   };
 
+  /**
+   * @param {AVPacket} avpacket
+   * @returns {Buffer}
+   */
+  static createMessage = (avpacket) => {
+    let rtmpPacket = new RtmpPacket();
+    rtmpPacket.header.fmt = MESSAGE_FORMAT_0;
+    switch (avpacket.codec_type) {
+    case 8:
+      rtmpPacket.header.cid = RTMP_CHANNEL_AUDIO;
+      break;
+    case 9:
+      rtmpPacket.header.cid = RTMP_CHANNEL_VIDEO;
+      break;
+    case 18:
+      rtmpPacket.header.cid = RTMP_CHANNEL_DATA;
+      break;
+    }
+    rtmpPacket.header.length = avpacket.size;
+    rtmpPacket.header.type = avpacket.codec_type;
+    rtmpPacket.header.timestamp = avpacket.dts;
+    rtmpPacket.clock = avpacket.dts;
+    rtmpPacket.payload = avpacket.data;
+    return Rtmp.chunksCreate(rtmpPacket);
+  };
 
-  chunkBasicHeaderCreate = (fmt, cid) => {
+  static chunkBasicHeaderCreate = (fmt, cid) => {
     let out;
     if (cid >= 64 + 255) {
       out = Buffer.alloc(3);
@@ -369,7 +393,7 @@ export default class Rtmp {
     return out;
   };
 
-  chunkMessageHeaderCreate = (header) => {
+  static chunkMessageHeaderCreate = (header) => {
     let out = Buffer.alloc(rtmpHeaderSize[header.fmt % 4]);
     if (header.fmt <= RTMP_CHUNK_TYPE_2) {
       out.writeUIntBE(header.timestamp >= 0xffffff ? 0xffffff : header.timestamp, 0, 3);
@@ -386,16 +410,21 @@ export default class Rtmp {
     return out;
   };
 
-  chunksCreate = (packet) => {
+  /**
+   * 
+   * @param {RtmpPacket} packet 
+   * @returns {Buffer}
+   */
+  static chunksCreate = (packet) => {
     let header = packet.header;
     let payload = packet.payload;
     let payloadSize = header.length;
-    let chunkSize = this.outChunkSize;
+    let chunkSize = RTMP_MAX_CHUNK_SIZE;
     let chunksOffset = 0;
     let payloadOffset = 0;
-    let chunkBasicHeader = this.chunkBasicHeaderCreate(header.fmt, header.cid);
-    let chunkBasicHeader3 = this.chunkBasicHeaderCreate(RTMP_CHUNK_TYPE_3, header.cid);
-    let chunkMessageHeader = this.chunkMessageHeaderCreate(header);
+    let chunkBasicHeader = Rtmp.chunkBasicHeaderCreate(header.fmt, header.cid);
+    let chunkBasicHeader3 = Rtmp.chunkBasicHeaderCreate(RTMP_CHUNK_TYPE_3, header.cid);
+    let chunkMessageHeader = Rtmp.chunkMessageHeaderCreate(header);
     let useExtendedTimestamp = header.timestamp >= 0xffffff;
     let headerSize = chunkBasicHeader.length + chunkMessageHeader.length + (useExtendedTimestamp ? 4 : 0);
     let n = headerSize + payloadSize + Math.floor(payloadSize / chunkSize);
@@ -686,18 +715,18 @@ export default class Rtmp {
     }
     this.streamName = invokeMessage.streamName.split("?")[0];
     this.streamId = this.parserPacket.header.stream_id;
+    this.respondPublish();
     this.onConnectCallback(this.streamApp, this.streamName);
     this.onPushCallback();
-    this.respondPublish();
   };
 
   onPlay = (invokeMessage) => {
     this.streamName = invokeMessage.streamName.split("?")[0];
     this.streamPath = "/" + this.streamApp + "/" + this.streamName;
     this.streamId = this.parserPacket.header.stream_id;
+    this.respondPlay();
     this.onConnectCallback(this.streamApp, this.streamName);
     this.onPlayCallback();
-    this.respondPlay();
   };
 
   onDeleteStream = (invokeMessage) => {
@@ -744,7 +773,7 @@ export default class Rtmp {
     packet.header.stream_id = sid;
     packet.payload = AMF.encodeAmf0Cmd(opt);
     packet.header.length = packet.payload.length;
-    let chunks = this.chunksCreate(packet);
+    let chunks = Rtmp.chunksCreate(packet);
     this.onOutputCallback(chunks);
   };
 
@@ -756,7 +785,7 @@ export default class Rtmp {
     packet.payload = AMF.encodeAmf0Data(opt);
     packet.header.length = packet.payload.length;
     packet.header.stream_id = sid;
-    let chunks = this.chunksCreate(packet);
+    let chunks = Rtmp.chunksCreate(packet);
     this.onOutputCallback(chunks);
   }
 

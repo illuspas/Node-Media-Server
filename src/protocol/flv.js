@@ -190,22 +190,19 @@ export default class Flv {
   };
 
   /**
-   * @param {number} type
-   * @param {number} time
-   * @param {number} size
-   * @param {Buffer} data
+   * @param {AVPacket} avpacket
    * @returns {Buffer}
    */
-  static createMessage = (type, time, size, data) => {
-    const buffer = Buffer.alloc(11 + size + 4);
-    buffer[0] = type;
-    buffer.writeUintBE(size, 1, 3);
-    buffer[4] = (time >> 16) & 0xFF;
-    buffer[5] = (time >> 8) & 0xFF;
-    buffer[6] = time & 0xFF;
-    buffer[7] = (time >> 24) & 0xFF;
-    data.copy(buffer, 11, 0, size);
-    buffer.writeUint32BE(11 + size, 11 + size);
+  static createMessage = (avpacket) => {
+    const buffer = Buffer.alloc(11 + avpacket.size + 4);
+    buffer[0] = avpacket.codec_type;
+    buffer.writeUintBE(avpacket.size, 1, 3);
+    buffer[4] = (avpacket.dts >> 16) & 0xFF;
+    buffer[5] = (avpacket.dts >> 8) & 0xFF;
+    buffer[6] = avpacket.dts & 0xFF;
+    buffer[7] = (avpacket.dts >> 24) & 0xFF;
+    avpacket.data.copy(buffer, 11, 0, avpacket.size);
+    buffer.writeUint32BE(11 + avpacket.size, 11 + avpacket.size);
     return buffer;
   };
 
