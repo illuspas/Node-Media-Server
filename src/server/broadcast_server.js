@@ -38,6 +38,12 @@ export default class BroadcastServer {
 
     /** @type {Buffer | null} */
     this.rtmpVideoHeader = null;
+
+    /**@type {Set<Buffer> | null} */
+    this.flvGopCache = null;
+
+    /**@type {Set<Buffer> | null} */
+    this.rtmpGopCache = null;
   }
 
   /**
@@ -47,14 +53,19 @@ export default class BroadcastServer {
     switch (session.protocol) {
     case "flv":
       session.sendBuffer(this.flvHeader);
-      if (this.flvMetaData != null) {
+      if (this.flvMetaData !== null) {
         session.sendBuffer(this.flvMetaData);
       }
-      if (this.flvAudioHeader != null) {
+      if (this.flvAudioHeader !== null) {
         session.sendBuffer(this.flvAudioHeader);
       }
-      if (this.flvVideoHeader != null) {
+      if (this.flvVideoHeader !== null) {
         session.sendBuffer(this.flvVideoHeader);
+      }
+      if (this.flvGopCache !== null) {
+        this.flvGopCache.forEach((v) => {
+          session.sendBuffer(v);
+        });
       }
       break;
     case "rtmp":
@@ -66,6 +77,11 @@ export default class BroadcastServer {
       }
       if (this.rtmpVideoHeader != null) {
         session.sendBuffer(this.rtmpVideoHeader);
+      }
+      if (this.rtmpGopCache !== null) {
+        this.rtmpGopCache.forEach((v) => {
+          session.sendBuffer(v);
+        });
       }
     }
 
@@ -115,9 +131,37 @@ export default class BroadcastServer {
       this.flvAudioHeader = Buffer.from(flvMessage);
       this.rtmpAudioHeader = Buffer.from(rtmpMessage);
       break;
+    case 1:
+      if (this.flvGopCache !== null) {
+        this.flvGopCache.add(flvMessage);
+      }
+      if (this.rtmpGopCache !== null) {
+        this.rtmpGopCache.add(rtmpMessage);
+      }
+      break;
     case 2:
       this.flvVideoHeader = Buffer.from(flvMessage);
       this.rtmpVideoHeader = Buffer.from(rtmpMessage);
+      break;
+    case 3:
+      if (this.flvGopCache !== null) {
+        this.flvGopCache.clear();
+      }
+      if (this.rtmpGopCache !== null) {
+        this.rtmpGopCache.clear();
+      }
+      this.flvGopCache = new Set();
+      this.rtmpGopCache = new Set();
+      this.flvGopCache.add(flvMessage);
+      this.rtmpGopCache.add(rtmpMessage);
+      break;
+    case 4:
+      if (this.flvGopCache !== null) {
+        this.flvGopCache.add(flvMessage);
+      }
+      if (this.rtmpGopCache !== null) {
+        this.rtmpGopCache.add(rtmpMessage);
+      }
       break;
     case 5:
       this.flvMetaData = Buffer.from(flvMessage);
