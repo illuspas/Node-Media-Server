@@ -27,6 +27,7 @@ export default class RtmpSession extends BaseSession {
     super();
     this.ctx = ctx;
     this.socket = socket;
+    this.ip = socket.remoteAddress + ":" + socket.remotePort;
     this.protocol = "rtmp";
     this.rtmp = new Rtmp();
     this.broadcast = new BroadcastServer();
@@ -48,7 +49,7 @@ export default class RtmpSession extends BaseSession {
    * @param {string} streamApp 
    * @param {string} streamName 
    */
-  onConnect = (streamApp, streamName) =>{
+  onConnect = (streamApp, streamName) => {
     this.streamApp = streamApp;
     this.streamName = streamName;
     this.streamPath = "/" + streamApp + "/" + streamName;
@@ -110,8 +111,12 @@ export default class RtmpSession extends BaseSession {
     }
   };
 
+  /**
+   * 
+   * @param {Error} error 
+   */
   onError = (error) => {
-
+    logger.info(`RTMP session ${this.id} socket error, ${error.name}: ${error.message}`);
   };
 
   /**

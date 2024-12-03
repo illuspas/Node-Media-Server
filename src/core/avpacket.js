@@ -15,8 +15,6 @@ export default class AVPacket {
     this.dts = 0;
     this.size = 0;
     this.offset = 0;
-        
-    /**@type {Buffer} */
     this.data = Buffer.alloc(0);
   }
 }

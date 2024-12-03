@@ -6,7 +6,8 @@
   "bin": "bin/app.js",
   "main": "src/index.js",
   "scripts": {
-    "dev": "npx eslint;node bin/app.js"
+    "dev": "npx eslint;node bin/app.js",
+    "start": "node bin/app.js"
   },
   "keywords": [
     "rtmp",

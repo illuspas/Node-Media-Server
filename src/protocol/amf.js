@@ -160,7 +160,7 @@ function amf0decDate(buf) {
 
 /**
  * AMF0 Encode Date
- * @param ts
+ * @param {number} ts
  * @returns {Buffer}
  */
 function amf0encDate(ts) {
@@ -225,7 +225,7 @@ function amf0encObject(o) {
 
 /**
  * AMF0 Decode Reference
- * @param buf
+ * @param {Buffer} buf
  * @returns {{len: number, value: string}}
  */
 function amf0decRef(buf) {
@@ -235,7 +235,7 @@ function amf0decRef(buf) {
 
 /**
  * AMF0 Encode Reference
- * @param index
+ * @param {number} index
  * @returns {Buffer}
  */
 function amf0encRef(index) {
@@ -279,7 +279,7 @@ function amf0encUString(str) {
 
 /**
  * AMF0 Encode String
- * @param str
+ * @param {string} str
  * @returns {Buffer}
  */
 function amf0encString(str) {
@@ -301,7 +301,7 @@ function amf0decLongString(buf) {
 
 /**
  * AMF0 Encode Long String
- * @param str
+ * @param {string} str
  * @returns {Buffer}
  */
 function amf0encLongString(str) {
@@ -324,7 +324,8 @@ function amf0decArray(buf) {
 
 /**
  * AMF0 Encode Array
- * @param a
+ * @param {Array} a
+ * @returns {Buffer}
  */
 function amf0encArray(a) {
   let l = 0;
@@ -334,12 +335,12 @@ function amf0encArray(a) {
   buf.writeUInt8(8, 0);
   buf.writeUInt32BE(l, 1);
   let data = amf0encObject(a);
-  return Buffer.concat([buf, data.slice(1)]);
+  return Buffer.concat([buf, data.subarray(1)]);
 }
 
 /**
  * AMF0 Encode Binary Array into binary Object
- * @param aData
+ * @param {Buffer} aData
  * @returns {Buffer}
  */
 function amf0cnletray2Object(aData) {
@@ -373,7 +374,7 @@ function amf0decXmlDoc(buf) {
 
 /**
  * AMF0 Encode XMLDoc
- * @param str
+ * @param {string} str
  * @returns {Buffer}
  */
 function amf0encXmlDoc(str) { // Essentially it is the same as string
@@ -419,7 +420,8 @@ function amf0encSArray(a) {
 
 /**
  *
- * @param a
+ * @param {Array} a
+ * @returns {Array}
  */
 function amf0markSArray(a) {
   Object.defineProperty(a, "sarray", { value: true });
@@ -448,7 +450,7 @@ function amf0encTypedObj() {
 
 /**
  * Decode one value from the Buffer according to the applied rules
- * @param rules
+ * @param {Array} rules
  * @param {Buffer} buffer
  * @returns {*}
  */
@@ -472,7 +474,7 @@ function amf0DecodeOne(buffer) {
 
 /**
  * Decode a whole buffer of AMF values according to rules and return in array
- * @param rules
+ * @param {Array} rules
  * @param {Buffer} buffer
  * @returns {Array}
  */
@@ -499,8 +501,8 @@ function amf0Decode(buffer) {
 
 /**
  * Encode one AMF value according to rules
- * @param rules
- * @param o
+ * @param {Array} rules
+ * @param {object} o
  * @returns {*}
  */
 function amfXEncodeOne(rules, o) {
@@ -512,7 +514,7 @@ function amfXEncodeOne(rules, o) {
 
 /**
  * Encode one AMF0 value
- * @param o
+ * @param {object} o
  * @returns {*}
  */
 function amf0EncodeOne(o) {
@@ -521,7 +523,7 @@ function amf0EncodeOne(o) {
 
 /**
  * Encode an array of values into a buffer
- * @param a
+ * @param {Array} a
  * @returns {Buffer}
  */
 function amf0Encode(a) {
@@ -649,6 +651,7 @@ function encodeAmf0Cmd(opt) {
 /**
  *
  * @param {object} opt
+ * @returns {Buffer}
  */
 function encodeAmf0Data(opt) {
   let data = amf0EncodeOne(opt.cmd);

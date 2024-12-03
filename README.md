@@ -1,9 +1,10 @@
 # Node-Media-Server v4
 
 ## Introduction
-Node-Media-Server is a high-performance open-source live broadcast server developed based on Nodejs.  
+Node-Media-Server is a high-performance/low-latency/open-source Live Streaming Server developed based on Nodejs.  
 v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.  
-v4 is no longer compatible with the cn_cdn extension id flv_265 standard.
+v4 is no longer compatible with the cn_cdn extension id flv_265 standard.  
+v4 is no longer compatible with flashplayer's rtmp protocol.
 
 ## Installation
 ```
@@ -25,8 +26,9 @@ npx node-media-server
 * HTTP-API
 * Authentication
 * Notification
-* WebManager
-* Relay
+* Record and Playback
+* GOP cache
+* Rtmp Proxy
 
 ## Usage
 * obs_29.1 or above is required

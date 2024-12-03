@@ -28,7 +28,7 @@ export default class FlvSession extends BaseSession {
     this.ctx = ctx;
     this.req = req;
     this.res = res;
-    this.ip = req.ip ?? "0.0.0.0";
+    this.ip = req.socket.remoteAddress + ":" + req.socket.remotePort;
     this.flv = new Flv();
     this.protocol = "flv";
     this.streamHost = req.hostname;
@@ -40,13 +40,13 @@ export default class FlvSession extends BaseSession {
     this.ctx.broadcasts.set(this.streamPath, this.broadcast);
   }
 
-  run = ()=> {
+  run = () => {
     this.req.on("data", this.onData);
     this.req.on("error", this.onError);
     this.req.socket.on("close", this.onClose);
-    if(this.req.method === "GET") {
+    if (this.req.method === "GET") {
       this.onPlay();
-    }else if(this.req.method === "POST") {
+    } else if (this.req.method === "POST") {
       this.onPush();
     }
   };
