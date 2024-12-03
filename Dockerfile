@@ -4,7 +4,7 @@ WORKDIR /node-media-server
 
 COPY . .
 
-RUN npm install
+RUN npm install --production
 
 EXPOSE 1935 8000 8443
 
