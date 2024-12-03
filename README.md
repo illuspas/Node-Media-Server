@@ -1,4 +1,8 @@
 # Node-Media-Server v4
+[![npm](https://img.shields.io/node/v/node-media-server.svg)](https://nodejs.org/en/)
+[![npm](https://img.shields.io/npm/v/node-media-server.svg)](https://npmjs.org/package/node-media-server)
+[![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
+[![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 
 ## Introduction
 Node-Media-Server is a high-performance/low-latency/open-source Live Streaming Server developed based on Nodejs.  
