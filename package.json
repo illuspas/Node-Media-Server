@@ -1,7 +1,7 @@
 {
   "name": "node-media-server",
   "description": "A Node.js implementation of RTMP Server",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "type": "module",
   "bin": "bin/app.js",
   "main": "src/index.js",
