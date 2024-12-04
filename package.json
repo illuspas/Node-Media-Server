@@ -28,7 +28,7 @@
     "chalk": "^4.1.2",
     "dateformat": "^4.6.3",
     "express": "^4.21.1",
-    "http2-express-bridge": "^1.0.7",
+    "http2-express": "^1.0.0",
     "lodash": "^4.17.21",
     "minimist": "^1.2.8",
     "mkdirp": "^2.1.6",
