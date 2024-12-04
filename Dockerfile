@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM --platform=$TARGETPLATFORM node:lts-alpine
 
 WORKDIR /node-media-server
 
