@@ -33,7 +33,7 @@ npx node-media-server
 * Record and Playback
 * Rtmp Proxy
 
-# Supported clients
+## Supported clients
 |Client   | H.264  | HEVC | VP9 | AV1|
 | ------------ | ------------ |------------ |------------ |------------ |
 |  OBS_29.1+|  ✅   | ✅ |  ❌|  ✅ |
