@@ -29,6 +29,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v3
       with:
-        push: true
+        context: .
         platforms: linux/amd64,linux/arm64
+        push: true
         tags: illuspas/node-media-server:latest, illuspas/node-media-server:${{steps.tag.outputs.tag}}
