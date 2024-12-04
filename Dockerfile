@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM --platform=$TARGETPLATFORM node:lts-alpine
 
 ARG BUILD_DATE
 ARG VCS_REF
