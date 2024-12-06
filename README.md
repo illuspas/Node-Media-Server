@@ -23,7 +23,7 @@ npx node-media-server
 
 ## Features
 * HTTP/HTTP2-flv Push/Play
-* RTMP Push/Play
+* RTMP/RTMPS Push/Play
 * GOP cache
 
 ## Roadmap
