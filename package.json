@@ -25,9 +25,8 @@
     "globals": "^15.12.0"
   },
   "dependencies": {
-    "express": "^4.21.1",
-    "http2-express-bridge": "^1.0.7",
-    "nanoid": "^5.0.9"
+    "express": "^4.21.2",
+    "http2-express": "^1.0.0"
   },
   "engines": {
     "node": ">=16.0.0"

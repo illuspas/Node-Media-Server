@@ -11,7 +11,7 @@ const http2 = require("http2");
 const express = require("express");
 const logger = require("../core/logger.js");
 const Context = require("../core/context.js");
-const http2Express = require("http2-express-bridge");
+const http2Express = require("http2-express");
 const FlvSession = require("../session/flv_session.js");
 
 class NodeHttpServer {
