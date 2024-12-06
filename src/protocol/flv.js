@@ -5,9 +5,9 @@
 //  Copyright (c) 2023 Nodemedia. All rights reserved.
 //
 
+const AMF = require("./amf.js");
 const logger = require("../core/logger.js");
 const AVPacket = require("../core/avpacket.js");
-const AMF = require("./amf.js");
 
 const FLV_MEDIA_TYPE_AUDIO = 8;
 const FLV_MEDIA_TYPE_VIDEO = 9;

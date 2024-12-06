@@ -5,7 +5,6 @@
 
 const logger = require("../core/logger.js");
 
-
 const amf0dRules = {
   0x00: amf0decNumber,
   0x01: amf0decBool,

@@ -5,11 +5,11 @@
 //  Copyright (c) 2024 Nodemedia. All rights reserved.
 //
 
+const AMF = require("./amf.js");
+const Flv = require("./flv.js");
 const crypto = require("node:crypto");
 const logger = require("../core/logger.js");
 const AVPacket = require("../core/avpacket.js");
-const Flv = require("./flv.js");
-const AMF = require("./amf.js");
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
