@@ -9,7 +9,7 @@ Node-Media-Server is a high-performance/low-latency/open-source Live Streaming S
 v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.  
 v4 is no longer compatible with the cn_cdn extension id flv_265 standard.  
 v4 is no longer compatible with flashplayer's rtmp protocol.  
-v4 is incompatible with V2. Do not upgrade across major versions.
+v4 is incompatible with v2. Do not upgrade across major versions.
 
 ## Installation
 ```
