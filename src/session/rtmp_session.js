@@ -5,13 +5,14 @@
 //  Copyright (c) 2024 Nodemedia. All rights reserved.
 //
 
-const net = require( "net");
-const Rtmp = require( "../protocol/rtmp.js");
-const logger = require( "../core/logger.js");
-const Context = require( "../core/context.js");
-const AVPacket = require( "../core/avpacket.js");
-const BaseSession = require( "./base_session.js");
-const BroadcastServer = require( "../server/broadcast_server.js");
+const net = require("net");
+const Rtmp = require("../protocol/rtmp.js");
+const logger = require("../core/logger.js");
+const Context = require("../core/context.js");
+const AVPacket = require("../core/avpacket.js");
+const BaseSession = require("./base_session.js");
+const BroadcastServer = require("../server/broadcast_server.js");
+const querystring = require("node:querystring");
 
 /**
  * @class
@@ -44,6 +45,14 @@ class RtmpSession extends BaseSession {
     this.socket.on("error", this.onError);
   };
 
+  /**
+   * 
+   * @param {object} req 
+   * @param {string} req.app 
+   * @param {string} req.name
+   * @param {string} req.host 
+   * @param {object} req.query 
+   */
   onConnect = (req) => {
     this.streamApp = req.app;
     this.streamName = req.name;
