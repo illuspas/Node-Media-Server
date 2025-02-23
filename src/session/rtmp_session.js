@@ -44,15 +44,12 @@ class RtmpSession extends BaseSession {
     this.socket.on("error", this.onError);
   };
 
-  /**
-   * 
-   * @param {string} streamApp 
-   * @param {string} streamName 
-   */
-  onConnect = (streamApp, streamName) => {
-    this.streamApp = streamApp;
-    this.streamName = streamName;
-    this.streamPath = "/" + streamApp + "/" + streamName;
+  onConnect = (req) => {
+    this.streamApp = req.app;
+    this.streamName = req.name;
+    this.streamHost = req.host;
+    this.streamPath = "/" + req.app + "/" + req.name;
+    this.streamQuery = req.query;
     this.broadcast = this.ctx.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     this.ctx.broadcasts.set(this.streamPath, this.broadcast);
   };

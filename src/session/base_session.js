@@ -89,7 +89,8 @@ class BaseSession {
     this.streamApp = "";
     this.streamName = "";
     this.streamPath = "";
-
+    this.streamQuery = {};
+    
     this.videoCodec = 0;
     this.videoWidth = 0;
     this.videoHeight = 0;

@@ -10,6 +10,7 @@ const Flv = require("./flv.js");
 const crypto = require("node:crypto");
 const logger = require("../core/logger.js");
 const AVPacket = require("../core/avpacket.js");
+const querystring= require("node:querystring");
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
@@ -258,11 +259,10 @@ class Rtmp {
   }
 
   /**
-   * @param {string} streamApp
-   * @param {string} streamName
+   * @param {object} req
    * @abstract
    */
-  onConnectCallback = (streamApp, streamName) => {
+  onConnectCallback = (req) => {
 
   };
 
@@ -692,9 +692,10 @@ class Rtmp {
   };
 
   onConnect = (invokeMessage) => {
-    invokeMessage.cmdObj.app = invokeMessage.cmdObj.app.replace("/", ""); //fix jwplayer
+    const url = new URL(invokeMessage.cmdObj.tcUrl);
     this.connectCmdObj = invokeMessage.cmdObj;
     this.streamApp = invokeMessage.cmdObj.app;
+    this.streamHost = url.hostname;
     this.objectEncoding = invokeMessage.cmdObj.objectEncoding != null ? invokeMessage.cmdObj.objectEncoding : 0;
     this.connectTime = new Date();
     this.startTimestamp = Date.now();
@@ -709,22 +710,29 @@ class Rtmp {
   };
 
   onPublish = (invokeMessage) => {
-    if (typeof invokeMessage.streamName !== "string") {
-      return;
-    }
     this.streamName = invokeMessage.streamName.split("?")[0];
+    this.streamQuery = querystring.parse(invokeMessage.streamName.split("?")[1]);
     this.streamId = this.parserPacket.header.stream_id;
     this.respondPublish();
-    this.onConnectCallback(this.streamApp, this.streamName);
+    this.onConnectCallback({
+      app: this.streamApp,
+      name: this.streamName,
+      host:this.streamHost,
+      query:this.streamQuery
+    });
     this.onPushCallback();
   };
 
   onPlay = (invokeMessage) => {
     this.streamName = invokeMessage.streamName.split("?")[0];
-    this.streamPath = "/" + this.streamApp + "/" + this.streamName;
     this.streamId = this.parserPacket.header.stream_id;
     this.respondPlay();
-    this.onConnectCallback(this.streamApp, this.streamName);
+    this.onConnectCallback({
+      app: this.streamApp,
+      name: this.streamName,
+      host: this.streamHost,
+      query:this.streamQuery
+    });
     this.onPlayCallback();
   };
 
@@ -841,7 +849,7 @@ class Rtmp {
   }
 
   respondPublish() {
-    this.sendStatusMessage(this.streamId, "status", "NetStream.Publish.Start", `${this.streamPath} is now published.`);
+    this.sendStatusMessage(this.streamId, "status", "NetStream.Publish.Start", `/${this.streamApp}/${this.streamName} is now published.`);
   }
 
   respondPlay() {
