@@ -15,11 +15,8 @@ const http2Express = require("http2-express");
 const FlvSession = require("../session/flv_session.js");
 
 class NodeHttpServer {
-  /**
-   * @param {Context} ctx 
-   */
-  constructor(ctx) {
-    this.ctx = ctx;
+  constructor(config) {
+    this.config = config;
     const app = http2Express(express);
 
     app.all("*", (req, res, next) => {
@@ -29,13 +26,13 @@ class NodeHttpServer {
 
     app.all("/:app/:name.flv", this.handleFlv);
 
-    if (ctx.config.http?.port) {
+    if (this.config.http?.port) {
       this.httpServer = http.createServer(app);
     }
-    if (ctx.config.https?.port) {
+    if (this.config.https?.port) {
       const opt = {
-        key: fs.readFileSync(ctx.config.https.key),
-        cert: fs.readFileSync(ctx.config.https.cert),
+        key: fs.readFileSync(this.config.https.key),
+        cert: fs.readFileSync(this.config.https.cert),
         allowHTTP1: true
       };
       this.httpsServer = http2.createSecureServer(opt, app);
@@ -44,11 +41,11 @@ class NodeHttpServer {
   }
 
   run = () => {
-    this.httpServer?.listen(this.ctx.config.http.port, this.ctx.config.http.bind, () => {
-      logger.info(`HTTP server listening on port ${this.ctx.config.http.bind}:${this.ctx.config.http.port}`);
+    this.httpServer?.listen(this.config.http.port, this.config.bind, () => {
+      logger.info(`HTTP server listening on port ${this.config.bind}:${this.config.http.port}`);
     });
-    this.httpsServer?.listen(this.ctx.config.https.port, this.ctx.config.https.bind, () => {
-      logger.info(`HTTPS server listening on port ${this.ctx.config.https.bind}:${this.ctx.config.https.port}`);
+    this.httpsServer?.listen(this.config.https.port, this.config.bind, () => {
+      logger.info(`HTTPS server listening on port ${this.config.bind}:${this.config.https.port}`);
     });
   };
 
@@ -57,7 +54,7 @@ class NodeHttpServer {
    * @param {express.Response} res
    */
   handleFlv = (req, res) => {
-    const session = new FlvSession(this.ctx, req, res);
+    const session = new FlvSession( req, res);
     session.run();
   };
 }

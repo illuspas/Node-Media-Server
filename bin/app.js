@@ -22,4 +22,27 @@ if (config.https?.cert && !fs.existsSync(config.https.cert)) {
 }
 
 const nms = new NodeMediaServer(config);
+
+
+nms.on("prePlay", (session) => {
+  console.log("prePlay", session.id, session.streamApp, session.streamName, session.streamQuery);
+});
+
+nms.on("postPlay", (session) => {
+  console.log("postPlay", session.id);
+});
+
+nms.on("donePlay", (session) => {
+  console.log("donePlay", session.id);
+});
+
+nms.on("prePush", (session) => {
+  console.log("prePush", session.id, session.streamApp, session.streamName, session.streamQuery);
+});
+nms.on("postPush", (session) => {
+  console.log("postPush", session.id);
+});
+nms.on("donePush", (session) => {
+  console.log("donePush", session.id);
+});
 nms.run(); 

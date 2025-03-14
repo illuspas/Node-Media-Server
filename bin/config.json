@@ -1,20 +1,17 @@
 {
+    "bind":"0.0.0.0",
     "rtmp": {
-        "bind": "0.0.0.0",
         "port": 1935
     },
     "rtmps": {
-        "bind": "0.0.0.0",
         "port": 1936,
         "key": "./key.pem",
         "cert": "./cert.pem"
     },
     "http": {
-        "bind": "0.0.0.0",
         "port": 8000
     },
     "https": {
-        "bind": "0.0.0.0",
         "port": 8443,
         "key": "./key.pem",
         "cert": "./cert.pem"

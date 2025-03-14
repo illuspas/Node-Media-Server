@@ -8,6 +8,7 @@
 const logger = require("./core/logger.js");
 const Package = require("../package.json");
 const Context = require("./core/context.js");
+const BaseSession = require("./session/base_session.js");
 const NodeHttpServer = require("./server/http_server.js");
 const NodeRtmpServer = require("./server/rtmp_server.js");
 
@@ -19,16 +20,24 @@ class NodeMediaServer {
     logger.info(`License: ${Package.license}`);
     logger.info(`Author: ${Package.author}`);
 
-    this.ctx = new Context(config);
-    this.httpServer = new NodeHttpServer(this.ctx);
-    this.rtmpServer = new NodeRtmpServer(this.ctx);
+    this.httpServer = new NodeHttpServer(config);
+    this.rtmpServer = new NodeRtmpServer(config);
+  }
+
+  /**
+   * 
+   * @param {string} eventName 
+   * @param {(session:BaseSession)=>void} listener 
+   */
+  on(eventName, listener) {
+    Context.eventEmitter.on(eventName, listener);
   }
 
   run() {
 
     this.httpServer.run();
     this.rtmpServer.run();
-    
+
   }
 }
 

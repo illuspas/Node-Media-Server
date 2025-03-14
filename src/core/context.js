@@ -5,19 +5,14 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-const BaseSession = require("../session/base_session.js");
-const BroadcastServer = require( "../server/broadcast_server.js");
+const EventEmitter = require("node:events");
 
-class Context {
-  constructor(config) {
-    this.config = config;
+const Context = {
+  sessions: new Map(),
 
-    /** @type {Map<string, BaseSession>} */
-    this.sessions = new Map();
+  broadcasts: new Map(),
 
-    /** @type {Map<string, BroadcastServer>} */
-    this.broadcasts = new Map();
-  }
-}
+  eventEmitter: new EventEmitter()
+};
 
 module.exports = Context;

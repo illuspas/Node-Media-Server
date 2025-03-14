@@ -9,6 +9,7 @@ const Flv = require("../protocol/flv.js");
 const Rtmp = require("../protocol/rtmp.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("../session/base_session.js");
+const Context = require("../core/context.js");
 
 class BroadcastServer {
   constructor() {
@@ -49,7 +50,15 @@ class BroadcastServer {
   /**
    * @param {BaseSession} session
    */
+  prePlay = (session) => {
+    Context.eventEmitter.emit("prePlay", session);
+  };
+
+  /**
+   * @param {BaseSession} session
+   */
   postPlay = (session) => {
+    Context.eventEmitter.emit("postPlay", session);
     switch (session.protocol) {
     case "flv":
       session.sendBuffer(this.flvHeader);
@@ -92,6 +101,7 @@ class BroadcastServer {
    * @param {BaseSession} session
    */
   donePlay = (session) => {
+    Context.eventEmitter.emit("donePlay", session);
     this.subscribers.delete(session.id);
   };
 
@@ -99,7 +109,17 @@ class BroadcastServer {
    * @param {BaseSession} session
    * @returns {string | null}
    */
+  prePush = (session) => {
+    Context.eventEmitter.emit("prePush", session);
+    return null;
+  };
+
+  /**
+   * @param {BaseSession} session
+   * @returns {string | null}
+   */
   postPush = (session) => {
+    Context.eventEmitter.emit("postPush", session);
     if (this.publisher == null) {
       this.publisher = session;
     } else {
@@ -113,6 +133,7 @@ class BroadcastServer {
    */
   donePush = (session) => {
     if (session === this.publisher) {
+      Context.eventEmitter.emit("donePush", session);
       this.publisher = null;
       this.flvMetaData = null;
       this.flvAudioHeader = null;

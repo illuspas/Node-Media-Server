@@ -21,12 +21,10 @@ const querystring = require("node:querystring");
 class RtmpSession extends BaseSession {
   /**
    * 
-   * @param {Context} ctx 
    * @param {net.Socket} socket 
    */
-  constructor(ctx, socket) {
+  constructor(socket) {
     super();
-    this.ctx = ctx;
     this.socket = socket;
     this.ip = socket.remoteAddress + ":" + socket.remotePort;
     this.protocol = "rtmp";
@@ -59,18 +57,20 @@ class RtmpSession extends BaseSession {
     this.streamHost = req.host;
     this.streamPath = "/" + req.app + "/" + req.name;
     this.streamQuery = req.query;
-    this.broadcast = this.ctx.broadcasts.get(this.streamPath) ?? new BroadcastServer();
-    this.ctx.broadcasts.set(this.streamPath, this.broadcast);
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    Context.broadcasts.set(this.streamPath, this.broadcast);
   };
 
 
   onPlay = () => {
+    this.broadcast.prePlay(this);
     logger.info(`RTMP session ${this.id} ${this.ip} start play ${this.streamPath}`);
     this.isPublisher = false;
     this.broadcast.postPlay(this);
   };
 
   onPush = () => {
+    this.broadcast.prePush(this);
     logger.info(`RTMP session ${this.id} ${this.ip} start push ${this.streamPath}`);
     this.isPublisher = true;
     const err = this.broadcast.postPush(this);

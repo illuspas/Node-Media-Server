@@ -13,29 +13,27 @@ const Context = require("../core/context.js");
 const RtmpSession = require("../session/rtmp_session.js");
 
 class NodeRtmpServer {
-  /**
-   * @param {Context} ctx 
-   */
-  constructor(ctx) {
-    this.ctx = ctx;
-    if (ctx.config.rtmp?.port) {
+
+  constructor(config) {
+    this.config = config;
+    if (this.config.rtmp?.port) {
       this.tcpServer = net.createServer(this.handleRequest);
     }
-    if (ctx.config.rtmps?.port) {
+    if (this.config.rtmps?.port) {
       const opt = {
-        key: fs.readFileSync(ctx.config.rtmps.key),
-        cert: fs.readFileSync(ctx.config.rtmps.cert),
+        key: fs.readFileSync(this.config.rtmps.key),
+        cert: fs.readFileSync(this.config.rtmps.cert),
       };
       this.tlsServer = tls.createServer(opt, this.handleRequest);
     }
   }
 
   run = () => {
-    this.tcpServer?.listen(this.ctx.config.rtmp.port, this.ctx.config.rtmp.bind, () => {
-      logger.log(`Rtmp Server listening on port ${this.ctx.config.rtmp.bind}:${this.ctx.config.rtmp.port}`);
+    this.tcpServer?.listen(this.config.rtmp.port, this.config.bind, () => {
+      logger.log(`Rtmp Server listening on port ${this.config.bind}:${this.config.rtmp.port}`);
     });
-    this.tlsServer?.listen(this.ctx.config.rtmps.port, this.ctx.config.rtmps.bind, () => {
-      logger.log(`Rtmps Server listening on port ${this.ctx.config.rtmps.bind}:${this.ctx.config.rtmps.port}`);
+    this.tlsServer?.listen(this.config.rtmps.port, this.config.bind, () => {
+      logger.log(`Rtmps Server listening on port ${this.config.bind}:${this.config.rtmps.port}`);
     });
   };
 
@@ -43,7 +41,7 @@ class NodeRtmpServer {
    * @param {net.Socket} socket 
    */
   handleRequest = (socket) => {
-    const session = new RtmpSession(this.ctx, socket);
+    const session = new RtmpSession(socket);
     session.run();
   };
 }

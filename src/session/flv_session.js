@@ -19,13 +19,11 @@ const BroadcastServer = require( "../server/broadcast_server.js");
  */
 class FlvSession extends BaseSession {
   /**
-   * @param {Context} ctx
    * @param {express.Request} req
    * @param {express.Response} res
    */
-  constructor(ctx, req, res) {
+  constructor(req, res) {
     super();
-    this.ctx = ctx;
     this.req = req;
     this.res = res;
     this.ip = req.socket.remoteAddress + ":" + req.socket.remotePort;
@@ -36,8 +34,8 @@ class FlvSession extends BaseSession {
     this.streamName = req.params.name;
     this.streamPath = "/" + this.streamApp + "/" + this.streamName;
     this.streamQuery = req.query;
-    this.broadcast = this.ctx.broadcasts.get(this.streamPath) ?? new BroadcastServer();
-    this.ctx.broadcasts.set(this.streamPath, this.broadcast);
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    Context.broadcasts.set(this.streamPath, this.broadcast);
   }
 
   run = () => {
@@ -52,12 +50,14 @@ class FlvSession extends BaseSession {
   };
 
   onPlay = () => {
+    this.broadcast.prePlay(this);
     logger.info(`FLV session ${this.id} ${this.ip} start play ${this.streamPath}`);
     this.isPublisher = false;
     this.broadcast.postPlay(this);
   };
 
   onPush = () => {
+    this.broadcast.prePush(this);
     logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
     this.isPublisher = true;
     this.flv.onPacketCallback = this.onPacket;
