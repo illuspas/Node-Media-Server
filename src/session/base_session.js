@@ -100,6 +100,9 @@ class BaseSession {
     this.audioChannels = 0;
     this.audioSamplerate = 0;
     this.audioDatarate = 0;
+
+    this.inBytes = 0;
+    this.outBytes = 0;
   }
 
   /**

@@ -33,7 +33,7 @@ nms.on("postPlay", (session) => {
 });
 
 nms.on("donePlay", (session) => {
-  console.log("donePlay", session.id);
+  console.log("donePlay", session.id, session.outBytes);
 });
 
 nms.on("prePush", (session) => {
@@ -43,6 +43,6 @@ nms.on("postPush", (session) => {
   console.log("postPush", session.id);
 });
 nms.on("donePush", (session) => {
-  console.log("donePush", session.id);
+  console.log("donePush", session.id, session.inBytes);
 });
 nms.run(); 
