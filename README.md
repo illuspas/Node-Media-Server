@@ -26,13 +26,12 @@ npx node-media-server
 * HTTP/HTTP2-flv Push/Play
 * RTMP/RTMPS Push/Play
 * GOP cache
+* Authentication
+* Notification
 
 ## Roadmap
 * HTTP-API
-* Authentication
-* Notification
-* Record and Playback
-* Rtmp Proxy
+* Rtmp Relay
 
 ## Supported clients
 |Client   | H.264  | HEVC | VP9 | AV1|
