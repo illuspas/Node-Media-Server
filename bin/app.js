@@ -33,16 +33,35 @@ nms.on("postPlay", (session) => {
 });
 
 nms.on("donePlay", (session) => {
-  console.log("donePlay", session.id, session.outBytes);
+  console.log("donePlay", session.id, session.createTime, session.outBytes);
 });
 
 nms.on("prePush", (session) => {
   console.log("prePush", session.id, session.streamApp, session.streamName, session.streamQuery);
+
+  // fetch("http://127.0.0.1:8008/notify", {
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     id: session.id,
+  //     ip: session.ip,
+  //     app: session.streamApp,
+  //     name: session.streamName,
+  //     query: session.streamQuery,
+  //     protocol: session.protocol,
+  //     action: "prePush"
+  //   }),
+  // }
+  // ).then((res) => {
+  //   if (res.status !== 200) {
+  //     session.close();
+  //   }
+  // });
+
 });
 nms.on("postPush", (session) => {
   console.log("postPush", session.id);
 });
 nms.on("donePush", (session) => {
-  console.log("donePush", session.id, session.inBytes);
+  console.log("donePush", session.id, session.createTime, session.inBytes);
 });
 nms.run(); 
