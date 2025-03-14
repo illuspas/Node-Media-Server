@@ -50,18 +50,16 @@ class FlvSession extends BaseSession {
   };
 
   onPlay = () => {
-    this.broadcast.prePlay(this);
     logger.info(`FLV session ${this.id} ${this.ip} start play ${this.streamPath}`);
     this.isPublisher = false;
     this.broadcast.postPlay(this);
   };
 
   onPush = () => {
-    this.broadcast.prePush(this);
     logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
     this.isPublisher = true;
     this.flv.onPacketCallback = this.onPacket;
-    const err = this.broadcast.postPush(this);
+    const err = this.broadcast.postPublish(this);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
       this.res.end();
@@ -83,7 +81,7 @@ class FlvSession extends BaseSession {
   onClose = () => {
     logger.info(`FLV session ${this.id} close`);
     if (this.isPublisher) {
-      this.broadcast.donePush(this);
+      this.broadcast.donePublish(this);
     } else {
       this.broadcast.donePlay(this);
     }

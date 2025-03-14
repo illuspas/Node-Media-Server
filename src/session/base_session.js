@@ -91,6 +91,7 @@ class BaseSession {
     this.streamPath = "";
     this.streamQuery = {};
     this.createTime = Date.now();
+    this.endTime = 0;
 
     this.videoCodec = 0;
     this.videoWidth = 0;
