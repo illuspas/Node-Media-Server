@@ -90,7 +90,7 @@ class BaseSession {
     this.streamName = "";
     this.streamPath = "";
     this.streamQuery = {};
-    
+
     this.videoCodec = 0;
     this.videoWidth = 0;
     this.videoHeight = 0;
@@ -107,6 +107,13 @@ class BaseSession {
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {
+  };
+
+  /**
+   * @abstract
+   */
+  close = () => {
+
   };
 }
 

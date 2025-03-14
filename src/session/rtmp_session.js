@@ -132,6 +132,13 @@ class RtmpSession extends BaseSession {
   sendBuffer = (buffer) => {
     this.socket.write(buffer);
   };
+
+  /**
+   * @override
+   */
+  close = () => {
+    this.socket.end();
+  };
 }
 
 module.exports = RtmpSession;
