@@ -3,6 +3,11 @@
     "notify": {
         "url": ""
     },
+    "auth": {
+        "play": false,
+        "publish": false,
+        "secret": "nodemedia2017privatekey"
+    },
     "rtmp": {
         "port": 1935
     },

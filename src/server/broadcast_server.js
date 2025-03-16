@@ -6,6 +6,7 @@
 //
 
 const Flv = require("../protocol/flv.js");
+const Crypto = require("node:crypto");
 const Rtmp = require("../protocol/rtmp.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("../session/base_session.js");
@@ -48,9 +49,41 @@ class BroadcastServer {
   }
 
   /**
+   * 
+   * @param {string} authKey 
+   * @param {BaseSession} session 
+   * @returns {boolean}
+   */
+  verifyAuth = (authKey, session) => {
+    if (authKey === "") {
+      return true;
+    }
+    let signStr = session.streamQuery?.sign;
+    if (signStr?.split("-")?.length !== 2) {
+      return false;
+    }
+    let now = Date.now() / 1000 | 0;
+    let exp = parseInt(signStr.split("-")[0]);
+    let shv = signStr.split("-")[1];
+    let str = session.streamPath + "-" + exp + "-" + authKey;
+    if (exp < now) {
+      return false;
+    }
+    let md5 = Crypto.createHash("md5");
+    let ohv = md5.update(str).digest("hex");
+    return shv === ohv;
+  };
+
+  /**
    * @param {BaseSession} session
+   * @returns {string | null}
    */
   postPlay = (session) => {
+    if (Context.config.auth?.play) {
+      if (!this.verifyAuth(Context.config.auth?.secret, session)) {
+        return `play stream ${session.streamPath} authentication verification failed`;
+      }
+    }
     Context.eventEmitter.emit("postPlay", session);
     switch (session.protocol) {
     case "flv":
@@ -88,6 +121,7 @@ class BroadcastServer {
     }
 
     this.subscribers.set(session.id, session);
+    return null;
   };
 
   /**
@@ -104,6 +138,12 @@ class BroadcastServer {
    * @returns {string | null}
    */
   postPublish = (session) => {
+    if (Context.config.auth?.publish) {
+      if (!this.verifyAuth(Context.config.auth?.secret, session)) {
+        return `publish stream ${session.streamPath} authentication verification failed`;
+      }
+    }
+
     Context.eventEmitter.emit("postPublish", session);
     if (this.publisher == null) {
       this.publisher = session;

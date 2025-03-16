@@ -34,6 +34,7 @@ class FlvSession extends BaseSession {
     this.streamName = req.params.name;
     this.streamPath = "/" + this.streamApp + "/" + this.streamName;
     this.streamQuery = req.query;
+    /**@type {BroadcastServer} */
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     Context.broadcasts.set(this.streamPath, this.broadcast);
   }
@@ -50,20 +51,26 @@ class FlvSession extends BaseSession {
   };
 
   onPlay = () => {
-    logger.info(`FLV session ${this.id} ${this.ip} start play ${this.streamPath}`);
+    const err = this.broadcast.postPlay(this);
+    if (err != null) {
+      logger.error(`FLV session ${this.id} ${this.ip} play ${this.streamPath} error, ${err}`);
+      this.res.end();
+      return;
+    }
     this.isPublisher = false;
-    this.broadcast.postPlay(this);
+    logger.info(`FLV session ${this.id} ${this.ip} start play ${this.streamPath}`);
   };
 
   onPush = () => {
-    logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
-    this.isPublisher = true;
-    this.flv.onPacketCallback = this.onPacket;
     const err = this.broadcast.postPublish(this);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
       this.res.end();
+      return;
     }
+    this.isPublisher = true;
+    this.flv.onPacketCallback = this.onPacket;
+    logger.info(`FLV session ${this.id} ${this.ip} start push ${this.streamPath}`);
   };
 
   /**

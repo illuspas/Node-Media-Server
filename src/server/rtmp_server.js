@@ -9,7 +9,6 @@ const fs = require("fs");
 const net = require("net");
 const tls = require("tls");
 const logger = require("../core/logger.js");
-const Context = require("../core/context.js");
 const RtmpSession = require("../session/rtmp_session.js");
 
 class NodeRtmpServer {

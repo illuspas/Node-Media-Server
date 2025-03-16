@@ -27,10 +27,10 @@ npx node-media-server
 * RTMP/RTMPS Push/Play
 * GOP cache
 * Notification
+* Authentication
 
 ## Roadmap
 * HTTP-API
-* Authentication
 * Rtmp Relay
 
 ## Supported clients

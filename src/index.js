@@ -19,7 +19,8 @@ class NodeMediaServer {
     logger.info(`Homepage: ${Package.homepage}`);
     logger.info(`License: ${Package.license}`);
     logger.info(`Author: ${Package.author}`);
-
+    
+    Context.config = config;
     this.httpServer = new NodeHttpServer(config);
     this.rtmpServer = new NodeRtmpServer(config);
   }

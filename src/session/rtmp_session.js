@@ -63,19 +63,25 @@ class RtmpSession extends BaseSession {
 
 
   onPlay = () => {
-    logger.info(`RTMP session ${this.id} ${this.ip} start play ${this.streamPath}`);
+    const err = this.broadcast.postPlay(this);
+    if (err != null) {
+      logger.error(`RTMP session ${this.id} ${this.ip} play ${this.streamPath} error, ${err}`);
+      this.socket.end();
+      return;
+    }
     this.isPublisher = false;
-    this.broadcast.postPlay(this);
+    logger.info(`RTMP session ${this.id} ${this.ip} start play ${this.streamPath}`);
   };
 
   onPush = () => {
-    logger.info(`RTMP session ${this.id} ${this.ip} start push ${this.streamPath}`);
-    this.isPublisher = true;
     const err = this.broadcast.postPublish(this);
     if (err != null) {
       logger.error(`RTMP session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
       this.socket.end();
+      return;
     }
+    this.isPublisher = true;
+    logger.info(`RTMP session ${this.id} ${this.ip} start push ${this.streamPath}`);
   };
 
   /**

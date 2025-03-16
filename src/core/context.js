@@ -8,6 +8,8 @@
 const EventEmitter = require("node:events");
 
 const Context = {
+  config: {},
+
   sessions: new Map(),
 
   broadcasts: new Map(),
