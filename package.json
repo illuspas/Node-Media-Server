@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "express": "^4.21.2",
-    "http2-express": "^1.0.0"
+    "http2-express": "^1.0.0",
+    "rxjs": "^7.8.2"
   },
   "engines": {
     "node": ">=18.0.0"
