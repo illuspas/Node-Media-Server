@@ -5,6 +5,8 @@
 //  Copyright (c) 2024 Nodemedia. All rights reserved.
 //
 
+const { Subject, delay } = require("rxjs");
+
 const net = require("net");
 const Rtmp = require("../protocol/rtmp.js");
 const logger = require("../core/logger.js");
@@ -20,8 +22,8 @@ const querystring = require("node:querystring");
  */
 class RtmpSession extends BaseSession {
   /**
-   * 
-   * @param {net.Socket} socket 
+   *
+   * @param {net.Socket} socket
    */
   constructor(socket) {
     super();
@@ -30,6 +32,14 @@ class RtmpSession extends BaseSession {
     this.protocol = "rtmp";
     this.rtmp = new Rtmp();
     this.broadcast = new BroadcastServer();
+    this.subject = new Subject().pipe(delay(5000));
+
+    this.subject.subscribe({
+      next: (buffer) => {
+        this.outBytes += buffer.length;
+        this.socket.write(buffer);
+      },
+    });
   }
 
   run = () => {
@@ -44,12 +54,12 @@ class RtmpSession extends BaseSession {
   };
 
   /**
-   * 
-   * @param {object} req 
-   * @param {string} req.app 
+   *
+   * @param {object} req
+   * @param {string} req.app
    * @param {string} req.name
-   * @param {string} req.host 
-   * @param {object} req.query 
+   * @param {string} req.host
+   * @param {object} req.query
    */
   onConnect = (req) => {
     this.streamApp = req.app;
@@ -57,58 +67,76 @@ class RtmpSession extends BaseSession {
     this.streamHost = req.host;
     this.streamPath = "/" + req.app + "/" + req.name;
     this.streamQuery = req.query;
-    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.broadcast =
+      Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     Context.broadcasts.set(this.streamPath, this.broadcast);
   };
-
 
   onPlay = () => {
     const err = this.broadcast.postPlay(this);
     if (err != null) {
-      logger.error(`RTMP session ${this.id} ${this.ip} play ${this.streamPath} error, ${err}`);
+      logger.error(
+        `RTMP session ${this.id} ${this.ip} play ${this.streamPath} error, ${err}`
+      );
       this.socket.end();
       return;
     }
     this.isPublisher = false;
-    logger.info(`RTMP session ${this.id} ${this.ip} start play ${this.streamPath}`);
+    logger.info(
+      `RTMP session ${this.id} ${this.ip} start play ${this.streamPath}`
+    );
   };
 
   onPush = () => {
     const err = this.broadcast.postPublish(this);
     if (err != null) {
-      logger.error(`RTMP session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
+      logger.error(
+        `RTMP session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`
+      );
       this.socket.end();
       return;
     }
     this.isPublisher = true;
-    logger.info(`RTMP session ${this.id} ${this.ip} start push ${this.streamPath}`);
+    logger.info(
+      `RTMP session ${this.id} ${this.ip} start push ${this.streamPath}`
+    );
+    // Need to build the stream key
+
+    this.subject.subscribe((buffer) => {
+      client.write(buffer);
+    });
+
   };
 
   /**
    * rtmp protocol need output buffer
-   * @param {Buffer} buffer 
+   * @param {Buffer} buffer
    */
   onOutput = (buffer) => {
+    console.log(`on Output ${this.id}`);
     this.socket.write(buffer);
   };
 
   /**
-   * 
-   * @param {AVPacket} packet 
+   *
+   * @param {AVPacket} packet
    */
   onPacket = (packet) => {
+    // console.log(`On Packet ${this.id}`);
     this.broadcast.broadcastMessage(packet);
   };
 
   /**
-   * 
-   * @param {Buffer} data 
+   *
+   * @param {Buffer} data
    */
   onData = (data) => {
     this.inBytes += data.length;
     let err = this.rtmp.parserData(data);
     if (err != null) {
-      logger.error(`RTMP session ${this.id} ${this.ip} parserData error, ${err}`);
+      logger.error(
+        `RTMP session ${this.id} ${this.ip} parserData error, ${err}`
+      );
       this.socket.end();
     }
   };
@@ -123,11 +151,13 @@ class RtmpSession extends BaseSession {
   };
 
   /**
-   * 
-   * @param {Error} error 
+   *
+   * @param {Error} error
    */
   onError = (error) => {
-    logger.info(`RTMP session ${this.id} socket error, ${error.name}: ${error.message}`);
+    logger.info(
+      `RTMP session ${this.id} socket error, ${error.name}: ${error.message}`
+    );
   };
 
   /**
@@ -135,8 +165,7 @@ class RtmpSession extends BaseSession {
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {
-    this.outBytes += buffer.length;
-    this.socket.write(buffer);
+    this.subject.next(buffer);
   };
 
   /**
