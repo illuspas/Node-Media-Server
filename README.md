@@ -60,5 +60,13 @@ ffmpeg -re -i test_av1.mp4 -c copy -f flv http://localhost:8000/live/test_av1.fl
 ffplay http://localhost:8000/live/test_265.flv
 ```
 
+### [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js/) pure javascript implementation live streaming player
+[Online Demo](http://demo.nodemedia.cn/)
+- ASM.js, WASM, SIMD, WebWorker, WebCodecs, MediaSource multiple technical implementations
+- H.264/H.265+AAC/G711 software and hardware decoder
+- Ultra-low latency, Under extreme conditions less than 100 milliseconds
+- Enhanced HTTP/WS-FLV Protocol, Natively support h.265
+- Android/iOS/HarmonyOS/Chrome/Edge/Firefox/Safari, All modern browsers or platforms
+
 ## License
 Apache 2.0
