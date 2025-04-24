@@ -725,6 +725,7 @@ class Rtmp {
 
   onPlay = (invokeMessage) => {
     this.streamName = invokeMessage.streamName.split("?")[0];
+    this.streamQuery = querystring.parse(invokeMessage.streamName.split("?")[1]);
     this.streamId = this.parserPacket.header.stream_id;
     this.respondPlay();
     this.onConnectCallback({
