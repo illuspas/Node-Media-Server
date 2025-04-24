@@ -79,7 +79,7 @@ class BroadcastServer {
    * @returns {string | null}
    */
   postPlay = (session) => {
-    if (Context.config.auth?.play) {
+    if (Context.config.auth?.play && session.ip !== "") {
       if (!this.verifyAuth(Context.config.auth?.secret, session)) {
         return `play stream ${session.streamPath} authentication verification failed`;
       }

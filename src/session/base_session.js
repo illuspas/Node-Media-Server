@@ -48,6 +48,8 @@ class BaseSession {
 
     this.inBytes = 0;
     this.outBytes = 0;
+
+    this.filePath = "";
   }
 
   /**

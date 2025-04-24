@@ -28,6 +28,8 @@ npx node-media-server
 * GOP cache
 * Notification
 * Authentication
+* Static file server
+* Record to flv file
 
 ## Roadmap
 * HTTP-API
@@ -67,6 +69,32 @@ ffplay http://localhost:8000/live/test_265.flv
 - Ultra-low latency, Under extreme conditions less than 100 milliseconds
 - Enhanced HTTP/WS-FLV Protocol, Natively support h.265
 - Android/iOS/HarmonyOS/Chrome/Edge/Firefox/Safari, All modern browsers or platforms
+
+## Static file services
+Node-Media-Server can provide static file services for a directory.
+```
+"static": {
+    "router": "/",
+    "root": "./html"
+}
+```
+
+## Record to flv file
+Node-Media-Server can record live streams as FLV files.  
+When the static file server is enabled and recordings are saved in its directory.  
+It can provide video-on-demand services.
+
+```
+"record": {
+    "path": "./html/record"
+}
+```
+
+```
+http://server_ip:8000/record/live/stream/unix_time.flv  
+or  
+https://server_ip:8443/record/live/stream/unix_time.flv  
+```
 
 ## License
 Apache 2.0

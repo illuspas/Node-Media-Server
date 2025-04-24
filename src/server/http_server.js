@@ -19,6 +19,10 @@ class NodeHttpServer {
     this.config = config;
     const app = http2Express(express);
 
+    if (config.static?.router && config.static?.root) {
+      app.use(config.static.router, express.static(config.static.root));
+    }
+
     app.all("*", (req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*");
       req.method === "OPTIONS" ? res.sendStatus(200) : next();
@@ -54,7 +58,7 @@ class NodeHttpServer {
    * @param {express.Response} res
    */
   handleFlv = (req, res) => {
-    const session = new FlvSession( req, res);
+    const session = new FlvSession(req, res);
     session.run();
   };
 }

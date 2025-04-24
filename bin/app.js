@@ -41,6 +41,7 @@ const notify = (action, session) => {
       endtime: session.endTime,
       inbytes: session.inBytes,
       outbytes: session.outBytes,
+      filePath: session.filePath,
       action: action,
     }),
   }
@@ -71,6 +72,10 @@ if (config.notify.url !== "") {
 
   nms.on("donePublish", (session) => {
     notify("donePublish", session);
+  });
+
+  nms.on("doneRecord", (session) => {
+    notify("doneRecord", session);
   });
 }
 

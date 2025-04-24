@@ -11,6 +11,7 @@ const Context = require("./core/context.js");
 const BaseSession = require("./session/base_session.js");
 const NodeHttpServer = require("./server/http_server.js");
 const NodeRtmpServer = require("./server/rtmp_server.js");
+const NodeRecordServer = require("./server/record_server.js");
 
 class NodeMediaServer {
   constructor(config) {
@@ -23,6 +24,7 @@ class NodeMediaServer {
     Context.config = config;
     this.httpServer = new NodeHttpServer(config);
     this.rtmpServer = new NodeRtmpServer(config);
+    this.recordServer = new NodeRecordServer(config);
   }
 
   /**
@@ -38,7 +40,8 @@ class NodeMediaServer {
 
     this.httpServer.run();
     this.rtmpServer.run();
-
+    this.recordServer.run();
+    
   }
 }
 
