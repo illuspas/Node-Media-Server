@@ -84,7 +84,9 @@ class BroadcastServer {
         return `play stream ${session.streamPath} authentication verification failed`;
       }
     }
-    Context.eventEmitter.emit("postPlay", session);
+    if (session.ip !== "") {
+      Context.eventEmitter.emit("postPlay", session);
+    }
     switch (session.protocol) {
     case "flv":
       session.sendBuffer(this.flvHeader);
@@ -129,7 +131,9 @@ class BroadcastServer {
    */
   donePlay = (session) => {
     session.endTime = Date.now();
-    Context.eventEmitter.emit("donePlay", session);
+    if (session.ip !== "") {
+      Context.eventEmitter.emit("donePlay", session);
+    }
     this.subscribers.delete(session.id);
   };
 
