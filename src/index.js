@@ -12,6 +12,7 @@ const BaseSession = require("./session/base_session.js");
 const NodeHttpServer = require("./server/http_server.js");
 const NodeRtmpServer = require("./server/rtmp_server.js");
 const NodeRecordServer = require("./server/record_server.js");
+const NodeNotifyServer = require("./server/notify_server.js");
 
 class NodeMediaServer {
   constructor(config) {
@@ -25,6 +26,7 @@ class NodeMediaServer {
     this.httpServer = new NodeHttpServer(config);
     this.rtmpServer = new NodeRtmpServer(config);
     this.recordServer = new NodeRecordServer(config);
+    this.notifyServer = new NodeNotifyServer(config);
   }
 
   /**
@@ -40,7 +42,8 @@ class NodeMediaServer {
 
     this.httpServer.run();
     this.rtmpServer.run();
-    this.recordServer.run();
+    this.recordServer.run(); 
+    this.notifyServer.run();
     
   }
 }
