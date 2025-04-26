@@ -5,8 +5,8 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
+const crypto = require("node:crypto");
 const Flv = require("../protocol/flv.js");
-const Crypto = require("node:crypto");
 const Rtmp = require("../protocol/rtmp.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("../session/base_session.js");
@@ -69,7 +69,7 @@ class BroadcastServer {
     if (exp < now) {
       return false;
     }
-    let md5 = Crypto.createHash("md5");
+    let md5 = crypto.createHash("md5");
     let ohv = md5.update(str).digest("hex");
     return shv === ohv;
   };
