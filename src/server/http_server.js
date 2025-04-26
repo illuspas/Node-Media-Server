@@ -20,14 +20,17 @@ class NodeHttpServer {
     const app = http2Express(express);
 
     if (config.static?.router && config.static?.root) {
+      // @ts-ignore
       app.use(config.static.router, express.static(config.static.root));
     }
 
+    // @ts-ignore
     app.all("*", (req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*");
       req.method === "OPTIONS" ? res.sendStatus(200) : next();
     });
 
+    // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
 
     if (this.config.http?.port) {
