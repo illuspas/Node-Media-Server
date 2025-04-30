@@ -114,8 +114,10 @@ class FlvSession extends BaseSession {
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {
+    if (this.res.writableEnded) {
+      return;
+    }
     this.outBytes += buffer.length;
-    if(this.res.writableEnded) return
     this.res.write(buffer);
   };
 
