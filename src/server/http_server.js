@@ -9,6 +9,7 @@ const fs = require("fs");
 const http = require("http");
 const http2 = require("http2");
 const express = require("express");
+const cors = require("cors");
 const logger = require("../core/logger.js");
 const http2Express = require("http2-express");
 const FlvSession = require("../session/flv_session.js");
@@ -24,10 +25,7 @@ class NodeHttpServer {
     }
 
     // @ts-ignore
-    app.all("*", (req, res, next) => {
-      res.header("Access-Control-Allow-Origin", "*");
-      req.method === "OPTIONS" ? res.sendStatus(200) : next();
-    });
+    app.use(cors());
 
     // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
