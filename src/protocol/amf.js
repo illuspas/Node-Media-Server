@@ -610,6 +610,11 @@ function decodeAmf0Cmd(dbuf) {
   let resp = {};
 
   let cmd = amf0DecodeOne(buffer);
+  if (!cmd) {
+    logger.error("Failed to decode AMF0 command");
+    return resp;
+  }
+  
   resp.cmd = cmd.value;
   buffer = buffer.slice(cmd.len);
 
