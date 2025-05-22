@@ -29,7 +29,6 @@ class RtmpSession extends BaseSession {
     this.ip = socket.remoteAddress + ":" + socket.remotePort;
     this.protocol = "rtmp";
     this.rtmp = new Rtmp();
-    this.broadcast = new BroadcastServer();
   }
 
   run = () => {
@@ -59,6 +58,7 @@ class RtmpSession extends BaseSession {
     this.streamQuery = req.query;
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     Context.broadcasts.set(this.streamPath, this.broadcast);
+    Context.sessions.set(this.id, this);
   };
 
 
@@ -120,6 +120,7 @@ class RtmpSession extends BaseSession {
     } else {
       this.broadcast.donePlay(this);
     }
+    Context.sessions.delete(this.id);
   };
 
   /**

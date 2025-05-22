@@ -37,6 +37,7 @@ class FlvSession extends BaseSession {
     /**@type {BroadcastServer} */
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     Context.broadcasts.set(this.streamPath, this.broadcast);
+    Context.sessions.set(this.id, this);
   }
 
   run = () => {
@@ -92,6 +93,7 @@ class FlvSession extends BaseSession {
     } else {
       this.broadcast.donePlay(this);
     }
+    Context.sessions.delete(this.id);
   };
 
   /**
