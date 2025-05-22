@@ -33,6 +33,32 @@ function handleGetSessions(req, res) {
 }
 
 /**
+ * 获取指定流的所有会话
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+function handleGetStreamSessions(req, res) {
+  let data = [];
+  for (const [id, session] of Context.sessions) {
+    if (session.streamApp === req.params.app && session.streamName === req.params.name) {
+      data.push({
+        id,
+        ip: session.ip,
+        protocol: session.protocol,
+        streamApp: session.streamApp,
+        streamName: session.streamName,
+        streamQuery: session.streamQuery,
+        createTime: session.createTime,
+        isPublisher: session.isPublisher,
+        inBytes: session.inBytes,
+        outBytes: session.outBytes,
+      });
+    }
+  }
+  res.json({ data });
+}
+
+/**
  * 获取单个会话
  * @param {express.Request} req
  * @param {express.Response} res
@@ -73,4 +99,4 @@ function handleDeleteSession(req, res) {
   res.json({ data: { id: session.id } });
 }
 
-module.exports = { handleGetSessions, handleGetSession, handleDeleteSession };
+module.exports = { handleGetSessions, handleGetStreamSessions, handleGetSession, handleDeleteSession };

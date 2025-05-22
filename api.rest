@@ -17,6 +17,11 @@ content-type: application/json
 GET {{baseUrl}}/sessions HTTP/1.1
 Authorization: Bearer {{authToken}}
 
+### 获取指定stream的全部session
+# @name getSessions
+GET {{baseUrl}}/sessions/live/bbb HTTP/1.1
+Authorization: Bearer {{authToken}}
+
 ### 通过id获取session
 # @name getSession
 GET {{baseUrl}}/sessions/maytezjrs7x5v9ru HTTP/1.1

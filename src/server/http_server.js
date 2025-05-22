@@ -57,9 +57,10 @@ class NodeHttpServer {
     });
 
     apiRouter.get("/sessions", sessionController.handleGetSessions);
+    apiRouter.get("/sessions/:app/:name", sessionController.handleGetStreamSessions);
     apiRouter.get("/sessions/:id", sessionController.handleGetSession);
     apiRouter.delete("/sessions/:id", sessionController.handleDeleteSession);
-    
+
     // @ts-ignore 挂载 API 路由组 
     app.use("/api", apiRouter);
 
