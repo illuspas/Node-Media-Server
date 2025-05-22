@@ -6,7 +6,9 @@
     "auth": {
         "play": false,
         "publish": false,
-        "secret": "nodemedia2017privatekey"
+        "secret": "nodemedia2017privatekey",
+        "username": "admin",
+        "password": "admin123"
     },
     "rtmp": {
         "port": 1935

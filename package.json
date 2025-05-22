@@ -27,7 +27,9 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "http2-express": "^1.0.0"
+    "express-jwt": "^8.5.1",
+    "http2-express": "^1.0.0",
+    "jsonwebtoken": "^9.0.2"
   },
   "engines": {
     "node": ">=18.0.0"

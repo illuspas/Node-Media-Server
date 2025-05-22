@@ -35,7 +35,7 @@ class BaseSession {
     this.streamQuery = {};
     this.createTime = Date.now();
     this.endTime = 0;
-
+    this.isPublisher = false;
     this.videoCodec = 0;
     this.videoWidth = 0;
     this.videoHeight = 0;

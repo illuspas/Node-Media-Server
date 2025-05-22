@@ -1,0 +1,28 @@
+@baseUrl = http://127.0.0.1:8000/api
+
+# @name login
+POST {{baseUrl}}/login HTTP/1.1
+content-type: application/json
+
+{
+  "username": "admin",
+  "password": "0192023a7bbd73250516f069df18b500"
+}
+
+### 保存token
+@authToken = {{login.response.body.data.token}}
+
+### 获取全部session
+# @name getSessions
+GET {{baseUrl}}/sessions HTTP/1.1
+Authorization: Bearer {{authToken}}
+
+### 通过id获取session
+# @name getSession
+GET {{baseUrl}}/sessions/maytezjrs7x5v9ru HTTP/1.1
+Authorization: Bearer {{authToken}}
+
+### 通过id停止session
+# @name getSession
+DELETE {{baseUrl}}/sessions/maytgltdr74q4s2f HTTP/1.1
+Authorization: Bearer {{authToken}}
