@@ -1,29 +1,29 @@
 {
-    "bind": "0.0.0.0",
-    "notify": {
-        "url": ""
-    },
-    "auth": {
-        "play": false,
-        "publish": false,
-        "secret": "nodemedia2017privatekey",
-        "username": "admin",
-        "password": "admin123"
-    },
-    "rtmp": {
-        "port": 1935
-    },
-    "rtmps": {
-        "port": 1936,
-        "key": "./key.pem",
-        "cert": "./cert.pem"
-    },
-    "http": {
-        "port": 8000
-    },
-    "https": {
-        "port": 8443,
-        "key": "./key.pem",
-        "cert": "./cert.pem"
-    }
+  "bind": "0.0.0.0",
+  "notify": {
+    "url": ""
+  },
+  "auth": {
+    "play": false,
+    "publish": false,
+    "secret": "nodemedia2017privatekey",
+    "username": "admin",
+    "password": ""
+  },
+  "rtmp": {
+    "port": 1935
+  },
+  "rtmps": {
+    "port": 1936,
+    "key": "./key.pem",
+    "cert": "./cert.pem"
+  },
+  "http": {
+    "port": 8000
+  },
+  "https": {
+    "port": 8443,
+    "key": "./key.pem",
+    "cert": "./cert.pem"
+  }
 }
