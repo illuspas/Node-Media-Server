@@ -31,10 +31,6 @@ npx node-media-server
 * Static file server
 * Record to flv file
 
-## Roadmap
-* HTTP-API
-* Rtmp Relay
-
 ## Supported clients
 |Client   | H.264  | HEVC | VP9 | AV1|
 | ------------ | ------------ |------------ |------------ |------------ |
