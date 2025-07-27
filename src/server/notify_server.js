@@ -13,26 +13,30 @@ class NodeNotifyServer {
   }
 
   run() {
-    if(!this.config.notify?.url ) {
+    if (!this.config.notify?.url) {
       return;
     }
 
     Context.eventEmitter.on("postPlay", (session) => {
       this.notify("postPlay", session);
     });
-  
+
     Context.eventEmitter.on("donePlay", (session) => {
       this.notify("donePlay", session);
     });
-  
+
     Context.eventEmitter.on("postPublish", (session) => {
       this.notify("postPublish", session);
     });
-  
+
     Context.eventEmitter.on("donePublish", (session) => {
       this.notify("donePublish", session);
     });
-  
+
+    Context.eventEmitter.on("postRecord", (session) => {
+      this.notify("postRecord", session);
+    });
+
     Context.eventEmitter.on("doneRecord", (session) => {
       this.notify("doneRecord", session);
     });
@@ -66,7 +70,7 @@ class NodeNotifyServer {
         session.close();
       }
     }).catch((err) => {
-  
+
     });
   };
 }

@@ -11,6 +11,11 @@ const logger = require("../core/logger.js");
 const BaseSession = require("./base_session");
 const BroadcastServer = require("../server/broadcast_server.js");
 const Context = require("../core/context.js");
+
+/**
+ * @class
+ * @augments BaseSession
+ */
 class NodeRecordSession extends BaseSession {
 
   /**
@@ -44,12 +49,13 @@ class NodeRecordSession extends BaseSession {
   run() {
     this.broadcast.postPlay(this);
     logger.info(`Record session ${this.id} ${this.streamPath} start record ${this.filePath}`);
+    Context.eventEmitter.emit("postRecord", this);
     Context.eventEmitter.on("donePublish", (session) => {
       if (session.streamPath === this.streamPath) {
         this.fileStream.close();
         this.broadcast.donePlay(this);
         logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
-        Context.eventEmitter.emit("doneRecord", session);
+        Context.eventEmitter.emit("doneRecord", this);
       }
     });
   }
