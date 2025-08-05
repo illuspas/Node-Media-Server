@@ -6,13 +6,13 @@
 //
 
 const fs = require("fs");
+const cors = require("cors");
 const http = require("http");
 const http2 = require("http2");
 const express = require("express");
-const cors = require("cors");
 const logger = require("../core/logger.js");
-const http2Express = require("http2-express");
 const FlvSession = require("../session/flv_session.js");
+const http2Express = require("../vendor/http2-express");
 
 class NodeHttpServer {
   constructor(config) {
