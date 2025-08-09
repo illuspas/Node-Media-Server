@@ -16,6 +16,9 @@ class NodeNotifyServer {
     if (!this.config.notify?.url) {
       return;
     }
+    Context.eventEmitter.on("prePlay", (session) => {
+      this.notify("prePlay", session);
+    });
 
     Context.eventEmitter.on("postPlay", (session) => {
       this.notify("postPlay", session);
@@ -23,6 +26,10 @@ class NodeNotifyServer {
 
     Context.eventEmitter.on("donePlay", (session) => {
       this.notify("donePlay", session);
+    });
+
+    Context.eventEmitter.on("prePublish", (session) => {
+      this.notify("postPublish", session);
     });
 
     Context.eventEmitter.on("postPublish", (session) => {
