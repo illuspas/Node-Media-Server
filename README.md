@@ -4,6 +4,9 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 
+## **If you like this project you can support me.**  
+[![](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=illuspas&button_colour=5F7FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00)](https://www.buymeacoffee.com/illuspas)
+
 ## Introduction
 Node-Media-Server is a high-performance/low-latency/open-source Live Streaming Server developed based on Nodejs.  
 v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.  
