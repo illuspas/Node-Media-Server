@@ -6,6 +6,9 @@
 //
 
 const express = require("express");
+const url = require("url");
+const http = require("http");
+const WebSocket = require("ws");
 const Flv = require("../protocol/flv.js");
 const logger = require("../core/logger.js");
 const Context = require("../core/context.js");
@@ -19,8 +22,8 @@ const BroadcastServer = require("../server/broadcast_server.js");
  */
 class FlvSession extends BaseSession {
   /**
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {express.Request | http.IncomingMessage} req
+   * @param {express.Response | WebSocket} res
    */
   constructor(req, res) {
     super();
@@ -29,24 +32,46 @@ class FlvSession extends BaseSession {
     this.ip = req.socket.remoteAddress + ":" + req.socket.remotePort;
     this.flv = new Flv();
     this.protocol = "flv";
-    this.streamHost = req.hostname;
-    this.streamApp = req.params.app;
-    this.streamName = req.params.name;
-    this.streamPath = "/" + this.streamApp + "/" + this.streamName;
-    this.streamQuery = req.query;
+    if (this.res instanceof WebSocket) {
+      const urlInfo = url.parse(req.url, true);
+      this.streamHost = req.headers.host?.split(":")[0];
+      this.streamPath = urlInfo.pathname.split(".")[0];
+      this.streamApp = this.streamPath.split("/")[1];
+      this.streamName = this.streamPath.split("/")[2];
+      this.streamQuery = urlInfo.query;
+      if (this.res.protocol.toLowerCase() === "post" || this.res.protocol.toLowerCase() === "publisher") {
+        this.isPublisher = true;
+      }
+    } else {
+      this.streamHost = req.hostname;
+      this.streamApp = req.params.app;
+      this.streamName = req.params.name;
+      this.streamPath = "/" + this.streamApp + "/" + this.streamName;
+      this.streamQuery = req.query;
+      if (this.req.method === "POST") {
+        this.isPublisher = true;
+      }
+    }
+
     /**@type {BroadcastServer} */
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
     Context.broadcasts.set(this.streamPath, this.broadcast);
   }
 
   run = () => {
-    this.req.on("data", this.onData);
-    this.req.on("error", this.onError);
-    this.req.socket.on("close", this.onClose);
-    if (this.req.method === "GET") {
-      this.onPlay();
-    } else if (this.req.method === "POST") {
+    if (this.res instanceof WebSocket) {
+      this.res.on("message", this.onData);
+      this.res.on("close", this.onClose);
+      this.res.on("error", this.onError);
+    } else {
+      this.req.on("data", this.onData);
+      this.req.on("error", this.onError);
+      this.req.socket.on("close", this.onClose);
+    }
+    if (this.isPublisher) {
       this.onPush();
+    } else {
+      this.onPlay();
     }
   };
 
@@ -54,7 +79,7 @@ class FlvSession extends BaseSession {
     const err = this.broadcast.postPlay(this);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} play ${this.streamPath} error, ${err}`);
-      this.res.end();
+      this.close();
       return;
     }
     this.isPublisher = false;
@@ -65,7 +90,7 @@ class FlvSession extends BaseSession {
     const err = this.broadcast.postPublish(this);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} push ${this.streamPath} error, ${err}`);
-      this.res.end();
+      this.close();
       return;
     }
     this.isPublisher = true;
@@ -81,7 +106,7 @@ class FlvSession extends BaseSession {
     let err = this.flv.parserData(data);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} parserData error, ${err}`);
-      this.res.end();
+      this.close();
     }
   };
 
@@ -114,18 +139,29 @@ class FlvSession extends BaseSession {
    * @param {Buffer} buffer
    */
   sendBuffer = (buffer) => {
-    if (this.res.writableEnded) {
-      return;
+    if (this.res instanceof WebSocket) {
+      if (this.res.readyState !== WebSocket.OPEN) {
+        return;
+      }
+      this.res.send(buffer);
+    } else {
+      if (this.res.writableEnded) {
+        return;
+      }
+      this.res.write(buffer);
     }
     this.outBytes += buffer.length;
-    this.res.write(buffer);
   };
 
   /**
    * @override
    */
   close = () => {
-    this.res.end();
+    if (this.res instanceof WebSocket) {
+      this.res.close();
+    } else {
+      this.res.end();
+    }
   };
 }
 

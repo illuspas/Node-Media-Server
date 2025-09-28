@@ -9,6 +9,7 @@ const fs = require("fs");
 const cors = require("cors");
 const http = require("http");
 const http2 = require("http2");
+const WebSocket = require("ws");
 const express = require("express");
 const logger = require("../core/logger.js");
 const FlvSession = require("../session/flv_session.js");
@@ -30,8 +31,13 @@ class NodeHttpServer {
     // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
 
+
     if (this.config.http?.port) {
       this.httpServer = http.createServer(app);
+      this.wsServer = new WebSocket.Server({ server: this.httpServer });
+      this.wsServer.on("connection", (ws, req) => {
+        this.handleFlv(req, ws);
+      });
     }
     if (this.config.https?.port) {
       const opt = {
@@ -40,6 +46,10 @@ class NodeHttpServer {
         allowHTTP1: true
       };
       this.httpsServer = http2.createSecureServer(opt, app);
+      this.wssServer = new WebSocket.Server({ server: this.httpsServer });
+      this.wssServer.on("connection", (ws, req) => {
+        this.handleFlv(req, ws);
+      });
     }
 
   }
@@ -48,14 +58,20 @@ class NodeHttpServer {
     this.httpServer?.listen(this.config.http.port, this.config.bind, () => {
       logger.info(`HTTP server listening on port ${this.config.bind}:${this.config.http.port}`);
     });
+    this.wsServer?.on("listening", () => {
+      logger.info(`WebSocket server listening on port ${this.config.bind}:${this.config.http.port}`);
+    });
     this.httpsServer?.listen(this.config.https.port, this.config.bind, () => {
       logger.info(`HTTPS server listening on port ${this.config.bind}:${this.config.https.port}`);
+    });
+    this.wssServer?.on("listening", () => {
+      logger.info(`WebSocket server listening on port ${this.config.bind}:${this.config.https.port}`);
     });
   };
 
   /**
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {express.Request | http.IncomingMessage} req
+   * @param {express.Response | WebSocket} res
    */
   handleFlv = (req, res) => {
     const session = new FlvSession(req, res);
