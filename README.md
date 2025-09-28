@@ -27,6 +27,7 @@ npx node-media-server
 
 ## Features
 * HTTP/HTTP2-flv Push/Play
+* WS/WSS-flv Push/Play
 * RTMP/RTMPS Push/Play
 * GOP cache
 * Notification
@@ -68,6 +69,12 @@ ffplay http://localhost:8000/live/test_265.flv
 - Ultra-low latency, Under extreme conditions less than 100 milliseconds
 - Enhanced HTTP/WS-FLV Protocol, Natively support h.265
 - Android/iOS/HarmonyOS/Chrome/Edge/Firefox/Safari, All modern browsers or platforms
+
+### [NodePublisher.js](https://www.nodemedia.cn/demo/nodepublisher/) pure javascript implementation live streaming publisher
+- WebSocket-FLV Protocol
+- H.264+AAC hardware encoder
+- Only chrome or chromium based browsers are supported at the moment
+- wss is required
 
 ## Static file services
 Node-Media-Server can provide static file services for a directory.
