@@ -23,10 +23,10 @@ class NodeMediaServer {
     logger.info(`Author: ${Package.author}`);
     
     Context.config = config;
-    this.httpServer = new NodeHttpServer(config);
-    this.rtmpServer = new NodeRtmpServer(config);
-    this.recordServer = new NodeRecordServer(config);
-    this.notifyServer = new NodeNotifyServer(config);
+    this.httpServer = new NodeHttpServer();
+    this.rtmpServer = new NodeRtmpServer();
+    this.recordServer = new NodeRecordServer();
+    this.notifyServer = new NodeNotifyServer();
   }
 
   /**

@@ -12,22 +12,21 @@ const Context = require("../core/context.js");
 const NodeRecordSession = require("../session/record_session.js");
 
 class NodeRecordServer {
-  constructor(config) {
-    this.config = config;
+  constructor() {
   }
 
   run() {
-    if (this.config.record?.path) {
+    if (Context.config.record?.path) {
       try {
-        fs.mkdirSync(this.config.record.path, { recursive: true });
-        fs.accessSync(this.config.record.path, fs.constants.W_OK);
+        fs.mkdirSync(Context.config.record.path, { recursive: true });
+        fs.accessSync(Context.config.record.path, fs.constants.W_OK);
       } catch (error) {
-        logger.error(`record path ${this.config.record.path} has no write permission. ${error}`);
+        logger.error(`record path ${Context.config.record.path} has no write permission. ${error}`);
         return;
       }
-      logger.info(`Record server start on the path ${this.config.record.path}`);
+      logger.info(`Record server start on the path ${Context.config.record.path}`);
       Context.eventEmitter.on("postPublish", (session) => {
-        let filePath = path.join(this.config.record.path, session.streamPath, Date.now() + ".flv");
+        let filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
         let sess = new NodeRecordSession(session, filePath);
         sess.run();
       });

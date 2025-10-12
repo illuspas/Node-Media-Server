@@ -12,7 +12,6 @@ const Context = require("../core/context.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("./base_session.js");
 const BroadcastServer = require("../server/broadcast_server.js");
-const querystring = require("node:querystring");
 
 /**
  * @class

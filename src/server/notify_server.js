@@ -8,12 +8,11 @@ const Context = require("../core/context.js");
 const BaseSession = require("../session/base_session");
 
 class NodeNotifyServer {
-  constructor(config) {
-    this.config = config;
+  constructor() {
   }
 
   run() {
-    if (!this.config.notify?.url) {
+    if (!Context.config.notify?.url) {
       return;
     }
     Context.eventEmitter.on("prePlay", (session) => {
@@ -55,7 +54,7 @@ class NodeNotifyServer {
    * @param {BaseSession} session 
    */
   notify(action, session) {
-    fetch(this.config.notify.url, {
+    fetch(Context.config.notify.url, {
       method: "POST",
       body: JSON.stringify({
         id: session.id,
