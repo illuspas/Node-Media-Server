@@ -37,6 +37,7 @@ const FLV_CODECID_NELLYMOSER_8KHZ_MONO = 5;
 const FLV_CODECID_NELLYMOSER = 6;
 const FLV_CODECID_PCM_ALAW = 7;
 const FLV_CODECID_PCM_MULAW = 8;
+const FLV_CODECID_ExHeader = 9;
 const FLV_CODECID_AAC = 10;
 const FLV_CODECID_SPEEX = 11;
 
@@ -53,12 +54,26 @@ const FOURCC_AV1 = Buffer.from("av01");
 const FOURCC_VP9 = Buffer.from("vp09");
 const FOURCC_HEVC = Buffer.from("hvc1");
 
-const PacketTypeSequenceStart = 0;
-const PacketTypeCodedFrames = 1;
-const PacketTypeSequenceEnd = 2;
-const PacketTypeCodedFramesX = 3;
-const PacketTypeMetadata = 4;
-const PacketTypeMPEG2TSSequenceStart = 5;
+const FOURCC_AC3 = Buffer.from("ac-3");
+const FOURCC_EAC3 = Buffer.from("ec-3");
+const FOURCC_OPUS = Buffer.from("Opus");
+const FOURCC_MP3 = Buffer.from(".mp3");
+const FOURCC_FLAC = Buffer.from("fLaC");
+const FOURCC_AAC = Buffer.from("mp4a");
+
+const VideoPacketTypeSequenceStart = 0;
+const VideoPacketTypeCodedFrames = 1;
+const VideoPacketTypeSequenceEnd = 2;
+const VideoPacketTypeCodedFramesX = 3;
+const VideoPacketTypeMetadata = 4;
+const VideoPacketTypeMPEG2TSSequenceStart = 5;
+
+const AudioPacketTypeSequenceStart = 0;
+const AudioPacketTypeCodedFrames = 1;
+const AudioPacketTypeSequenceEnd = 2;
+const AudioPacketTypeMultichannelConfig = 4;
+const AudioPacketTypeMultitrack = 5;
+const AudioPacketTypModEx = 7;
 
 /**
  * @class
@@ -221,40 +236,49 @@ class Flv {
     packet.size = size;
     packet.data = data;
     if (type === FLV_MEDIA_TYPE_AUDIO) {
-      const codecID = data[0] >> 4;
-      packet.codec_id = codecID;
+      const soundFormat = data[0] >> 4;
+      packet.codec_id = soundFormat;
       packet.flags = 1;
-      if (codecID === FLV_CODECID_AAC) {
-        if (data[1] === 0) {
-          packet.flags = 0;
+      if (soundFormat !== FLV_CODECID_ExHeader) {
+        if (soundFormat === FLV_CODECID_AAC) {
+          if (data[1] === 0) {
+            packet.flags = 0;
+          }
         }
+      } else {
+        const audioPacketType = data[0] & 0x0f;
+        if(audioPacketType === AudioPacketTypeSequenceStart) {
+          packet.flags = 0;
+        } 
       }
+
+
     } else if (type === FLV_MEDIA_TYPE_VIDEO) {
       const frameType = data[0] >> 4 & 0b0111;
       const codecID = data[0] & 0x0f;
       const isExHeader = (data[0] >> 4 & 0b1000) !== 0;
 
       if (isExHeader) {
-        const packetType = data[0] & 0x0f;
+        const VideoPacketType = data[0] & 0x0f;
         const fourCC = data.subarray(1, 5);
         if (fourCC.compare(FOURCC_AV1) === 0 || fourCC.compare(FOURCC_VP9) === 0 || fourCC.compare(FOURCC_HEVC) === 0) {
           packet.codec_id = fourCC.readUint32BE();
-          if (packetType === PacketTypeSequenceStart) {
+          if (VideoPacketType === VideoPacketTypeSequenceStart) {
             packet.flags = 2;
-          } else if (packetType === PacketTypeCodedFrames || packetType === PacketTypeCodedFramesX) {
+          } else if (VideoPacketType === VideoPacketTypeCodedFrames || VideoPacketType === VideoPacketTypeCodedFramesX) {
             if (frameType === FLV_FRAME_KEY) {
               packet.flags = 3;
             } else {
               packet.flags = 4;
             }
-          } else if (packetType === PacketTypeMetadata) {
+          } else if (VideoPacketType === VideoPacketTypeMetadata) {
             // const hdrMetadata = AMF.parseScriptData(packet.data.buffer, 5, packet.size);
             // logger.debug(`hdrMetadata:${JSON.stringify(hdrMetadata)}`);
             packet.flags = 6;
           }
 
           if (fourCC.compare(FOURCC_HEVC) === 0) {
-            if (packetType === PacketTypeCodedFrames) {
+            if (VideoPacketType === VideoPacketTypeCodedFrames) {
               const cts = data.readUintBE(5, 3);
               packet.pts = packet.dts + cts;
             }
@@ -262,12 +286,12 @@ class Flv {
         }
       } else {
         const cts = data.readUintBE(2, 3);
-        const packetType = data[1];
+        const VideoPacketType = data[1];
         packet.codec_id = codecID;
         packet.pts = packet.dts + cts;
         packet.flags = 4;
         if (codecID === FLV_CODECID_H264) {
-          if (packetType === FLV_AVC_SEQUENCE_HEADER) {
+          if (VideoPacketType === FLV_AVC_SEQUENCE_HEADER) {
             packet.flags = 2;
           } else {
             if (frameType === FLV_FRAME_KEY) {
