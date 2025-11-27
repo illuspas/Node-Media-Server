@@ -23,14 +23,12 @@ class StatsHandler {
         server: {
           uptime: process.uptime(),
           nodeVersion: process.version,
-          platform: process.platform
+          platform: process.platform,
+          arch: process.arch,
+          pid: process.pid
         },
-        memory: {
-          rss: memoryUsage.rss,
-          heapTotal: memoryUsage.heapTotal,
-          heapUsed: memoryUsage.heapUsed,
-          external: memoryUsage.external
-        },
+        cpu: cpuUsage,
+        memory: memoryUsage,
         sessions: {
           total: Context.sessions.size,
           publishers: Array.from(Context.sessions.values()).filter(s => s.isPublisher).length,
