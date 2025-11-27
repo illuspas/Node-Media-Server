@@ -119,6 +119,7 @@ class RtmpSession extends BaseSession {
     } else {
       this.broadcast.donePlay(this);
     }
+    Context.sessions.delete(this.id);
   };
 
   /**

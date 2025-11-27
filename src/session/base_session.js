@@ -27,6 +27,7 @@ class BaseSession {
   constructor() {
     this.id = generateRandomId();
     this.ip = "";
+    this.isPublisher = false;
     this.protocol = "";
     this.streamHost = "";
     this.streamApp = "";

@@ -16,6 +16,7 @@ const logger = require("../core/logger.js");
 const Context = require("../core/context.js");
 const FlvSession = require("../session/flv_session.js");
 const http2Express = require("../vendor/http2-express");
+const ApiRouter = require("../api/router.js");
 
 class NodeHttpServer {
   constructor() {
@@ -28,6 +29,11 @@ class NodeHttpServer {
 
     // @ts-ignore
     app.use(cors());
+
+    // Setup API routes
+    const apiRouter = new ApiRouter();
+    // @ts-ignore
+    app.use("/api/v1", apiRouter.router);
 
     // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
@@ -77,6 +83,7 @@ class NodeHttpServer {
   handleFlv = (req, res) => {
     const session = new FlvSession(req, res);
     session.run();
+    Context.sessions.set(session.id, session);
   };
 }
 

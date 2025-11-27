@@ -42,6 +42,7 @@ class NodeRtmpServer {
   handleRequest = (socket) => {
     const session = new RtmpSession(socket);
     session.run();
+    Context.sessions.set(session.id, session);
   };
 }
 
