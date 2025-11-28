@@ -97,9 +97,158 @@ It can provide video-on-demand services.
 ```
 
 ```
-http://server_ip:8000/record/live/stream/unix_time.flv  
-or  
-https://server_ip:8443/record/live/stream/unix_time.flv  
+http://server_ip:8000/record/live/stream/unix_time.flv
+or
+https://server_ip:8443/record/live/stream/unix_time.flv
+```
+
+## REST API System (New in v4.2.0)
+
+Node-Media-Server v4.2.0 introduces a comprehensive REST API system for server management and monitoring.
+
+### Authentication
+The API system uses JWT-based authentication with the following endpoints:
+
+#### Login
+```bash
+POST /api/v1/login
+Content-Type: application/json
+
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "token": "your_jwt_token",
+    "expiresIn": "24h"
+  },
+  "message": "Login successful"
+}
+```
+
+#### Using the API
+Include the JWT token in your requests:
+```bash
+Authorization: Bearer your_jwt_token
+```
+
+### API Endpoints
+
+#### Health Check
+```bash
+GET /api/v1/health
+```
+Returns server health status, including CPU usage, memory consumption, and uptime.
+
+#### Server Information
+```bash
+GET /api/v1/info
+```
+Returns server configuration, version information, and system details.
+
+#### Stream Management
+```bash
+GET /api/v1/streams
+```
+List all active streams with detailed information including codecs, bitrate, and connected clients.
+
+#### Session Management
+```bash
+GET /api/v1/sessions
+```
+Monitor all connected clients (publishers and players) with session details.
+
+#### Server Statistics
+```bash
+GET /api/v1/stats
+```
+Real-time server performance metrics including:
+- CPU usage percentage
+- Memory consumption (RSS, heap total, heap used)
+- Process uptime
+- Active stream count
+- Connected client count
+
+### Configuration
+
+The API system is configured through the `bin/config.json` file:
+
+```json
+"auth": {
+    "play": false,
+    "publish": false,
+    "secret": "nodemedia2017privatekey",
+    "jwt": {
+        "expiresIn": "24h",
+        "refreshExpiresIn": "7d",
+        "algorithm": "HS256",
+        "users": [
+            {
+                "username": "admin",
+                "password": "admin123"
+            }
+        ]
+    }
+},
+```
+
+### Security Features
+
+#### Password Hashing
+Passwords are securely stored using MD5 hashing. To generate a hashed password:
+```javascript
+const crypto = require('crypto');
+const hashedPassword = crypto.createHash('md5').update('your_password').digest('hex');
+```
+
+#### JWT Configuration
+- Configurable secret key for token signing
+- Support for different algorithms (HS256, HS384, HS512)
+- Configurable token expiration times
+- Refresh token support for extended sessions
+
+### Example Usage
+
+#### Using curl
+```bash
+# Login
+curl -X POST http://localhost:8001/api/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password": md5("password")}'
+
+# Get server stats
+curl -X GET http://localhost:8001/api/v1/stats \
+  -H "Authorization: Bearer your_jwt_token"
+
+# Get active streams
+curl -X GET http://localhost:8001/api/v1/streams \
+  -H "Authorization: Bearer your_jwt_token"
+```
+
+#### Using JavaScript
+```javascript
+// Login and get streams
+const response = await fetch('http://localhost:8001/api/v1/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'admin', password: md5('password') })
+});
+
+const { token } = await response.json();
+
+// Get streams
+const streamsResponse = await fetch('http://localhost:8001/api/v1/streams', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+
+const streams = await streamsResponse.json();
+console.log('Active streams:', streams);
 ```
 
 ## License
