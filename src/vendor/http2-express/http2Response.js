@@ -1,4 +1,4 @@
-const { Http2ServerResponse } = require('http2');
+const { Http2ServerResponse } = require("http2");
 
 const createHttp2Response = (response) => {
   const http2Response = Object.create(Http2ServerResponse.prototype);

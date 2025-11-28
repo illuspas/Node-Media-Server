@@ -1,5 +1,5 @@
-/* eslint-disable dot-notation */
-const { Http2ServerRequest } = require('http2');
+ 
+const { Http2ServerRequest } = require("http2");
 
 const createHttp2Request = (request) => {
   const http2Request = Object.create(Http2ServerRequest.prototype);
@@ -20,14 +20,14 @@ const createHttp2Request = (request) => {
     }
   });
 
-  const requestHostName = Object.getOwnPropertyDescriptor(http2Request, 'hostname')?.get;
+  const requestHostName = Object.getOwnPropertyDescriptor(http2Request, "hostname")?.get;
 
   // Redefine hostname property with custom getter.
   if (requestHostName) {
-    Object.defineProperty(http2Request, 'hostname', {
+    Object.defineProperty(http2Request, "hostname", {
       get() {
-        if (!this.headers['host'] && this.authority) {
-          this.headers['host'] = this.authority;
+        if (!this.headers["host"] && this.authority) {
+          this.headers["host"] = this.authority;
         }
         return requestHostName.call(this);
       }

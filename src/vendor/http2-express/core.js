@@ -1,10 +1,10 @@
-/* eslint-disable func-names */
-/* eslint-disable no-underscore-dangle */
-const EventEmitter = require('events');
+ 
+ 
+const EventEmitter = require("events");
 
-const createHttp2Request = require('./http2Request');
-const createHttp2Response = require('./http2Response');
-const initHttp2Express = require('./initHttp2Express');
+const createHttp2Request = require("./http2Request");
+const createHttp2Response = require("./http2Response");
+const initHttp2Express = require("./initHttp2Express");
 
 const createHttp2Express = (express) => {
   const {
@@ -18,10 +18,10 @@ const createHttp2Express = (express) => {
   application.lazyrouter = function lazyrouter() {
     if (!this._router) {
       this._router = new Router({
-        caseSensitive: this.enabled('case sensitive routing'),
-        strict: this.enabled('strict routing')
+        caseSensitive: this.enabled("case sensitive routing"),
+        strict: this.enabled("strict routing")
       });
-      this._router.use(query(this.get('query parser fn')));
+      this._router.use(query(this.get("query parser fn")));
       this._router.use(initHttp2Express(this));
     }
   };
