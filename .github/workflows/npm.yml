@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
-          node-version: 8
+          node-version: 18
       - run: npm install
       - run: npm test
       - uses: JS-DevTools/npm-publish@v1
