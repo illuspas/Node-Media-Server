@@ -40,6 +40,7 @@ class ApiRouter {
 
     // Session management endpoints
     this.router.get("/sessions", SessionsHandler.getSessions);
+    this.router.delete("/sessions/:id", SessionsHandler.deleteSession);
 
     // Statistics endpoint
     this.router.get("/stats", StatsHandler.getStats);

@@ -50,6 +50,53 @@ class SessionsHandler {
       });
     }
   }
+
+  /**
+   * Delete a session by ID
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  static deleteSession(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          data: {},
+          message: "Session ID is required"
+        });
+      }
+
+      const session = Context.sessions.get(id);
+
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          data: {},
+          message: "Session not found"
+        });
+      }
+
+      // Call the close method on the session
+      session.close();
+
+      res.json({
+        success: true,
+        data: {
+          id
+        },
+        message: "Session deleted successfully"
+      });
+    } catch (error) {
+      logger.error("Error deleting session:", error);
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
+    }
+  }
 }
 
 module.exports = SessionsHandler;
