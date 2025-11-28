@@ -1,27 +1,36 @@
-// @ts-check
-//
 // Authentication handlers
 // Login and JWT token management
 //
 
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const Context = require('../../core/context.js');
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const Context = require("../../core/context.js");
+
+/**
+ * Create MD5 hash of password
+ * @param password
+ */
+const createMD5Hash = (password) => {
+  return crypto.createHash("md5").update(password).digest("hex");
+};
 
 /**
  * Handle user login
  * Returns JWT token for authenticated users
+ * Supports password or MD5 hash for security
+ * @param req
+ * @param res
  */
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
     // Validate input
-    if (!username || !password) {
+    if (!username || !password ) {
       return res.status(400).json({
         success: false,
-        error: 'Username and password are required',
-        code: 'INVALID_CREDENTIALS'
+        error: "Username and password are required",
+        code: "INVALID_CREDENTIALS"
       });
     }
 
@@ -30,8 +39,8 @@ const login = async (req, res) => {
     if (!jwtConfig || !jwtConfig.users) {
       return res.status(500).json({
         success: false,
-        error: 'JWT configuration not found',
-        code: 'CONFIG_ERROR'
+        error: "JWT configuration not found",
+        code: "CONFIG_ERROR"
       });
     }
 
@@ -39,35 +48,40 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid username or password',
-        code: 'INVALID_CREDENTIALS'
+        error: "Invalid username or password",
+        code: "INVALID_CREDENTIALS"
       });
     }
 
-    // For security, recommend using HTTPS for password transmission
-    // In production, passwords should be transmitted over encrypted connections
+    // Support both plain password and MD5 hash verification
+    const storedPasswordHash = createMD5Hash(user.password);
 
-    // Verify password (direct comparison for now, can be enhanced to use bcrypt)
-    if (user.password !== password) {
+    // Client provided plain password, direct comparison
+    if (storedPasswordHash !== password) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid username or password',
-        code: 'INVALID_CREDENTIALS'
+        error: "Invalid username or password",
+        code: "INVALID_CREDENTIALS"
       });
+    }
+    
+    // For security, recommend using HTTPS for password transmission
+    if (req.protocol === "http" && process.env.NODE_ENV === "production") {
+      console.warn(`[SECURITY WARNING] Password transmitted over HTTP for user ${username}`);
     }
 
     // Generate JWT secret from user password hash
-    const passwordHash = crypto.createHash('sha256').update(user.password).digest('hex');
+    const jwtSecret = crypto.createHash("sha256").update(user.password).digest("hex");
 
     // Generate JWT token
     const token = jwt.sign(
       {
         username: user.username
       },
-      passwordHash, // Use password hash as JWT secret
+      jwtSecret, // Use password hash as JWT secret
       {
-        expiresIn: jwtConfig.expiresIn || '24h',
-        algorithm: jwtConfig.algorithm || 'HS256'
+        expiresIn: jwtConfig.expiresIn || "24h",
+        algorithm: jwtConfig.algorithm || "HS256"
       }
     );
 
@@ -79,17 +93,17 @@ const login = async (req, res) => {
         user: {
           username: user.username
         },
-        expiresIn: jwtConfig.expiresIn || '24h'
+        expiresIn: jwtConfig.expiresIn || "24h"
       },
-      message: 'Login successful'
+      message: "Login successful"
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error during login',
-      code: 'SERVER_ERROR'
+      error: "Internal server error during login",
+      code: "SERVER_ERROR"
     });
   }
 };

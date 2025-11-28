@@ -4,7 +4,8 @@
       "Bash(npx eslint)",
       "Bash(yarn add:*)",
       "Bash(node:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(md5sum:*)"
     ],
     "deny": [],
     "ask": []
