@@ -8,12 +8,12 @@
 const express = require("express");
 
 // Import handlers
-const HealthHandler = require("../handlers/health.js");
-const AuthHandler = require("../handlers/auth.js");
-const InfoHandler = require("../handlers/info.js");
-const StreamsHandler = require("../handlers/streams.js");
-const SessionsHandler = require("../handlers/sessions.js");
-const StatsHandler = require("../handlers/stats.js");
+const HealthHandler = require("../api/handlers/health.js");
+const AuthHandler = require("../api/handlers/auth.js");
+const InfoHandler = require("../api/handlers/info.js");
+const StreamsHandler = require("../api/handlers/streams.js");
+const SessionsHandler = require("../api/handlers/sessions.js");
+const StatsHandler = require("../api/handlers/stats.js");
 
 class ApiRouter {
   constructor() {

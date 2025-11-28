@@ -16,7 +16,7 @@ const logger = require("../core/logger.js");
 const Context = require("../core/context.js");
 const FlvSession = require("../session/flv_session.js");
 const http2Express = require("../vendor/http2-express");
-const ApiRouter = require("../api/routers/api.js");
+const ApiRouter = require("../routers/api.js");
 const { jwtAuth, jwtErrorHandler } = require("../api/middleware/auth.js");
 
 class NodeHttpServer {
