@@ -25,8 +25,11 @@
     "globals": "^15.12.0"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "express-jwt": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.3"
   },
   "engines": {

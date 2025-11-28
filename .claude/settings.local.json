@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx eslint)"
+      "Bash(npx eslint)",
+      "Bash(yarn add:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

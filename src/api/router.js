@@ -9,6 +9,7 @@ const express = require("express");
 
 // Import handlers
 const HealthHandler = require("./handlers/health.js");
+const AuthHandler = require("./handlers/auth.js");
 const InfoHandler = require("./handlers/info.js");
 const StreamsHandler = require("./handlers/streams.js");
 const SessionsHandler = require("./handlers/sessions.js");
@@ -24,6 +25,9 @@ class ApiRouter {
    * Setup API routes
    */
   setupRoutes() {
+    // Authentication endpoints
+    this.router.post("/login", AuthHandler.login);
+
     // Health check endpoint
     this.router.get("/health", HealthHandler.check);
 

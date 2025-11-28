@@ -8,6 +8,17 @@
         "publish": false,
         "secret": "nodemedia2017privatekey"
     },
+    "jwt": {
+        "expiresIn": "24h",
+        "refreshExpiresIn": "7d",
+        "algorithm": "HS256",
+        "users": [
+            {
+                "username": "admin",
+                "password": "admin123"
+            }
+        ]
+    },
     "rtmp": {
         "port": 1935
     },

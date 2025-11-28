@@ -17,6 +17,7 @@ const Context = require("../core/context.js");
 const FlvSession = require("../session/flv_session.js");
 const http2Express = require("../vendor/http2-express");
 const ApiRouter = require("../api/router.js");
+const { jwtAuth, jwtErrorHandler } = require("../api/middleware/auth.js");
 
 class NodeHttpServer {
   constructor() {
@@ -28,7 +29,13 @@ class NodeHttpServer {
     }
 
     // @ts-ignore
+    app.use(express.json());
+    // @ts-ignore
     app.use(cors());
+
+    // Apply JWT authentication middleware to API routes
+    // @ts-ignore
+    app.use("/api/v1", jwtAuth, jwtErrorHandler);
 
     // Setup API routes
     const apiRouter = new ApiRouter();
