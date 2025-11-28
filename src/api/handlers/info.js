@@ -7,7 +7,8 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
-
+const packageInfo = require("../../../package.json");
+      
 class InfoHandler {
   /**
    * Get server information
@@ -17,7 +18,7 @@ class InfoHandler {
   static getServerInfo(req, res) {
     try {
       const config = Context.config;
-      const packageInfo = require("../../../package.json");
+
 
       const serverInfo = {
         server: {

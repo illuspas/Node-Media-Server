@@ -6,6 +6,7 @@
 //
 
 const logger = require("../../core/logger.js");
+const packageInfo = require("../../../package.json");
 
 class HealthHandler {
   /**
@@ -15,7 +16,6 @@ class HealthHandler {
    */
   static check(req, res) {
     try {
-      const packageInfo = require("../../../package.json");
       res.json({
         success: true,
         data: {
