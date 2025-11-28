@@ -34,6 +34,12 @@ npx node-media-server
 * Authentication
 * Static file server
 * Record to flv file
+* REST API System (New in v4.2.0)
+* JWT-based Authentication (New in v4.2.0)
+* Real-time Monitoring & Statistics (New in v4.2.0)
+* Session Management (New in v4.2.0)
+* Session Deletion (New in v4.2.0)
+* Advanced Health Monitoring (New in v4.2.0)
 
 ## Supported clients
 |Client   | H.264  | HEVC | VP9 | AV1|
