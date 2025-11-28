@@ -43,12 +43,20 @@ class StreamsHandler {
       });
 
       res.json({
-        streams,
-        total: streams.length
+        success: true,
+        data: {
+          streams,
+          total: streams.length
+        },
+        message: "Streams retrieved successfully"
       });
     } catch (error) {
       logger.error("Error getting streams:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
     }
   }
 
@@ -65,7 +73,11 @@ class StreamsHandler {
       const broadcast = Context.broadcasts.get(key);
 
       if (!broadcast) {
-        return res.status(404).json({ error: "Stream not found" });
+        return res.status(404).json({
+          success: false,
+          data: {},
+          message: "Stream not found"
+        });
       }
 
       const streamInfo = {
@@ -89,10 +101,18 @@ class StreamsHandler {
         subscribers: broadcast.subscribers?.size || 0,
       };
 
-      res.json(streamInfo);
+      res.json({
+        success: true,
+        data: streamInfo,
+        message: "Stream information retrieved successfully"
+      });
     } catch (error) {
       logger.error("Error getting stream info:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
     }
   }
 }

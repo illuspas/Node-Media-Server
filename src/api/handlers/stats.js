@@ -40,10 +40,18 @@ class StatsHandler {
         timestamp: new Date().toISOString()
       };
 
-      res.json(stats);
+      res.json({
+        success: true,
+        data: stats,
+        message: "Server statistics retrieved successfully"
+      });
     } catch (error) {
       logger.error("Error getting stats:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
     }
   }
 }

@@ -34,12 +34,20 @@ class SessionsHandler {
       });
 
       res.json({
-        sessions,
-        total: sessions.length
+        success: true,
+        data: {
+          sessions,
+          total: sessions.length
+        },
+        message: "Sessions retrieved successfully"
       });
     } catch (error) {
       logger.error("Error getting sessions:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
     }
   }
 }

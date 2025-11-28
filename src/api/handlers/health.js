@@ -15,15 +15,21 @@ class HealthHandler {
    */
   static check(req, res) {
     try {
+      const packageInfo = require("../../../package.json");
       res.json({
-        status: "ok",
-        timestamp: new Date().toISOString(),
-        version: require("../../../package.json").version
+        success: true,
+        data: {
+          status: "ok",
+          timestamp: new Date().toISOString(),
+          version: packageInfo.version
+        },
+        message: "Server is healthy"
       });
     } catch (error) {
       logger.error("Health check error:", error);
       res.status(500).json({
-        status: "error",
+        success: false,
+        data: {},
         message: "Health check failed"
       });
     }

@@ -29,8 +29,8 @@ const login = async (req, res) => {
     if (!username || !password ) {
       return res.status(400).json({
         success: false,
-        error: "Username and password are required",
-        code: "INVALID_CREDENTIALS"
+        data: {},
+        message: "Username and password are required"
       });
     }
 
@@ -39,8 +39,8 @@ const login = async (req, res) => {
     if (!jwtConfig || !jwtConfig.users) {
       return res.status(500).json({
         success: false,
-        error: "JWT configuration not found",
-        code: "CONFIG_ERROR"
+        data: {},
+        message: "JWT configuration not found"
       });
     }
 
@@ -48,8 +48,8 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: "Invalid username or password",
-        code: "INVALID_CREDENTIALS"
+        data: {},
+        message: "Invalid username or password"
       });
     }
 
@@ -60,8 +60,8 @@ const login = async (req, res) => {
     if (storedPasswordHash !== password) {
       return res.status(401).json({
         success: false,
-        error: "Invalid username or password",
-        code: "INVALID_CREDENTIALS"
+        data: {},
+        message: "Invalid username or password"
       });
     }
     
@@ -102,8 +102,8 @@ const login = async (req, res) => {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      error: "Internal server error during login",
-      code: "SERVER_ERROR"
+      data: {},
+      message: "Internal server error during login"
     });
   }
 };

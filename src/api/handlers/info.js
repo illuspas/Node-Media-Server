@@ -19,7 +19,7 @@ class InfoHandler {
       const config = Context.config;
       const packageInfo = require("../../../package.json");
 
-      res.json({
+      const serverInfo = {
         server: {
           name: packageInfo.name,
           version: packageInfo.version,
@@ -39,10 +39,20 @@ class InfoHandler {
         },
         uptime: process.uptime(),
         node_version: process.version
+      };
+
+      res.json({
+        success: true,
+        data: serverInfo,
+        message: "Server information retrieved successfully"
       });
     } catch (error) {
       logger.error("Error getting server info:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        data: {},
+        message: "Internal server error"
+      });
     }
   }
 }
