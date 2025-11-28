@@ -164,6 +164,22 @@ GET /api/v1/sessions
 ```
 Monitor all connected clients (publishers and players) with session details.
 
+```bash
+DELETE /api/v1/sessions/{sessionId}
+```
+Terminate a specific session by ID. This will disconnect the associated client and stop their stream or playback.
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "sessionId",
+  }
+  "message": "Session deleted successfully",
+}
+```
+
 #### Server Statistics
 ```bash
 GET /api/v1/stats
@@ -229,6 +245,14 @@ curl -X GET http://localhost:8001/api/v1/stats \
 # Get active streams
 curl -X GET http://localhost:8001/api/v1/streams \
   -H "Authorization: Bearer your_jwt_token"
+
+# Get all sessions
+curl -X GET http://localhost:8001/api/v1/sessions \
+  -H "Authorization: Bearer your_jwt_token"
+
+# Delete a specific session
+curl -X DELETE http://localhost:8001/api/v1/sessions/abc123-def456-ghi789 \
+  -H "Authorization: Bearer your_jwt_token"
 ```
 
 #### Using JavaScript
@@ -249,6 +273,26 @@ const streamsResponse = await fetch('http://localhost:8001/api/v1/streams', {
 
 const streams = await streamsResponse.json();
 console.log('Active streams:', streams);
+
+// Get all sessions
+const sessionsResponse = await fetch('http://localhost:8001/api/v1/sessions', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+
+const sessions = await sessionsResponse.json();
+console.log('Active sessions:', sessions);
+
+// Delete a specific session
+if (sessions.length > 0) {
+  const sessionIdToDelete = sessions[0].id; // Get first session ID
+  const deleteResponse = await fetch(`http://localhost:8001/api/v1/sessions/${sessionIdToDelete}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  const deleteResult = await deleteResponse.json();
+  console.log('Session deletion result:', deleteResult);
+}
 ```
 
 ## License
