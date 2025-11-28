@@ -29,19 +29,22 @@ class NodeHttpServer {
     }
 
     // @ts-ignore
-    app.use(express.json());
-    // @ts-ignore
     app.use(cors());
 
-    // Apply JWT authentication middleware to API routes
-    // @ts-ignore
-    app.use("/api/v1", jwtAuth, jwtErrorHandler);
+    if (Context.config.auth?.jwt) {
+      // @ts-ignore
+      app.use(express.json());
+      // Apply JWT authentication middleware to API routes
+      // @ts-ignore
+      app.use("/api/v1", jwtAuth, jwtErrorHandler);
 
-    // Setup API routes
-    const apiRouter = new ApiRouter();
-    // @ts-ignore
-    app.use("/api/v1", apiRouter.router);
+      // Setup API routes
+      const apiRouter = new ApiRouter();
+      // @ts-ignore
+      app.use("/api/v1", apiRouter.router);
 
+      logger.info("API service has been activated.");
+    }
     // @ts-ignore
     app.all("/:app/:name.flv", this.handleFlv);
 

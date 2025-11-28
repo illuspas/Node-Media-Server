@@ -14,7 +14,7 @@
             "users": [
                 {
                     "username": "admin",
-                    "password": "admin123"
+                    "password": "admin-default-password-change-me"
                 }
             ]
         }
