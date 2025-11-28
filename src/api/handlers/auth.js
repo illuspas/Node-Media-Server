@@ -35,7 +35,7 @@ const login = async (req, res) => {
     }
 
     // Find user in configuration
-    const jwtConfig = Context.config.jwt;
+    const jwtConfig = Context.config.auth.jwt;
     if (!jwtConfig || !jwtConfig.users) {
       return res.status(500).json({
         success: false,

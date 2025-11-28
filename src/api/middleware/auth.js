@@ -12,7 +12,7 @@ const Context = require("../../core/context.js");
  * Create JWT middleware configuration on-demand
  */
 const getJwtConfig = () => {
-  const jwtConfig = Context.config.jwt;
+  const jwtConfig = Context.config.auth.jwt;
   
   // If no JWT config is provided, use password hash of first user as secret
   let secret = "default-secret-change-me";
