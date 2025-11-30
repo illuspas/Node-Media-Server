@@ -11,6 +11,8 @@ const Rtmp = require("../protocol/rtmp.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("../session/base_session.js");
 const Context = require("../core/context.js");
+const logger = require("../core/logger.js");
+const { decodeAmf0Data } = require("../protocol/amf.js");
 
 class BroadcastServer {
   constructor() {
@@ -186,6 +188,20 @@ class BroadcastServer {
    * @param {AVPacket} packet 
    */
   broadcastMessage = (packet) => {
+    if (packet.flags == 5) {
+      let metadata = decodeAmf0Data(packet.data);
+      if (this.publisher && metadata.cmd === "@setDataFrame" && metadata.dataObj !== null) {
+        this.publisher.audioCodec = metadata.dataObj.audiocodecid;
+        this.publisher.audioChannels = metadata.dataObj.stereo ? 2 : 1;
+        this.publisher.audioSamplerate = metadata.dataObj.audiosamplerate;
+        this.publisher.audioDatarate = metadata.dataObj.audiodatarate;
+        this.publisher.videoCodec = metadata.dataObj.videocodecid;
+        this.publisher.videoWidth = metadata.dataObj.width;
+        this.publisher.videoHeight = metadata.dataObj.height;
+        this.publisher.videoFramerate = metadata.dataObj.framerate;
+        this.publisher.videoDatarate = metadata.dataObj.videodatarate;
+      }
+    }
     const flvMessage = Flv.createMessage(packet);
     const rtmpMessage = Rtmp.createMessage(packet);
     switch (packet.flags) {

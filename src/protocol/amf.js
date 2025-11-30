@@ -571,7 +571,7 @@ const rtmpDataCode = {
 /**
  * Decode a data!
  * @param {Buffer} dbuf
- * @returns {{cmd: (* | string | string | *), value: *}}
+ * @returns {{cmd: (* | string | string | *), value: *,dataObj: object, method: string}}
  */
 function decodeAmf0Data(dbuf) {
   let buffer = dbuf;
