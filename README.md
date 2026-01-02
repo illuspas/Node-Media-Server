@@ -4,9 +4,6 @@
 [![npm](https://img.shields.io/npm/dm/node-media-server.svg)](https://npmjs.org/package/node-media-server)
 [![npm](https://img.shields.io/npm/l/node-media-server.svg)](LICENSE) 
 
-## **If you like this project you can support me.**  
-[![](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=illuspas&button_colour=5F7FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00)](https://www.buymeacoffee.com/illuspas)
-
 ## Introduction
 Node-Media-Server is a high-performance/low-latency/open-source Live Streaming Server developed based on Nodejs.  
 v4 is design to implement enhanced RTMP FLV v1 support for native HEVC, VP9, AV1.  
@@ -40,47 +37,6 @@ npx node-media-server
 * Session Management (New in v4.2.0)
 * Session Deletion (New in v4.2.0)
 * Advanced Health Monitoring (New in v4.2.0)
-
-## Supported clients
-|Client   | H.264  | HEVC | VP9 | AV1|
-| ------------ | ------------ |------------ |------------ |------------ |
-|  OBS_29.1+|  ✅   | ✅ |  ❌|  ✅ |
-|  FFmpeg/FFplay_6.1+ |   ✅  |  ✅ |  ✅ |  ✅ |
-|  NodePlayer.js_1.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
-|  NodeMediaClient_3.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
-
-## Usage
-* obs_29.1 or above is required
-* ffmpeg_6.1 or above is required
-
-### Push Streaming
-
-```
-ffmpeg -re -i test_265.mp4 -c copy -f flv rtmp://localhost/live/test_265
-```
-
-```
-ffmpeg -re -i test_av1.mp4 -c copy -f flv http://localhost:8000/live/test_av1.flv
-```
-
-### Play Streaming
-```
-ffplay http://localhost:8000/live/test_265.flv
-```
-
-### [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js/) pure javascript implementation live streaming player
-[Online Demo](http://demo.nodemedia.cn/)
-- ASM.js, WASM, SIMD, WebWorker, WebCodecs, MediaSource multiple technical implementations
-- H.264/H.265+AAC/G711 software and hardware decoder
-- Ultra-low latency, Under extreme conditions less than 100 milliseconds
-- Enhanced HTTP/WS-FLV Protocol, Natively support h.265
-- Android/iOS/HarmonyOS/Chrome/Edge/Firefox/Safari, All modern browsers or platforms
-
-### [NodePublisher.js](https://www.nodemedia.cn/demo/nodepublisher/) pure javascript implementation live streaming publisher
-- WebSocket-FLV Protocol
-- H.264+AAC hardware encoder
-- Only chrome or chromium based browsers are supported at the moment
-- wss is required
 
 ## Static file services
 Node-Media-Server can provide static file services for a directory.
@@ -300,6 +256,49 @@ if (sessions.length > 0) {
   console.log('Session deletion result:', deleteResult);
 }
 ```
+
+## Supported clients
+|Client   | H.264  | HEVC | VP9 | AV1|
+| ------------ | ------------ |------------ |------------ |------------ |
+|  OBS_29.1+|  ✅   | ✅ |  ❌|  ✅ |
+|  FFmpeg/FFplay_6.1+ |   ✅  |  ✅ |  ✅ |  ✅ |
+|  NodePlayer.js_1.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
+|  NodeMediaClient_3.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
+
+### [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js/) pure javascript implementation live streaming player
+[Online Demo](http://demo.nodemedia.cn/)
+- ASM.js, WASM, SIMD, WebWorker, WebCodecs, MediaSource multiple technical implementations
+- H.264/H.265+AAC/G711 software and hardware decoder
+- Ultra-low latency, Under extreme conditions less than 100 milliseconds
+- Enhanced HTTP/WS-FLV Protocol, Natively support h.265
+- Android/iOS/HarmonyOS/Chrome/Edge/Firefox/Safari, All modern browsers or platforms
+
+### [NodePublisher.js](https://www.nodemedia.cn/demo/nodepublisher/) pure javascript implementation live streaming publisher
+- WebSocket-FLV Protocol
+- H.264+AAC hardware encoder
+- Only chrome or chromium based browsers are supported at the moment
+- wss is required
+
+### [NodeMediaClient-iOS](https://github.com/NodeMedia/NodeMediaClient-iOS)  iOS live streaming player and publisher SDK
+- Objective-C/Swift
+- RTMP/HTTP-FLV/RTSP
+- H.264/H.265+AAC/OPUS/G711
+- Ultra-low latency, Under extreme conditions less than 100 milliseconds
+- Enhanced RTMP/FLV Protocol, Natively support H.265/OPUS
+- Built-in beauty filter
+
+### [NodeMediaClient-Android](https://github.com/NodeMedia/NodeMediaClient-Android)  Android live streaming player and publisher SDK
+- JAVA/Kotlin
+- armv7/arm64/x86/x86_64
+- RTMP/HTTP-FLV/RTSP
+- H.264/H.265+AAC/OPUS/G711
+- Ultra-low latency, Under extreme conditions less than 100 milliseconds
+- Enhanced RTMP/FLV Protocol, Natively support H.265/OPUS
+- Built-in beauty filter
+
+### [expo-nodemediaclient](https://github.com/NodeMedia/expo-nodemediaclient)  Expo module for NodeMediaClient
+- iOS and Android
+- player and publisher
 
 ## License
 Apache 2.0
