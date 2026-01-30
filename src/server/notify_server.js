@@ -54,22 +54,35 @@ class NodeNotifyServer {
    * @param {BaseSession} session 
    */
   notify(action, session) {
+    const payload = {
+      id: session.id,
+      ip: session.ip,
+      app: session.streamApp,
+      name: session.streamName,
+      query: session.streamQuery,
+      protocol: session.protocol,
+      createtime: session.createTime,
+      endtime: session.endTime,
+      inbytes: session.inBytes,
+      outbytes: session.outBytes,
+      filePath: session.filePath,
+      action: action,
+    };
+
+    // Include metadata fields in donePublish event (metadata available after stream starts)
+    if (action === "donePublish") {
+      payload.title = session.streamTitle || session.streamName;
+      payload.description = session.streamDescription || "";
+      payload.encoder = session.encoder || "";
+      payload.metadata = session.metadata || {};
+    }
+
     fetch(Context.config.notify.url, {
       method: "POST",
-      body: JSON.stringify({
-        id: session.id,
-        ip: session.ip,
-        app: session.streamApp,
-        name: session.streamName,
-        query: session.streamQuery,
-        protocol: session.protocol,
-        createtime: session.createTime,
-        endtime: session.endTime,
-        inbytes: session.inBytes,
-        outbytes: session.outBytes,
-        filePath: session.filePath,
-        action: action,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     }
     ).then((res) => {
       if (res.status !== 200) {

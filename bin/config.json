@@ -1,7 +1,7 @@
 {
     "bind": "0.0.0.0",
     "notify": {
-        "url": ""
+        "url": "http://transcription-worker:3000/webhook"
     },
     "auth": {
         "play": false,

@@ -1,0 +1,65 @@
+version:  4.2.4
+
+services:
+  node-media-server:
+    build: .
+    ports:
+      - "1935:1935"  # RTMP - exposed for StreamYard
+      - "8000:8000"  # HTTP-FLV playback (optional)
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./bin/config.json:/node-media-server/bin/config.json:ro
+    networks:
+      - transcription-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - transcription-worker
+
+  faster-whisper:
+    image: fedirz/faster-whisper-server:latest-cpu
+    environment:
+      - WHISPER__MODEL=Systran/faster-whisper-small.en
+      - WHISPER__INFERENCE_DEVICE=cpu
+      - WHISPER__COMPUTE_TYPE=int8
+    volumes:
+      - whisper-cache:/root/.cache/huggingface
+    networks:
+      - transcription-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  transcription-worker:
+    build: ./transcription-worker
+    environment:
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:?N8N_WEBHOOK_URL is required}
+      - RTMP_HOST=node-media-server
+      - RTMP_PORT=1935
+      - WHISPER_URL=http://faster-whisper:8000
+      - CHECKPOINT_INTERVAL_MINUTES=5
+    volumes:
+      - audio-storage:/data
+    networks:
+      - transcription-net
+    depends_on:
+      - faster-whisper
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  transcription-net:
+    driver: bridge
+
+volumes:
+  audio-storage:
+  whisper-cache:

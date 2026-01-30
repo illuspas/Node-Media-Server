@@ -1,0 +1,17 @@
+{
+  "name": "transcription-worker",
+  "version": "1.0.0",
+  "description": "RTMP audio extraction and transcription worker for Node-Media-Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "axios": "^1.7.0",
+    "form-data": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

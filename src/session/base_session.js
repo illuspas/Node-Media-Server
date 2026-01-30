@@ -51,6 +51,13 @@ class BaseSession {
     this.outBytes = 0;
 
     this.filePath = "";
+
+    // Stream metadata from RTMP @setDataFrame onMetaData
+    this.streamTitle = "";
+    this.streamDescription = "";
+    this.encoder = "";
+    /** @type {object} */
+    this.metadata = {};
   }
 
   /**
