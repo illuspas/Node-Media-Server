@@ -4,6 +4,7 @@
   "version": "4.2.4",
   "bin": "bin/app.js",
   "main": "src/index.js",
+  "types": "@types/index.d.ts",
   "scripts": {
     "dev": "npx eslint;node bin/app.js",
     "start": "node bin/app.js",
