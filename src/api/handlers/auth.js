@@ -5,6 +5,7 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const Context = require("../../core/context.js");
+const logger = require("../../core/logger.js");
 
 /**
  * Create MD5 hash of password
@@ -67,18 +68,26 @@ const login = async (req, res) => {
     
     // For security, recommend using HTTPS for password transmission
     if (req.protocol === "http" && process.env.NODE_ENV === "production") {
-      console.warn(`[SECURITY WARNING] Password transmitted over HTTP for user ${username}`);
+      logger.warn(`Password transmitted over HTTP for user ${username}`);
     }
 
-    // Generate JWT secret from user password hash
-    const jwtSecret = crypto.createHash("sha256").update(user.password).digest("hex");
+    // Use dedicated JWT secret from configuration
+    const jwtSecret = jwtConfig.secret;
+    if (!jwtSecret) {
+      logger.error("JWT secret not configured");
+      return res.status(500).json({
+        success: false,
+        data: {},
+        message: "JWT secret not configured"
+      });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
       {
         username: user.username
       },
-      jwtSecret, // Use password hash as JWT secret
+      jwtSecret,
       {
         expiresIn: jwtConfig.expiresIn || "24h",
         algorithm: jwtConfig.algorithm || "HS256"
@@ -99,7 +108,7 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error(`Login error: ${error.message}`);
     res.status(500).json({
       success: false,
       data: {},

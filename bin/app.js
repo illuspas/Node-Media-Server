@@ -23,24 +23,34 @@ function generateRandomPassword(length = 16) {
   return result;
 }
 
+let configChanged = false;
+
 // Check and replace default admin password
-let passwordChanged = false;
 if (config.auth?.jwt?.users) {
   config.auth.jwt.users = config.auth.jwt.users.map(user => {
     if (user.username === "admin" && user.password === "admin-default-password-change-me") {
       const newPassword = generateRandomPassword(16);
       console.log(`🔒 Security: Replacing default admin password with: ${newPassword}`);
       user.password = newPassword;
-      passwordChanged = true;
+      configChanged = true;
     }
     return user;
   });
+}
 
-  // Write updated config back to file if password was changed
-  if (passwordChanged) {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
-    console.log("✅ Config updated with new admin password");
+// Auto-generate JWT secret if not configured
+if (config.auth?.jwt) {
+  if (!config.auth.jwt.secret) {
+    config.auth.jwt.secret = crypto.randomBytes(32).toString("hex");
+    console.log("🔒 Security: Generated new JWT secret");
+    configChanged = true;
   }
+}
+
+// Write updated config back to file if changed
+if (configChanged) {
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+  console.log("✅ Config updated");
 }
 
 const NodeMediaServer = require("..");

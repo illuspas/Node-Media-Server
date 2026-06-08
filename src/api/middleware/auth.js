@@ -5,7 +5,6 @@
 //
 
 const { expressjwt: jwt } = require("express-jwt");
-const crypto = require("crypto");
 const Context = require("../../core/context.js");
 
 /**
@@ -14,11 +13,10 @@ const Context = require("../../core/context.js");
 const getJwtConfig = () => {
   const jwtConfig = Context.config.auth.jwt;
   
-  // If no JWT config is provided, use password hash of first user as secret
-  let secret = "default-secret-change-me";
-  if (jwtConfig?.users?.length > 0) {
-    const firstUser = jwtConfig.users[0];
-    secret = crypto.createHash("sha256").update(firstUser.password).digest("hex");
+  // Use dedicated JWT secret from configuration
+  const secret = jwtConfig?.secret;
+  if (!secret) {
+    throw new Error("JWT secret not configured");
   }
 
   return {

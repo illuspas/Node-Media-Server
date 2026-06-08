@@ -8,6 +8,7 @@
         "publish": false,
         "secret": "nodemedia2017privatekey",
         "jwt": {
+            "secret": "",
             "expiresIn": "24h",
             "refreshExpiresIn": "7d",
             "algorithm": "HS256",
