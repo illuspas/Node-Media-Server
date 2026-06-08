@@ -13,6 +13,8 @@ const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("./base_session.js");
 const BroadcastServer = require("../server/broadcast_server.js");
 
+const SAFE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 /**
  * @class
  * @augments BaseSession
@@ -51,6 +53,11 @@ class RtmpSession extends BaseSession {
    * @param {object} req.query 
    */
   onConnect = (req) => {
+    if (!SAFE_NAME_PATTERN.test(req.app) || !SAFE_NAME_PATTERN.test(req.name)) {
+      logger.error(`RTMP session ${this.id} ${this.ip} invalid stream path characters: app=${req.app}, name=${req.name}`);
+      this.socket.end();
+      return;
+    }
     this.streamApp = req.app;
     this.streamName = req.name;
     this.streamHost = req.host;

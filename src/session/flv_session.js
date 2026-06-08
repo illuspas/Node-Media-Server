@@ -16,6 +16,8 @@ const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("./base_session.js");
 const BroadcastServer = require("../server/broadcast_server.js");
 
+const SAFE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 /**
  * @class
  * @augments BaseSession
@@ -51,6 +53,12 @@ class FlvSession extends BaseSession {
       if (this.req.method === "POST") {
         this.isPublisher = true;
       }
+    }
+
+    if (!SAFE_NAME_PATTERN.test(this.streamApp) || !SAFE_NAME_PATTERN.test(this.streamName)) {
+      logger.error(`FLV session ${this.id} ${this.ip} invalid stream path characters: app=${this.streamApp}, name=${this.streamName}`);
+      this.close();
+      return;
     }
 
     /**@type {BroadcastServer} */
