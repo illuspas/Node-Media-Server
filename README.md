@@ -71,14 +71,42 @@ Node-Media-Server v4.2.0 introduces a comprehensive REST API system for server m
 ### Authentication
 The API system uses JWT-based authentication with the following endpoints:
 
-#### Login
+#### Login (Challenge-Response)
+
+Login is a two-step process that prevents credential replay attacks without requiring HTTPS.
+
+**Step 1: Request a challenge**
+```bash
+POST /api/v1/login
+Content-Type: application/json
+
+{
+  "username": "your_username"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "challenge": "a_random_nonce_string"
+  },
+  "message": "Challenge issued"
+}
+```
+
+**Step 2: Submit challenge response**
+
+Compute `response = HMAC-SHA256(password, challenge)` and submit:
 ```bash
 POST /api/v1/login
 Content-Type: application/json
 
 {
   "username": "your_username",
-  "password": "your_password"
+  "challenge": "a_random_nonce_string",
+  "response": "hmac_sha256_hex_digest"
 }
 ```
 
@@ -88,11 +116,16 @@ Response:
   "success": true,
   "data": {
     "token": "your_jwt_token",
+    "user": {
+      "username": "your_username"
+    },
     "expiresIn": "24h"
   },
   "message": "Login successful"
 }
 ```
+
+Each challenge is single-use and expires after 60 seconds.
 
 #### Using the API
 Include the JWT token in your requests:
@@ -178,12 +211,8 @@ The API system is configured through the `bin/config.json` file:
 
 ### Security Features
 
-#### Password Hashing
-Passwords are securely stored using MD5 hashing. To generate a hashed password:
-```javascript
-const crypto = require('crypto');
-const hashedPassword = crypto.createHash('md5').update('your_password').digest('hex');
-```
+#### Challenge-Response Authentication
+Login uses a challenge-response protocol (HMAC-SHA256) to prevent credential replay attacks. Passwords never cross the network — even on plain HTTP. Each challenge is single-use and expires after 60 seconds.
 
 #### JWT Configuration
 - Configurable secret key for token signing
@@ -195,41 +224,58 @@ const hashedPassword = crypto.createHash('md5').update('your_password').digest('
 
 #### Using curl
 ```bash
-# Login
-curl -X POST http://localhost:8001/api/v1/login \
+# Step 1: Request challenge
+CHALLENGE=$(curl -s -X POST http://localhost:8000/api/v1/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password": md5("password")}'
+  -d '{"username":"admin"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['data']['challenge'])")
+
+# Step 2: Compute response and login
+RESPONSE=$(echo -n "$CHALLENGE" | openssl dgst -sha256 -hmac "your_password" | awk '{print $NF}')
+
+curl -X POST http://localhost:8000/api/v1/login \
+  -H "Content-Type: application/json" \
+  -d "{\"username\":\"admin\",\"challenge\":\"$CHALLENGE\",\"response\":\"$RESPONSE\"}"
 
 # Get server stats
-curl -X GET http://localhost:8001/api/v1/stats \
+curl -X GET http://localhost:8000/api/v1/stats \
   -H "Authorization: Bearer your_jwt_token"
 
 # Get active streams
-curl -X GET http://localhost:8001/api/v1/streams \
+curl -X GET http://localhost:8000/api/v1/streams \
   -H "Authorization: Bearer your_jwt_token"
 
 # Get all sessions
-curl -X GET http://localhost:8001/api/v1/sessions \
+curl -X GET http://localhost:8000/api/v1/sessions \
   -H "Authorization: Bearer your_jwt_token"
 
 # Delete a specific session
-curl -X DELETE http://localhost:8001/api/v1/sessions/abc123-def456-ghi789 \
+curl -X DELETE http://localhost:8000/api/v1/sessions/abc123-def456-ghi789 \
   -H "Authorization: Bearer your_jwt_token"
 ```
 
 #### Using JavaScript
 ```javascript
-// Login and get streams
-const response = await fetch('http://localhost:8001/api/v1/login', {
+const crypto = require('crypto');
+
+// Step 1: Request challenge
+const challengeRes = await fetch('http://localhost:8000/api/v1/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username: 'admin', password: md5('password') })
+  body: JSON.stringify({ username: 'admin' })
 });
+const { data: { challenge } } = await challengeRes.json();
 
-const { token } = await response.json();
+// Step 2: Compute response and login
+const response = crypto.createHmac('sha256', 'your_password').update(challenge).digest('hex');
+const loginRes = await fetch('http://localhost:8000/api/v1/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'admin', challenge, response })
+});
+const { data: { token } } = await loginRes.json();
 
 // Get streams
-const streamsResponse = await fetch('http://localhost:8001/api/v1/streams', {
+const streamsResponse = await fetch('http://localhost:8000/api/v1/streams', {
   headers: { 'Authorization': `Bearer ${token}` }
 });
 
@@ -237,7 +283,7 @@ const streams = await streamsResponse.json();
 console.log('Active streams:', streams);
 
 // Get all sessions
-const sessionsResponse = await fetch('http://localhost:8001/api/v1/sessions', {
+const sessionsResponse = await fetch('http://localhost:8000/api/v1/sessions', {
   headers: { 'Authorization': `Bearer ${token}` }
 });
 
@@ -245,9 +291,9 @@ const sessions = await sessionsResponse.json();
 console.log('Active sessions:', sessions);
 
 // Delete a specific session
-if (sessions.length > 0) {
-  const sessionIdToDelete = sessions[0].id; // Get first session ID
-  const deleteResponse = await fetch(`http://localhost:8001/api/v1/sessions/${sessionIdToDelete}`, {
+if (sessions.data.length > 0) {
+  const sessionIdToDelete = sessions.data[0].id;
+  const deleteResponse = await fetch(`http://localhost:8000/api/v1/sessions/${sessionIdToDelete}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${token}` }
   });
