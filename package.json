@@ -2,6 +2,10 @@
   "name": "node-media-server",
   "description": "A Node.js implementation of RTMP Server",
   "version": "4.2.8",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuspas/Node-Media-Server.git"
+  },
   "bin": "bin/app.js",
   "main": "src/index.js",
   "scripts": {
