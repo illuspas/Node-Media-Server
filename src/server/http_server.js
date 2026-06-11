@@ -51,9 +51,15 @@ class NodeHttpServer {
 
     if (Context.config.http?.port) {
       this.httpServer = http.createServer(app);
+      this.httpServer.on("error", (err) => {
+        Context.eventEmitter.emit("serverError", { server: "http", error: err });
+      });
       this.wsServer = new WebSocket.Server({ server: this.httpServer });
       this.wsServer.on("connection", (ws, req) => {
         this.handleFlv(req, ws);
+      });
+      this.wsServer.on("error", (err) => {
+        Context.eventEmitter.emit("serverError", { server: "ws", error: err });
       });
     }
     if (Context.config.https?.port) {
@@ -63,23 +69,64 @@ class NodeHttpServer {
         allowHTTP1: true
       };
       this.httpsServer = http2.createSecureServer(opt, app);
+      this.httpsServer.on("error", (err) => {
+        Context.eventEmitter.emit("serverError", { server: "https", error: err });
+      });
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
       this.wssServer.on("connection", (ws, req) => {
         this.handleFlv(req, ws);
+      });
+      this.wssServer.on("error", (err) => {
+        Context.eventEmitter.emit("serverError", { server: "wss", error: err });
       });
     }
 
   }
 
+  /**
+   * Gracefully stop all HTTP, HTTPS, and WebSocket servers
+   * @param {() => void} [callback]
+   */
+  stop(callback) {
+    const closeServer = (server, cb) => {
+      if (server) {
+        server.close(cb);
+      } else {
+        cb();
+      }
+    };
+
+    Promise.all([
+      new Promise(resolve => closeServer(this.wssServer, resolve)),
+      new Promise(resolve => closeServer(this.httpsServer, resolve)),
+      new Promise(resolve => closeServer(this.wsServer, resolve)),
+      new Promise(resolve => closeServer(this.httpServer, resolve)),
+    ]).then(() => callback?.());
+  }
+
   run = () => {
     this.httpServer?.listen(Context.config.http.port, Context.config.bind, () => {
       logger.info(`HTTP server listening on port ${Context.config.bind}:${Context.config.http.port}`);
+    }).on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        logger.error(`HTTP Server failed to listen on port ${Context.config.bind}:${Context.config.http.port} - Address already in use`);
+      } else {
+        logger.error(`HTTP Server failed to listen: ${err.message}`);
+      }
+      Context.eventEmitter.emit("serverError", { server: "http", error: err });
     });
     this.wsServer?.on("listening", () => {
       logger.info(`WebSocket server listening on port ${Context.config.bind}:${Context.config.http.port}`);
     });
     this.httpsServer?.listen(Context.config.https.port, Context.config.bind, () => {
       logger.info(`HTTPS server listening on port ${Context.config.bind}:${Context.config.https.port}`);
+    }).on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        logger.error(`HTTPS Server failed to listen on port ${Context.config.bind}:${Context.config.https.port} - Address already in use`);
+      } else {
+        logger.error(`HTTPS Server failed to listen: ${err.message}`);
+      }
+      Context.eventEmitter.emit("serverError", { server: "https", error: err });
     });
     this.wssServer?.on("listening", () => {
       logger.info(`WebSocket server listening on port ${Context.config.bind}:${Context.config.https.port}`);

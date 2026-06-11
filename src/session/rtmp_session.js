@@ -135,6 +135,7 @@ class RtmpSession extends BaseSession {
    */
   onError = (error) => {
     logger.info(`RTMP session ${this.id} socket error, ${error.name}: ${error.message}`);
+    Context.eventEmitter.emit("sessionError", { session: this, error });
   };
 
   /**

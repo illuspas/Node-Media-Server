@@ -38,6 +38,46 @@ class NodeMediaServer {
     Context.eventEmitter.on(eventName, listener);
   }
 
+  /**
+   * Gracefully shutdown the server and release all resources
+   * @param {() => void} [callback]
+   */
+  stop(callback) {
+    logger.info("NodeMediaServer is shutting down...");
+
+    // Close all active sessions
+    for (const [id, session] of Context.sessions) {
+      try {
+        session.close();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`Error closing session ${id}: ${message}`);
+      }
+    }
+    Context.sessions.clear();
+
+    // Clear all broadcasts
+    for (const [path, broadcast] of Context.broadcasts) {
+      broadcast.publisher = null;
+      broadcast.subscribers.clear();
+      broadcast.flvGopCache?.clear();
+      broadcast.rtmpGopCache?.clear();
+    }
+    Context.broadcasts.clear();
+
+    // Remove all event listeners
+    Context.eventEmitter.removeAllListeners();
+
+    // Stop all servers
+    Promise.all([
+      new Promise(resolve => this.httpServer.stop(resolve)),
+      new Promise(resolve => this.rtmpServer.stop(resolve)),
+    ]).then(() => {
+      logger.info("NodeMediaServer shutdown complete");
+      callback?.();
+    });
+  }
+
   run() {
 
     this.httpServer.run();
