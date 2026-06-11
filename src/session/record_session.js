@@ -69,6 +69,15 @@ class NodeRecordSession extends BaseSession {
     this.fileStream.write(buffer);
   };
 
+  /**
+   * @override
+   */
+  close = () => {
+    if (this.fileStream) {
+      this.fileStream.close();
+    }
+  };
+
 };
 
 module.exports = NodeRecordSession;

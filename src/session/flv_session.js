@@ -134,6 +134,7 @@ class FlvSession extends BaseSession {
    */
   onError = (err) => {
     logger.error(`FLV session ${this.id} ${this.ip} socket error, ${err}`);
+    Context.eventEmitter.emit("sessionError", { session: this, error: err });
   };
 
   /**
