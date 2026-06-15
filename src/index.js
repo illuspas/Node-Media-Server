@@ -40,20 +40,18 @@ class NodeMediaServer {
 
   /**
    * Gracefully shutdown the server and release all resources
-   * @param {() => void} [callback]
    */
-  stop(callback) {
+  async stop() {
     logger.info("NodeMediaServer is shutting down...");
 
     // Close all active sessions
+    const closePromises = [];
     for (const [id, session] of Context.sessions) {
-      try {
-        session.close();
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        logger.error(`Error closing session ${id}: ${message}`);
-      }
+      closePromises.push(
+        session.close()
+      );
     }
+    await Promise.allSettled(closePromises)
     Context.sessions.clear();
 
     // Clear all broadcasts
@@ -64,18 +62,17 @@ class NodeMediaServer {
       broadcast.rtmpGopCache?.clear();
     }
     Context.broadcasts.clear();
-
+    
+    // Stop all servers
+    await Promise.allSettled([
+      this.httpServer.stop(),
+      this.rtmpServer.stop(),
+    ]);
+    
+    logger.info("NodeMediaServer shutdown complete");
+    
     // Remove all event listeners
     Context.eventEmitter.removeAllListeners();
-
-    // Stop all servers
-    Promise.all([
-      new Promise(resolve => this.httpServer.stop(resolve)),
-      new Promise(resolve => this.rtmpServer.stop(resolve)),
-    ]).then(() => {
-      logger.info("NodeMediaServer shutdown complete");
-      callback?.();
-    });
   }
 
   run() {

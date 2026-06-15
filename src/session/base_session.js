@@ -62,8 +62,9 @@ class BaseSession {
 
   /**
    * @abstract
+   * @returns {Promise<void>}
    */
-  close = () => {
+  close = async () => {
 
   };
 }

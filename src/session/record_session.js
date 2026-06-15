@@ -71,11 +71,12 @@ class NodeRecordSession extends BaseSession {
 
   /**
    * @override
+   * @returns {Promise<void>}
    */
-  close = () => {
-    if (this.fileStream) {
-      this.fileStream.close();
-    }
+  close = async () => {
+    return new Promise((resolve) => {
+      this.fileStream.close(() => resolve());
+    });
   };
 
 };

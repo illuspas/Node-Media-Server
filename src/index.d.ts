@@ -215,7 +215,7 @@ export class BaseSession {
   filePath: string;
 
   sendBuffer(buffer: Buffer): void;
-  close(): void;
+  close(): Promise<void>;
 }
 
 /**
@@ -226,7 +226,7 @@ export class RtmpSession extends BaseSession {
   protocol: "rtmp";
 
   sendBuffer(buffer: Buffer): void;
-  close(): void;
+  close(): Promise<void>;
 }
 
 /**
@@ -238,7 +238,7 @@ export class FlvSession extends BaseSession {
   protocol: "flv";
 
   sendBuffer(buffer: Buffer): void;
-  close(): void;
+  close(): Promise<void>;
 }
 
 /**
@@ -249,7 +249,7 @@ export class RecordSession extends BaseSession {
   protocol: "flv";
 
   sendBuffer(buffer: Buffer): void;
-  close(): void;
+  close(): Promise<void>;
 }
 
 // ==================== Broadcast Types ====================
@@ -290,7 +290,7 @@ export class NodeHttpServer {
   wssServer?: WebSocket.Server;
 
   run(): void;
-  stop(callback?: () => void): void;
+  stop(): Promise<void>;
 }
 
 /**
@@ -301,7 +301,7 @@ export class NodeRtmpServer {
   tlsServer?: TlsServer;
 
   run(): void;
-  stop(callback?: () => void): void;
+  stop(): Promise<void>;
 }
 
 /**
@@ -531,19 +531,16 @@ export default class NodeMediaServer {
   /**
    * Gracefully shutdown the server and release all resources
    *
-   * @param callback - Optional callback invoked after shutdown completes
-   *
    * @example
    * ```typescript
-   * process.on("SIGINT", () => {
-   *   nms.stop(() => {
-   *     console.log("Server stopped");
-   *     process.exit(0);
-   *   });
+   * process.on("SIGINT", async () => {
+   *   await nms.stop();
+   *   console.log("Server stopped");
+   *   process.exit(0);
    * });
    * ```
    */
-  stop(callback?: () => void): void;
+  stop(): Promise<void>;
 }
 
 // ==================== Utility Exports ====================

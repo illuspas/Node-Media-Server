@@ -85,23 +85,24 @@ class NodeHttpServer {
 
   /**
    * Gracefully stop all HTTP, HTTPS, and WebSocket servers
-   * @param {() => void} [callback]
    */
-  stop(callback) {
-    const closeServer = (server, cb) => {
-      if (server) {
-        server.close(cb);
-      } else {
-        cb();
-      }
+  async stop() {
+    const closeServer = (server) => {
+      return new Promise((resolve) => {
+        if (server) {
+          server.close(() => resolve());
+        } else {
+          resolve();
+        }
+      });
     };
 
-    Promise.all([
-      new Promise(resolve => closeServer(this.wssServer, resolve)),
-      new Promise(resolve => closeServer(this.httpsServer, resolve)),
-      new Promise(resolve => closeServer(this.wsServer, resolve)),
-      new Promise(resolve => closeServer(this.httpServer, resolve)),
-    ]).then(() => callback?.());
+    await Promise.allSettled([
+      closeServer(this.wssServer),
+      closeServer(this.httpsServer),
+      closeServer(this.wsServer),
+      closeServer(this.httpServer),
+    ]);
   }
 
   run = () => {

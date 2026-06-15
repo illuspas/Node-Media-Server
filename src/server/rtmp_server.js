@@ -35,21 +35,22 @@ class NodeRtmpServer {
 
   /**
    * Gracefully stop all RTMP and RTMPS servers
-   * @param {() => void} [callback]
    */
-  stop(callback) {
-    const closeServer = (server, cb) => {
-      if (server) {
-        server.close(cb);
-      } else {
-        cb();
-      }
+  async stop() {
+    const closeServer = (server) => {
+      return new Promise((resolve) => {
+        if (server) {
+          server.close(() => resolve());
+        } else {
+          resolve();
+        }
+      });
     };
-
-    Promise.all([
-      new Promise(resolve => closeServer(this.tcpServer, resolve)),
-      new Promise(resolve => closeServer(this.tlsServer, resolve)),
-    ]).then(() => callback?.());
+    await Promise.allSettled([
+      closeServer(this.tcpServer),
+      closeServer(this.tlsServer),
+    ]);
+    console.log("closed rtmps server");
   }
 
   run = () => {
