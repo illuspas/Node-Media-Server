@@ -56,7 +56,7 @@ class SessionsHandler {
    * @param {express.Request} req
    * @param {express.Response} res
    */
-  static deleteSession(req, res) {
+  static async deleteSession(req, res) {
     try {
       const { id } = req.params;
 
@@ -79,7 +79,7 @@ class SessionsHandler {
       }
 
       // Call the close method on the session
-      session.close();
+      await session.close();
 
       res.json({
         success: true,

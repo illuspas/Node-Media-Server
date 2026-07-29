@@ -127,6 +127,7 @@ class RtmpSession extends BaseSession {
       this.broadcast.donePlay(this);
     }
     Context.sessions.delete(this.id);
+    this.resolve()
   };
 
   /**
@@ -135,6 +136,7 @@ class RtmpSession extends BaseSession {
    */
   onError = (error) => {
     logger.info(`RTMP session ${this.id} socket error, ${error.name}: ${error.message}`);
+    Context.eventEmitter.emit("sessionError", { session: this, error });
   };
 
   /**
@@ -148,10 +150,16 @@ class RtmpSession extends BaseSession {
 
   /**
    * @override
+   * @returns {Promise<void>}
    */
-  close = () => {
-    this.socket.end();
+  close = async () => {
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.socket.end();
+    });
   };
+
+  resolve = () => {}
 }
 
 module.exports = RtmpSession;
