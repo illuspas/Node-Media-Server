@@ -2,6 +2,24 @@
 
 This document provides guidelines for agentic coding agents operating in this repository.
 
+## Repository Purpose
+
+Node-Media-Server is a Node.js implementation of an RTMP media server (v4.x), supporting RTMP publish/play, HTTP-FLV, WebSocket-FLV, RTSP/WHIP, recording, relay, and a REST admin API. Requires Node.js >= 18.
+
+### Directory Layout
+- `src/index.js` — library entry point; `bin/app.js` — CLI entry point
+- `src/core/` — shared kernel: `context.js` (global `Context` singleton holding config and sessions), `logger.js`, `avpacket.js`, `avcodec.js`
+- `src/protocol/` — wire-format codecs (rtmp, flv, amf, rtsp, rtp, rtcp, sdp)
+- `src/session/` — per-connection sessions, all extending `base_session.js` (rtmp, flv, record, rtsp)
+- `src/server/` — TCP/HTTP listeners and managers (rtmp_server, http_server, broadcast_server, record_server, relay_manager, notify_server)
+- `src/api/` — express admin API handlers and middleware (JWT auth)
+- `docs/` — protocol and design documentation; read before changing media/protocol code
+
+### Architecture Rules
+- Sessions are created by servers and registered in `Context.sessions`; servers look up/relay streams via `Context`.
+- Protocol parsing (`src/protocol/`) is separate from session state machines (`src/session/`) — keep new wire-format code in `src/protocol/`.
+- Config is loaded once into `Context.config`; never read config ad hoc from files at runtime.
+
 ## Build/Lint/Test Commands
 
 ### Available Scripts
