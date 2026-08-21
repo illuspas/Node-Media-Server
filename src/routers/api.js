@@ -14,6 +14,7 @@ const InfoHandler = require("../api/handlers/info.js");
 const StreamsHandler = require("../api/handlers/streams.js");
 const SessionsHandler = require("../api/handlers/sessions.js");
 const StatsHandler = require("../api/handlers/stats.js");
+const RelayHandler = require("../api/handlers/relay.js");
 
 class ApiRouter {
   constructor() {
@@ -44,6 +45,12 @@ class ApiRouter {
 
     // Statistics endpoint
     this.router.get("/stats", StatsHandler.getStats);
+
+    // Relay (RTSP pull) management — single endpoint, HTTP method distinguishes operation
+    this.router.get("/relay", RelayHandler.listTasks);
+    this.router.get("/relay/:streamPath", RelayHandler.getTaskStatus);
+    this.router.post("/relay", RelayHandler.addPull);
+    this.router.delete("/relay", RelayHandler.removePull);
   }
 }
 
