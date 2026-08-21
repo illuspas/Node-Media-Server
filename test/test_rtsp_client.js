@@ -5,7 +5,7 @@
 //  Copyright (c) 2025 NodeMedia. All rights reserved.
 //
 
-const RtspClient = require("../src/protocol/rtsp.js");
+const RtspClient = require("../src/protocol/rtsp_client.js");
 const SdpParser = require("../src/protocol/sdp.js");
 const RtpParser = require("../src/protocol/rtp.js");
 const RtcpParser = require("../src/protocol/rtcp.js");

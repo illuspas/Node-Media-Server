@@ -44,7 +44,7 @@ src/
 │   ├── rtmp.js          # 现有
 │   ├── amf.js           # 现有
 │   ├── flv.js           # 现有
-│   ├── rtsp.js          # [新增] RTSP 信令协议解析（请求构建/响应解析）
+│   ├── rtsp_client.js          # [新增] RTSP 信令协议解析（请求构建/响应解析）
 │   ├── sdp.js           # [新增] SDP 会话描述解析器
 │   ├── rtp.js           # [新增] RTP 协议解析（头部解包、负载提取）
 │   ├── rtcp.js          # [新增] RTCP 协议解析
@@ -81,22 +81,22 @@ src/
 
 | 步骤 | 内容 | 产出文件 |
 |------|------|----------|
-| 1.1 | `src/protocol/rtsp.js` — RTSP 请求构建器 | `rtsp.js` |
+| 1.1 | `src/protocol/rtsp_client.js` — RTSP 请求构建器 | `rtsp_client.js` |
 | | - 请求格式：`METHOD uri RTSP/1.0\r\n` + headers + body | |
 | | - CSeq 自增管理 | |
 | | - Session 头自动携带 | |
 | | - 支持方法：OPTIONS/DESCRIBE/SETUP/PLAY/PAUSE/TEARDOWN | |
-| 1.2 | RTSP 响应解析器 | `rtsp.js` |
+| 1.2 | RTSP 响应解析器 | `rtsp_client.js` |
 | | - 状态行解析 `RTSP/1.0 200 OK` | |
 | | - 头部字段解析（键值对） | |
 | | - Content-Length 边界处理 | |
 | | - 响应体提取 | |
-| 1.3 | TCP 连接管理 | `rtsp.js` |
+| 1.3 | TCP 连接管理 | `rtsp_client.js` |
 | | - 基于 `net.createConnection` 的 TCP 连接 | |
 | | - 基于流的缓冲区管理（处理粘包/拆包） | |
 | | - 区分 RTSP 响应 vs TCP 交织 RTP 数据 | |
 | | - Keep-Alive（GET_PARAMETER 心跳） | |
-| 1.4 | Basic & Digest 认证 | `rtsp.js` |
+| 1.4 | Basic & Digest 认证 | `rtsp_client.js` |
 | | - 解析 `WWW-Authenticate` 头 | |
 | | - Basic：`base64(user:pass)` | |
 | | - Digest：realm / nonce / opaque / response 计算（MD5） | |
