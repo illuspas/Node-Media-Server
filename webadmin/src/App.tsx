@@ -8,6 +8,9 @@ import Streams from "./pages/Streams";
 import Relay from "./pages/Relay";
 import Records from "./pages/Records";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import { getToken, getUsername, saveSession, clearSession, UNAUTHORIZED_EVENT } from "./lib/api";
+import { toast } from "./lib/toast";
 
 const HOME = { path: "/", title: "仪表盘" } as const;
 
@@ -26,7 +29,12 @@ function titleFor(pathname: string): string {
   }
 }
 
-function Shell() {
+interface ShellProps {
+  username: string | null;
+  onLogout: () => void;
+}
+
+function Shell({ username, onLogout }: ShellProps) {
   const location = useLocation();
   // Sidebar stays open only while the route it was opened on is still current.
   const [openLocationKey, setOpenLocationKey] = useState<string | null>(null);
@@ -44,7 +52,9 @@ function Shell() {
       <div className="lg:pl-60 min-h-screen">
         <Navbar
           title={title}
+          username={username}
           onMenuClick={() => setOpenLocationKey(sidebarOpen ? null : location.key)}
+          onLogout={onLogout}
         />
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -60,9 +70,42 @@ function Shell() {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState(() => ({ token: getToken(), username: getUsername() }));
+
+  // API calls that come back 401 clear the session and bounce to the login page.
+  useEffect(() => {
+    const onUnauthorized = () => {
+      setAuth({ token: null, username: null });
+      toast("登录已过期，请重新登录", "warning");
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, []);
+
+  if (!auth.token) {
+    return (
+      <>
+        <Login
+          onLoggedIn={(token, username) => {
+            saveSession(token, username);
+            setAuth({ token, username });
+          }}
+        />
+        <ToastHost />
+      </>
+    );
+  }
+
   return (
     <HashRouter>
-      <Shell />
+      <Shell
+        username={auth.username}
+        onLogout={() => {
+          clearSession();
+          setAuth({ token: null, username: null });
+          toast("已退出登录");
+        }}
+      />
     </HashRouter>
   );
 }

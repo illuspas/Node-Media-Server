@@ -4,16 +4,17 @@ import { toast } from "../lib/toast";
 
 interface NavbarProps {
   title: string;
+  username: string | null;
   onMenuClick: () => void;
+  onLogout: () => void;
 }
 
-const MENU_ITEMS: { msg: string; label: string; danger?: boolean }[] = [
+const MENU_ITEMS: { msg: string; label: string }[] = [
   { msg: "个人资料（演示功能）", label: "个人资料" },
-  { msg: "已切换到只读模式（演示）", label: "只读模式" },
-  { msg: "已退出登录（演示）", label: "退出登录", danger: true }
+  { msg: "已切换到只读模式（演示）", label: "只读模式" }
 ];
 
-export default function Navbar({ title, onMenuClick }: NavbarProps) {
+export default function Navbar({ title, username, onMenuClick, onLogout }: NavbarProps) {
   const [userOpen, setUserOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
 
@@ -64,28 +65,33 @@ export default function Navbar({ title, onMenuClick }: NavbarProps) {
           onClick={e => {
             const item = (e.target as HTMLElement).closest(".nb-menu-item");
             if (item) {
-              toast(item.getAttribute("data-msg") || "");
-              setUserOpen(false);
+              const msg = item.getAttribute("data-msg");
+              if (msg !== null) {
+                toast(msg);
+                setUserOpen(false);
+              } else {
+                setUserOpen(false);
+                onLogout();
+              }
               return;
             }
             setUserOpen(v => !v);
           }}
         >
-          <div className="nb-avatar">管</div>
+          <div className="nb-avatar">{username ? username.charAt(0).toUpperCase() : "管"}</div>
           <div className="nb-meta">
-            <div className="name">管理员</div>
-            <div className="sub">admin@nms.io</div>
+            <div className="name">{username || "管理员"}</div>
+            <div className="sub">已登录</div>
           </div>
           <Icon name="chevron-down" />
           <div className="nb-menu">
             {MENU_ITEMS.map(item => (
-              <div key={item.label}>
-                {item.danger && <div className="nb-menu-sep" />}
-                <button className={item.danger ? "nb-menu-item danger" : "nb-menu-item"} data-msg={item.msg}>
-                  {item.label}
-                </button>
-              </div>
+              <button key={item.label} className="nb-menu-item" data-msg={item.msg}>
+                {item.label}
+              </button>
             ))}
+            <div className="nb-menu-sep" />
+            <button className="nb-menu-item danger">退出登录</button>
           </div>
         </div>
       </div>
