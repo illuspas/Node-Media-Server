@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "lucide-react": "^1.33.0",
+    "chart.js": "^4.5.1",
+    "feather-icons": "^4.29.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
