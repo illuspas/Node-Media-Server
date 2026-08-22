@@ -1,10 +1,16 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import Icon from "./Icon";
+import { fetchStats } from "../lib/api";
+import { fmtDurLong } from "../lib/format";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
+
+/** Footer refresh cadence; uptime needs no per-second precision. */
+const FOOTER_POLL = 30000;
 
 interface NavLinkItem {
   to: string;
@@ -32,6 +38,31 @@ const NAV_GROUPS: { section: string; links: NavLinkItem[] }[] = [
 ];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
+  const [foot, setFoot] = useState<{ connected: boolean; uptime: number } | null>(null);
+
+  /* keep the footer status block on real /stats data */
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const s = await fetchStats();
+        if (alive) setFoot({ connected: true, uptime: s.server.uptime });
+      } catch {
+        if (alive) setFoot(prev => (prev ? { ...prev, connected: false } : prev));
+      }
+    };
+    // Fetch-on-mount syncs with an external system; setState happens after the await.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void tick();
+    const iv = setInterval(() => {
+      if (!document.hidden) void tick();
+    }, FOOTER_POLL);
+    return () => {
+      alive = false;
+      clearInterval(iv);
+    };
+  }, []);
+
   return (
     <div className={open ? "sb-root open" : "sb-root"}>
       <div className="sb-overlay" onClick={onClose} />
@@ -63,10 +94,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
         <div className="sb-foot">
           <div className="sb-foot-status">
-            <span className="sb-pulse" />
-            所有服务运行正常
+            <span className={foot?.connected ? "sb-pulse" : "sb-pulse-off"} />
+            {foot === null ? "正在连接服务…" : foot.connected ? "服务运行正常" : "服务连接失败"}
           </div>
-          <div className="sb-foot-meta">v2.6.2 · 已稳定运行 14 天</div>
+          <div className="sb-foot-meta">
+            {foot?.connected ? `已稳定运行 ${fmtDurLong(foot.uptime)}` : "Node-Media-Server"}
+          </div>
         </div>
       </aside>
     </div>

@@ -111,6 +111,7 @@ class FlvSession extends BaseSession {
    */
   onData = (data) => {
     this.inBytes += data.length;
+    Context.networkStats.inBytes += data.length;
     let err = this.flv.parserData(data);
     if (err != null) {
       logger.error(`FLV session ${this.id} ${this.ip} parserData error, ${err}`);
@@ -160,6 +161,7 @@ class FlvSession extends BaseSession {
       this.res.write(buffer);
     }
     this.outBytes += buffer.length;
+    Context.networkStats.outBytes += buffer.length;
   };
 
   /**

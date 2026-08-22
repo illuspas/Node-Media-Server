@@ -14,6 +14,14 @@ const Context = {
 
   broadcasts: new Map(),
 
+  /**
+   * Cumulative streaming network traffic (bytes) over the process lifetime.
+   * Accumulated by every publisher/player session next to its own counters;
+   * record sessions (file writes) are excluded.
+   * @type {{inBytes: number, outBytes: number}}
+   */
+  networkStats: { inBytes: 0, outBytes: 0 },
+
   eventEmitter: new EventEmitter()
 };
 

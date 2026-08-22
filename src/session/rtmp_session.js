@@ -112,6 +112,7 @@ class RtmpSession extends BaseSession {
    */
   onData = (data) => {
     this.inBytes += data.length;
+    Context.networkStats.inBytes += data.length;
     let err = this.rtmp.parserData(data);
     if (err != null) {
       logger.error(`RTMP session ${this.id} ${this.ip} parserData error, ${err}`);
@@ -143,6 +144,7 @@ class RtmpSession extends BaseSession {
    */
   sendBuffer = (buffer) => {
     this.outBytes += buffer.length;
+    Context.networkStats.outBytes += buffer.length;
     this.socket.write(buffer);
   };
 

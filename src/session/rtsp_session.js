@@ -201,7 +201,7 @@ class RtspSession extends BaseSession {
       });
 
       rtpSocket.on("message", (msg) => {
-        this.inBytes += msg.length;
+        // onRtpData counts every packet once for both UDP and TCP interleaved
         this.onRtpData(0, msg);
       });
 
@@ -264,6 +264,7 @@ class RtspSession extends BaseSession {
    */
   onRtpData = (channel, data) => {
     this.inBytes += data.length;
+    Context.networkStats.inBytes += data.length;
 
     // Check if RTCP
     if (RtcpParser.isRtcp(data)) {
@@ -429,6 +430,7 @@ class RtspSession extends BaseSession {
   sendBuffer = (buffer) => {
     // RTSP pull session doesn't send data to remote
     this.outBytes += buffer.length;
+    Context.networkStats.outBytes += buffer.length;
   };
 
   /**

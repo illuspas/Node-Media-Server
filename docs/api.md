@@ -257,7 +257,8 @@ Real-time server performance metrics including:
 - CPU usage (`process.cpuUsage()`)
 - Memory consumption (RSS, heap total, heap used)
 - Process uptime, Node.js version, platform, and PID
-- Active stream count and connected client count, split into publishers and players
+- Connected client count, split into publishers and players (`publishers` equals the active stream count)
+- Cumulative streaming network traffic in/out bytes, accumulated by every publisher/player session over the process lifetime (record file writes excluded)
 
 ```json
 {
@@ -273,7 +274,7 @@ Real-time server performance metrics including:
     "cpu": { "user": 1200000, "system": 300000 },
     "memory": { "rss": 104857600, "heapTotal": 52428800, "heapUsed": 31457280 },
     "sessions": { "total": 4, "publishers": 1, "players": 3 },
-    "streams": { "total": 1 },
+    "network": { "inBytes": 1048576000, "outBytes": 3145728000 },
     "timestamp": "2026-08-22T00:00:00.000Z"
   },
   "message": "Server statistics retrieved successfully"

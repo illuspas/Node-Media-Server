@@ -23,6 +23,16 @@ export function fmtDur(sec: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
 }
 
+/** Long-form duration for status lines: "3 天 4 小时" / "2 小时 15 分钟" / m:ss. */
+export function fmtDurLong(sec: number): string {
+  const days = Math.floor(sec / 86400);
+  const hours = Math.floor((sec % 86400) / 3600);
+  const mins = Math.floor((sec % 3600) / 60);
+  if (days > 0) return `${days} 天 ${hours} 小时`;
+  if (hours > 0) return `${hours} 小时 ${mins} 分钟`;
+  return fmtDur(sec);
+}
+
 /** Current local time as HH:mm. */
 export function nowHM(): string {
   return new Date().toTimeString().slice(0, 5);

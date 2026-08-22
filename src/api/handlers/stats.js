@@ -34,8 +34,9 @@ class StatsHandler {
           publishers: Array.from(Context.sessions.values()).filter(s => s.isPublisher).length,
           players: Array.from(Context.sessions.values()).filter(s => !s.isPublisher).length
         },
-        streams: {
-          total: Context.broadcasts.size,
+        network: {
+          inBytes: Context.networkStats.inBytes,
+          outBytes: Context.networkStats.outBytes
         },
         timestamp: new Date().toISOString()
       };

@@ -142,6 +142,7 @@ class RtmpClientSession extends BaseSession {
    */
   onPacket = (packet) => {
     this.inBytes += packet.size;
+    Context.networkStats.inBytes += packet.size;
     if (this.mode === "pull" && this.broadcast) {
       this.broadcast.broadcastMessage(packet);
     }
@@ -165,6 +166,7 @@ class RtmpClientSession extends BaseSession {
       return;
     }
     this.outBytes += buffer.length;
+    Context.networkStats.outBytes += buffer.length;
     this.rtmpClient.onOutputCallback(buffer);
   };
 

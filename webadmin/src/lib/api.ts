@@ -260,3 +260,29 @@ export function addRelayTask(input: RelayTaskInput): Promise<ApiRelayTask> {
 export function removeRelayTask(taskKey: string): Promise<void> {
   return apiFetch("/relay", { method: "DELETE", body: JSON.stringify({ taskKey }) }).then(() => undefined);
 }
+
+/* ---------------- stats ---------------- */
+
+export interface ApiStats {
+  server: {
+    /** Process uptime in seconds. */
+    uptime: number;
+    nodeVersion: string;
+    platform: string;
+    arch: string;
+    pid: number;
+  };
+  /** process.cpuUsage() — cumulative microseconds since process start. */
+  cpu: { user: number; system: number };
+  /** process.memoryUsage() — bytes. */
+  memory: { rss: number; heapTotal: number; heapUsed: number; external?: number; arrayBuffers?: number };
+  sessions: { total: number; publishers: number; players: number };
+  /** Cumulative streaming traffic (bytes) over the process lifetime. */
+  network: { inBytes: number; outBytes: number };
+  timestamp: string;
+}
+
+/** Server runtime statistics (see docs/api.md GET /api/v1/stats). */
+export function fetchStats(): Promise<ApiStats> {
+  return apiFetch<ApiStats>("/stats");
+}
