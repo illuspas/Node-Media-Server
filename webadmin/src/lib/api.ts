@@ -203,3 +203,60 @@ export function fetchStreams(): Promise<ApiStream[]> {
 export function deleteSession(id: string): Promise<void> {
   return apiFetch(`/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }).then(() => undefined);
 }
+
+/* ---------------- relay ---------------- */
+
+export interface RelayTrack {
+  type: string;
+  codec: string;
+  payloadType: number;
+  clockRate: number;
+}
+
+/** Task status as returned by GET /api/v1/relay (taskKey present when listed). */
+export interface ApiRelayTask {
+  taskKey?: string;
+  id: string;
+  /** "rtsp" | "rtmp" */
+  protocol: string;
+  /** RTMP tasks only; RTSP is always pull. */
+  mode?: "pull" | "push";
+  /** Remote URL (rtsp tasks expose it as rtspUrl instead). */
+  url?: string;
+  rtspUrl?: string;
+  streamPath: string;
+  transport?: string;
+  isRunning: boolean;
+  isClosing: boolean;
+  reconnectAttempts: number;
+  inBytes: number;
+  outBytes: number;
+  createTime: number;
+  endTime: number;
+  tracks?: RelayTrack[];
+}
+
+export interface RelayTaskInput {
+  url: string;
+  mode: "pull" | "push";
+  streamPath: string;
+  transport?: string;
+  reconnect?: boolean;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
+}
+
+/** List all relay tasks (see docs/api.md GET /api/v1/relay). */
+export function fetchRelayTasks(): Promise<ApiRelayTask[]> {
+  return apiFetch<ApiRelayTask[]>("/relay");
+}
+
+/** Create a relay task (see docs/api.md POST /api/v1/relay). */
+export function addRelayTask(input: RelayTaskInput): Promise<ApiRelayTask> {
+  return apiFetch<ApiRelayTask>("/relay", { method: "POST", body: JSON.stringify(input) });
+}
+
+/** Remove a relay task by its taskKey (see docs/api.md DELETE /api/v1/relay). */
+export function removeRelayTask(taskKey: string): Promise<void> {
+  return apiFetch("/relay", { method: "DELETE", body: JSON.stringify({ taskKey }) }).then(() => undefined);
+}
