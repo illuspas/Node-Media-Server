@@ -8,14 +8,14 @@
         "publish": false,
         "secret": "nodemedia2017privatekey",
         "jwt": {
-            "secret": "",
+            "secret": "3e64abe6a00088e5039452d1ea1c854af7e4cc6ec30c129547b44f89604a6164",
             "expiresIn": "24h",
             "refreshExpiresIn": "7d",
             "algorithm": "HS256",
             "users": [
                 {
                     "username": "admin",
-                    "password": "admin-default-password-change-me",
+                    "password": "uYDP4cc4HuaCPhqn",
                     "role": "admin"
                 }
             ]

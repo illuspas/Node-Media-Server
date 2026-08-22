@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "npx eslint;node bin/app.js",
     "start": "node bin/app.js",
-    "test": "exit 0"
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "rtmp",

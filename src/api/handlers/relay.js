@@ -9,25 +9,54 @@ const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
 
 /**
- * Relay API Handler — REST API for RTSP pull stream management.
+ * Relay API Handler — REST API for RTSP/RTMP relay management.
  * @class
  */
 class RelayHandler {
   /**
-   * Add a new RTSP pull stream task.
+   * Add a new RTSP/RTMP relay task.
    * POST /api/v1/relay
-   * Body: { rtspUrl, streamPath, transport?, reconnect?, reconnectInterval?, maxReconnectAttempts? }
+   * Body: { url, mode?, streamPath, transport?, reconnect?, reconnectInterval?, maxReconnectAttempts? }
    * @param {express.Request} req
    * @param {express.Response} res
    */
   static addPull = (req, res) => {
     try {
-      const { rtspUrl, streamPath, transport, reconnect, reconnectInterval, maxReconnectAttempts } = req.body;
+      const {
+        url: requestUrl,
+        rtspUrl,
+        mode = "pull",
+        streamPath,
+        transport,
+        reconnect,
+        reconnectInterval,
+        maxReconnectAttempts
+      } = req.body;
+      const url = requestUrl || rtspUrl;
 
-      if (!rtspUrl || !streamPath) {
+      if (!url || !streamPath) {
         res.status(400).json({
           success: false,
-          error: "rtspUrl and streamPath are required"
+          error: "url (or legacy rtspUrl) and streamPath are required"
+        });
+        return;
+      }
+      if (mode !== "pull" && mode !== "push") {
+        res.status(400).json({ success: false, error: "mode must be pull or push" });
+        return;
+      }
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(url);
+      } catch (error) {
+        res.status(400).json({ success: false, error: "url must be a valid RTSP or RTMP URL" });
+        return;
+      }
+      if (!["rtsp:", "rtmp:"].includes(parsedUrl.protocol) ||
+          (parsedUrl.protocol === "rtsp:" && mode === "push")) {
+        res.status(400).json({
+          success: false,
+          error: "url/mode must be RTSP pull or RTMP pull/push"
         });
         return;
       }
@@ -51,8 +80,10 @@ class RelayHandler {
       }
 
       const session = relayManager.addTask({
+        url,
         rtspUrl,
         streamPath,
+        mode,
         transport: transport || "tcp",
         reconnect: reconnect !== false,
         reconnectInterval,
@@ -62,10 +93,10 @@ class RelayHandler {
       res.json({
         success: true,
         data: session.getStatus(),
-        message: `Pull stream added: ${streamPath}`
+        message: `${mode === "push" ? "Push" : "Pull"} relay added: ${streamPath}`
       });
 
-      logger.info(`API: Added pull stream ${rtspUrl} → ${streamPath}`);
+      logger.info(`API: Added ${mode} relay ${url} → ${streamPath}`);
     } catch (error) {
       logger.error(`API: Add pull stream failed: ${error.message}`);
       res.status(500).json({
@@ -76,20 +107,21 @@ class RelayHandler {
   };
 
   /**
-   * Stop an RTSP pull stream task.
+   * Stop a relay task.
    * DELETE /api/v1/relay
-   * Body: { streamPath }
+   * Body: { streamPath } or { taskKey }
    * @param {express.Request} req
    * @param {express.Response} res
    */
   static removePull = (req, res) => {
     try {
-      const { streamPath } = req.body;
+      const { streamPath, taskKey, url, mode = "pull" } = req.body;
+      const removeKey = taskKey || (mode === "push" && url ? `push:${url}` : streamPath);
 
-      if (!streamPath) {
+      if (!removeKey) {
         res.status(400).json({
           success: false,
-          error: "streamPath is required"
+          error: "streamPath or taskKey is required"
         });
         return;
       }
@@ -103,18 +135,18 @@ class RelayHandler {
         return;
       }
 
-      const removed = relayManager.removeTask(streamPath);
+      const removed = relayManager.removeTask(removeKey);
 
       if (removed) {
         res.json({
           success: true,
-          message: `Pull stream removed: ${streamPath}`
+          message: `Relay task removed: ${removeKey}`
         });
-        logger.info(`API: Removed pull stream ${streamPath}`);
+        logger.info(`API: Removed relay task ${removeKey}`);
       } else {
         res.status(404).json({
           success: false,
-          error: `Task not found: ${streamPath}`
+          error: `Task not found: ${removeKey}`
         });
       }
     } catch (error) {

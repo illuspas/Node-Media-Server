@@ -7,15 +7,15 @@
 
 const logger = require("../core/logger.js");
 const RtspSession = require("../session/rtsp_session.js");
+const RtmpClientSession = require("../session/rtmp_client_session.js");
 
 /**
- * Relay Manager — manages RTSP pull stream tasks.
- * Provides lifecycle management for RTSP pull sessions.
+ * Relay Manager — manages RTSP and RTMP relay tasks.
  * @class
  */
 class RelayManager {
   constructor() {
-    /** @type {Map<string, RtspSession>} streamPath -> RtspSession */
+    /** @type {Map<string, (RtspSession|RtmpClientSession)>} taskKey -> session */
     this.tasks = new Map();
 
     /** @type {boolean} */
@@ -66,57 +66,78 @@ class RelayManager {
   // ─────────────────────────────────────────
 
   /**
-   * Add a new RTSP pull stream task.
+   * Add a new RTSP or RTMP relay task.
    * @param {object} config
-   * @param {string} config.rtspUrl - Full RTSP URL
+   * @param {string} [config.rtspUrl] - Legacy RTSP URL field
+   * @param {string} [config.url] - Remote RTSP/RTMP URL
+   * @param {"pull"|"push"} [config.mode] - Relay direction
    * @param {string} config.streamPath - Stream path (e.g. "/live/camera1")
    * @param {"tcp"|"udp"} [config.transport] - Transport mode (default "tcp")
    * @param {boolean} [config.reconnect] - Enable auto-reconnect (default true)
    * @param {number} [config.reconnectInterval] - Initial reconnect interval ms
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)
-   * @returns {RtspSession} The created session
+   * @returns {(RtspSession|RtmpClientSession)} The created session
    */
   addTask = (config) => {
-    const { rtspUrl, streamPath } = config;
+    const url = config.url || config.rtspUrl;
+    const { streamPath } = config;
 
-    if (!rtspUrl || !streamPath) {
-      throw new Error("rtspUrl and streamPath are required");
+    if (!url || !streamPath) {
+      throw new Error("url and streamPath are required");
+    }
+    const parsedUrl = new URL(url);
+    const mode = config.mode || "pull";
+    if (mode !== "pull" && mode !== "push") {
+      throw new Error(`Unsupported relay mode: ${mode}`);
+    }
+    if (parsedUrl.protocol !== "rtsp:" && parsedUrl.protocol !== "rtmp:") {
+      throw new Error(`Unsupported relay URL scheme: ${parsedUrl.protocol}`);
+    }
+    if (parsedUrl.protocol === "rtsp:" && mode === "push") {
+      throw new Error("RTSP push relay is not supported");
     }
 
+    const taskKey = parsedUrl.protocol === "rtmp:" && mode === "push"
+      ? `push:${url}`
+      : streamPath;
     // Check if task already exists
-    if (this.tasks.has(streamPath)) {
-      logger.warn(`RelayManager task already exists: ${streamPath}`);
-      return this.tasks.get(streamPath);
+    if (this.tasks.has(taskKey)) {
+      logger.warn(`RelayManager task already exists: ${taskKey}`);
+      return this.tasks.get(taskKey);
     }
 
-    logger.info(`RelayManager adding task: ${rtspUrl} → ${streamPath}`);
+    logger.info(`RelayManager adding task: ${url} → ${streamPath} (${mode})`);
 
-    const session = new RtspSession(config);
-    this.tasks.set(streamPath, session);
+    const sessionConfig = { ...config, url, mode, rtspUrl: url };
+    const session = parsedUrl.protocol === "rtsp:"
+      ? new RtspSession(sessionConfig)
+      : new RtmpClientSession(sessionConfig);
+    session.taskKey = taskKey;
+    this.tasks.set(taskKey, session);
 
     // Start the session
     session.run().catch((error) => {
-      logger.error(`RelayManager task ${streamPath} start failed: ${error.message}`);
+      logger.error(`RelayManager task ${taskKey} start failed: ${error.message}`);
     });
 
     return session;
   };
 
   /**
-   * Remove an RTSP pull stream task.
-   * @param {string} streamPath - Stream path to remove
+   * Remove a relay task by its task key.
+   * @param {string} taskKey - Stream path or push URL key
    * @returns {boolean} True if task was found and removed
    */
-  removeTask = (streamPath) => {
-    const session = this.tasks.get(streamPath);
+  removeTask = (taskKey) => {
+    const session = this.tasks.get(taskKey);
     if (!session) {
-      logger.warn(`RelayManager task not found: ${streamPath}`);
+      logger.warn(`RelayManager task not found: ${taskKey}`);
       return false;
     }
 
-    logger.info(`RelayManager removing task: ${streamPath}`);
+    logger.info(`RelayManager removing task: ${taskKey}`);
     session.close();
-    this.tasks.delete(streamPath);
+    this.tasks.delete(taskKey);
     return true;
   };
 
@@ -126,23 +147,23 @@ class RelayManager {
    */
   listTasks = () => {
     const result = [];
-    for (const [streamPath, session] of this.tasks) {
-      result.push(session.getStatus());
+    for (const [taskKey, session] of this.tasks) {
+      result.push({ taskKey, ...session.getStatus() });
     }
     return result;
   };
 
   /**
    * Get status of a specific task.
-   * @param {string} streamPath - Stream path
+   * @param {string} taskKey - Stream path or push URL key
    * @returns {object|null} Task status or null if not found
    */
-  getTaskStatus = (streamPath) => {
-    const session = this.tasks.get(streamPath);
+  getTaskStatus = (taskKey) => {
+    const session = this.tasks.get(taskKey);
     if (!session) {
       return null;
     }
-    return session.getStatus();
+    return { taskKey, ...session.getStatus() };
   };
 
   /**
