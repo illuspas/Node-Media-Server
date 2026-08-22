@@ -27,3 +27,16 @@ export function fmtDur(sec: number): string {
 export function nowHM(): string {
   return new Date().toTimeString().slice(0, 5);
 }
+
+/** Format bytes as a human-readable string, e.g. 1048576 -> "1.0 MB". */
+export function fmtBytes(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v >= 100 ? v.toFixed(0) : v.toFixed(1)} ${units[i]}`;
+}

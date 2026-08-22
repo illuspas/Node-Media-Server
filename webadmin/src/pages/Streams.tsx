@@ -1,22 +1,97 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
-import { APP_NAMES, STREAMS, STREAM_STATUS, posterUrl } from "../lib/mock";
-import type { Stream } from "../lib/mock";
-import { fmtNum, fmtDur } from "../lib/format";
+import { posterUrl } from "../lib/mock";
+import { fetchStreams, deleteSession } from "../lib/api";
+import type { ApiStream } from "../lib/api";
+import { fmtNum, fmtDur, fmtBytes } from "../lib/format";
 import { toast } from "../lib/toast";
 
 const PAGE_SIZE = 8;
-const PROTOS = ["RTMP", "RTSP", "SRT", "HLS"];
+const POLL_INTERVAL = 5000;
+
+/* FLV codec id / fourcc → display name (values come from publish metadata). */
+const VIDEO_CODEC_IDS: Record<number, string> = {
+  2: "H.263",
+  3: "Screen",
+  4: "VP6",
+  5: "VP6A",
+  6: "Screen2",
+  7: "H.264"
+};
+const VIDEO_FOURCC: Record<string, string> = {
+  avc1: "H.264",
+  hvc1: "H.265",
+  hev1: "H.265",
+  av01: "AV1",
+  vp09: "VP9"
+};
+const AUDIO_CODEC_IDS: Record<number, string> = {
+  1: "ADPCM",
+  2: "MP3",
+  7: "G.711A",
+  8: "G.711µ",
+  10: "AAC",
+  11: "Speex",
+  14: "MP3"
+};
+
+function codecName(codec: number | string | undefined, idMap: Record<number, string>, fourccMap?: Record<string, string>): string {
+  if (codec === undefined || codec === null || codec === 0 || codec === "") return "—";
+  if (typeof codec === "number") return idMap[codec] || `Codec ${codec}`;
+  if (fourccMap && fourccMap[codec]) return fourccMap[codec];
+  return codec.toUpperCase();
+}
+
+/** Average bitrate in Mbps: cumulative inBytes over publish duration. */
+function avgBitrateMbps(s: ApiStream, now: number): number {
+  const p = s.publisher;
+  if (!p || !p.inBytes || !p.createTime) return 0;
+  const seconds = (now - p.createTime) / 1000;
+  if (seconds < 1) return 0;
+  return (p.inBytes * 8) / seconds / 1e6;
+}
 
 export default function Streams() {
-  const [list, setList] = useState<Stream[]>(() => STREAMS.map(s => ({ ...s })));
+  const [list, setList] = useState<ApiStream[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(() => Date.now());
   const [q, setQ] = useState("");
   const [fApp, setFApp] = useState("");
   const [fProto, setFProto] = useState("");
-  const [fStatus, setFStatus] = useState("");
   const [page, setPage] = useState(1);
-  const [preview, setPreview] = useState<Stream | null>(null);
+  const [preview, setPreview] = useState<ApiStream | null>(null);
+  const [recFlags, setRecFlags] = useState<Record<string, boolean>>({});
+  const [kicking, setKicking] = useState<string | null>(null);
+
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      setList(await fetchStreams());
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "加载流列表失败");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /* poll the API, paused while the tab is hidden; a 1s tick keeps durations fresh */
+  useEffect(() => {
+    // Fetch-on-mount is a legitimate external-system sync; every setState in
+    // load() runs after the awaited response, never synchronously.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void load(true);
+    const poll = setInterval(() => {
+      if (!document.hidden) load(true);
+    }, POLL_INTERVAL);
+    const clock = setInterval(() => setTick(Date.now()), 1000);
+    return () => {
+      clearInterval(poll);
+      clearInterval(clock);
+    };
+  }, [load]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -26,38 +101,54 @@ export default function Streams() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  const apps = useMemo(() => [...new Set(list.map(s => s.app))].sort(), [list]);
+  const protos = useMemo(
+    () => [...new Set(list.map(s => s.publisher?.protocol).filter((p): p is string => !!p))].sort(),
+    [list]
+  );
+
   const filtered = list.filter(
     s =>
-      (!q || (s.name + s.title + s.app).toLowerCase().includes(q.toLowerCase())) &&
+      (!q || (s.name + s.app).toLowerCase().includes(q.toLowerCase())) &&
       (!fApp || s.app === fApp) &&
-      (!fProto || s.proto === fProto) &&
-      (!fStatus || s.status === fStatus)
+      (!fProto || s.publisher?.protocol === fProto)
   );
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const curPage = Math.min(page, pages);
   const rows = filtered.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
 
-  const onlineCount = list.filter(s => s.status === "online").length;
-  const idleCount = list.filter(s => s.status === "idle").length;
-  const totalViewers = list.reduce((a, s) => a + s.viewers, 0);
+  const totalViewers = list.reduce((a, s) => a + s.subscribers, 0);
+  const totalInBytes = list.reduce((a, s) => a + (s.publisher?.inBytes ?? 0), 0);
 
-  const toggleRec = (key: string) => {
-    setList(prev =>
-      prev.map(s => {
-        if (`${s.app}/${s.name}` !== key) return s;
-        const rec = !s.rec;
-        toast(rec ? `已开始录制「${s.title}」` : `已停止录制「${s.title}」`);
-        return { ...s, rec };
-      })
-    );
+  const toggleRec = (s: ApiStream) => {
+    const rec = !recFlags[s.key];
+    setRecFlags(prev => ({ ...prev, [s.key]: rec }));
+    toast(rec ? `已开始录制「${s.name}」（演示）` : `已停止录制「${s.name}」（演示）`);
   };
 
-  const kick = (key: string) => {
-    const s = list.find(x => `${x.app}/${x.name}` === key);
-    if (!s) return;
-    setList(prev => prev.filter(x => `${x.app}/${x.name}` !== key));
-    toast(`已断开流 ${key}`, "danger");
+  const kick = async (s: ApiStream) => {
+    if (!s.publisher || kicking) return;
+    setKicking(s.key);
+    try {
+      await deleteSession(s.publisher.id);
+      toast(`已断开流 ${s.app}/${s.name}`, "danger");
+      await load(true);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "断开失败", "danger");
+    } finally {
+      setKicking(null);
+    }
+  };
+
+  const videoInfo = (s: ApiStream) => {
+    const p = s.publisher;
+    const res = p?.videoWidth && p?.videoHeight ? `${p.videoWidth}×${p.videoHeight}` : "—";
+    const vcodec = codecName(p?.videoCodec, VIDEO_CODEC_IDS, VIDEO_FOURCC);
+    const acodec = codecName(p?.audioCodec, AUDIO_CODEC_IDS);
+    // metadata framerates are often fractional (23.977…); display rounded
+    const fps = p?.videoFramerate ? Math.round(p.videoFramerate) : 0;
+    return { res, codec: `${vcodec} / ${acodec}`, fps };
   };
 
   return (
@@ -69,8 +160,8 @@ export default function Streams() {
           <p className="text-sm text-stone-500 mt-1">管理当前接入的所有推流与拉流会话</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn btn-secondary btn-sm" onClick={() => toast("流列表已刷新")}>
-            <Icon name="refresh-cw" className="w-3.5 h-3.5" />
+          <button className="btn btn-secondary btn-sm" disabled={loading} onClick={() => load()}>
+            <Icon name="refresh-cw" className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             刷新
           </button>
           <Link to="/relay" className="btn btn-primary btn-sm">
@@ -80,24 +171,28 @@ export default function Streams() {
         </div>
       </div>
 
+      {/* error banner */}
+      {error && (
+        <div className="card flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-red-200 bg-red-50">
+          <div className="flex items-center gap-2 text-sm text-red-700">
+            <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
+            流列表加载失败：{error}
+          </div>
+          <button className="btn btn-secondary btn-sm" onClick={() => load()}>
+            重试
+          </button>
+        </div>
+      )}
+
       {/* mini stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-stone-500">推流中</p>
-            <p className="text-2xl font-semibold tabular-nums mt-0.5">{onlineCount}</p>
+            <p className="text-2xl font-semibold tabular-nums mt-0.5">{list.length}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
             <Icon name="radio" className="w-4 h-4" />
-          </span>
-        </div>
-        <div className="card px-5 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-stone-500">待推送</p>
-            <p className="text-2xl font-semibold tabular-nums mt-0.5">{idleCount}</p>
-          </div>
-          <span className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-            <Icon name="clock" className="w-4 h-4" />
           </span>
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
@@ -109,6 +204,15 @@ export default function Streams() {
             <Icon name="users" className="w-4 h-4" />
           </span>
         </div>
+        <div className="card px-5 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-stone-500">累计上行流量</p>
+            <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtBytes(totalInBytes)}</p>
+          </div>
+          <span className="w-9 h-9 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
+            <Icon name="trending-up" className="w-4 h-4" />
+          </span>
+        </div>
       </div>
 
       {/* filters */}
@@ -118,7 +222,7 @@ export default function Streams() {
           <input
             className="input"
             style={{ paddingLeft: "2.25rem" }}
-            placeholder="搜索流名称 / 频道标题…"
+            placeholder="搜索流名称 / 应用…"
             value={q}
             onChange={e => {
               setQ(e.target.value);
@@ -135,7 +239,7 @@ export default function Streams() {
           }}
         >
           <option value="">全部应用</option>
-          {APP_NAMES.map(a => (
+          {apps.map(a => (
             <option key={a} value={a}>
               {a}
             </option>
@@ -150,22 +254,11 @@ export default function Streams() {
           }}
         >
           <option value="">全部协议</option>
-          {PROTOS.map(p => (
-            <option key={p}>{p}</option>
+          {protos.map(p => (
+            <option key={p} value={p}>
+              {p.toUpperCase()}
+            </option>
           ))}
-        </select>
-        <select
-          className="select md:w-40"
-          value={fStatus}
-          onChange={e => {
-            setFStatus(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">全部状态</option>
-          <option value="online">推流中</option>
-          <option value="idle">待推送</option>
-          <option value="offline">离线</option>
         </select>
       </div>
 
@@ -180,7 +273,7 @@ export default function Streams() {
                 <th>协议</th>
                 <th>发布者</th>
                 <th>视频信息</th>
-                <th>码率</th>
+                <th>平均码率</th>
                 <th>观众</th>
                 <th>时长</th>
                 <th>状态</th>
@@ -188,38 +281,53 @@ export default function Streams() {
               </tr>
             </thead>
             <tbody>
-              {rows.length ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={10}>
+                    <div className="flex items-center justify-center gap-2 py-14 text-stone-400">
+                      <Icon name="refresh-cw" className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">正在加载流列表…</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : rows.length ? (
                 rows.map(s => {
-                  const key = `${s.app}/${s.name}`;
+                  const p = s.publisher;
+                  const { res, codec, fps } = videoInfo(s);
+                  const mbps = avgBitrateMbps(s, tick);
+                  const rec = !!recFlags[s.key];
                   return (
-                    <tr key={key}>
+                    <tr key={s.key}>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200/60 flex items-center justify-center text-stone-500 shrink-0">
                             <Icon name="video" />
                           </div>
                           <div className="min-w-0">
-                            <div className="font-medium">{s.title}</div>
-                            <div className="text-xs text-stone-400 font-mono">{key}</div>
+                            <div className="font-medium">{s.name}</div>
+                            <div className="text-xs text-stone-400 font-mono">{s.app}/{s.name}</div>
                           </div>
                         </div>
                       </td>
                       <td>
                         <span className="badge badge-outline">{s.app}</span>
                       </td>
-                      <td>{s.proto}</td>
-                      <td className="text-stone-500 font-mono text-xs">{s.ip}</td>
+                      <td>{p ? p.protocol.toUpperCase() : "—"}</td>
+                      <td className="text-stone-500 font-mono text-xs">{p?.ip ?? "—"}</td>
                       <td>
                         <div className="text-sm">
-                          {s.res} · {s.fps}fps
+                          {res}{fps ? ` · ${fps}fps` : ""}
                         </div>
-                        <div className="text-xs text-stone-400">{s.codec}</div>
+                        <div className="text-xs text-stone-400">{codec}</div>
                       </td>
-                      <td className="tabular-nums">{s.bitrate ? `${(s.bitrate / 1000).toFixed(2)} Mbps` : "—"}</td>
-                      <td className="tabular-nums">{fmtNum(s.viewers)}</td>
-                      <td className="tabular-nums">{s.dur ? fmtDur(s.dur) : "—"}</td>
+                      <td className="tabular-nums">{mbps ? `${mbps.toFixed(2)} Mbps` : "—"}</td>
+                      <td className="tabular-nums">{fmtNum(s.subscribers)}</td>
+                      <td className="tabular-nums">{p ? fmtDur((tick - p.createTime) / 1000) : "—"}</td>
                       <td>
-                        <span className={`badge ${STREAM_STATUS[s.status].cls}`}>{STREAM_STATUS[s.status].label}</span>
+                        <span className="badge badge-success">
+                          <span className="dot-live" style={{ width: 6, height: 6 }} />
+                          &nbsp;推流中
+                        </span>
                       </td>
                       <td>
                         <div className="flex items-center gap-0.5">
@@ -227,18 +335,19 @@ export default function Streams() {
                             <Icon name="play" className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            className={`btn btn-ghost btn-sm btn-icon ${s.rec ? "text-emerald-600" : ""}`}
-                            title="录制"
-                            onClick={() => toggleRec(key)}
+                            className={`btn btn-ghost btn-sm btn-icon ${rec ? "text-emerald-600" : ""}`}
+                            title="录制（演示）"
+                            onClick={() => toggleRec(s)}
                           >
                             <Icon name="disc" className="w-3.5 h-3.5" />
                           </button>
                           <button
                             className="btn btn-ghost btn-sm btn-icon text-red-600 hover:bg-red-50"
                             title="断开"
-                            onClick={() => kick(key)}
+                            disabled={!p || kicking === s.key}
+                            onClick={() => kick(s)}
                           >
-                            <Icon name="slash" className="w-3.5 h-3.5" />
+                            <Icon name="slash" className={`w-3.5 h-3.5 ${kicking === s.key ? "animate-spin" : ""}`} />
                           </button>
                         </div>
                       </td>
@@ -249,8 +358,8 @@ export default function Streams() {
                 <tr>
                   <td colSpan={10}>
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
-                      <Icon name="wifi-off" className="w-8 h-8 mb-2" />
-                      <span className="text-sm">未找到匹配的流</span>
+                      <Icon name={list.length ? "search" : "video-off"} className="w-8 h-8 mb-2" />
+                      <span className="text-sm">{list.length ? "未找到匹配的流" : "当前没有活跃的流"}</span>
                     </div>
                   </td>
                 </tr>
@@ -283,18 +392,16 @@ export default function Streams() {
         <div className="modal-card">
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
             <div>
-              <h3 className="font-semibold">{preview?.title ?? "流预览"}</h3>
+              <h3 className="font-semibold">{preview?.name ?? "流预览"}</h3>
               <p className="text-xs text-stone-500 mt-0.5 font-mono">
-                {preview ? `${preview.app}/${preview.name} · ${preview.proto}` : "—"}
+                {preview ? `${preview.app}/${preview.name} · ${preview.publisher?.protocol.toUpperCase() ?? "—"}` : "—"}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {preview?.status === "online" && (
-                <span className="badge badge-success">
-                  <span className="dot-live" style={{ width: 6, height: 6 }} />
-                  &nbsp;推流中
-                </span>
-              )}
+              <span className="badge badge-success">
+                <span className="dot-live" style={{ width: 6, height: 6 }} />
+                &nbsp;推流中
+              </span>
               <button className="btn btn-ghost btn-icon" title="关闭" onClick={() => setPreview(null)}>
                 <Icon name="x" className="w-4 h-4" />
               </button>
@@ -304,7 +411,7 @@ export default function Streams() {
             <img
               className="w-full aspect-video object-cover opacity-70"
               alt="stream preview"
-              src={preview ? posterUrl(preview) : undefined}
+              src={preview ? posterUrl(preview.app) : undefined}
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div
@@ -317,18 +424,16 @@ export default function Streams() {
             <div className="absolute bottom-0 inset-x-0 px-4 py-3 bg-linear-to-t from-neutral-950/90 to-transparent flex items-center justify-between text-xs text-white">
               <div className="flex items-center gap-4">
                 <span className="tabular-nums">
-                  {preview?.bitrate ? `${(preview.bitrate / 1000).toFixed(2)} Mbps` : "—"}
+                  {preview && avgBitrateMbps(preview, tick) ? `${avgBitrateMbps(preview, tick).toFixed(2)} Mbps` : "—"}
                 </span>
-                <span className="tabular-nums">{preview ? `${fmtNum(preview.viewers)} 观众` : "—"}</span>
+                <span className="tabular-nums">{preview ? `${fmtNum(preview.subscribers)} 观众` : "—"}</span>
               </div>
-              <span className="tabular-nums">
-                {preview ? `${preview.res} · ${preview.fps}fps · ${preview.codec}` : "—"}
-              </span>
+              <span className="tabular-nums">{preview ? `${videoInfo(preview).res} · ${videoInfo(preview).codec}` : "—"}</span>
             </div>
           </div>
           <div className="px-5 py-3 bg-stone-50 border-t border-stone-200 text-xs text-stone-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <span>HTTP-FLV 播放地址</span>
-            <code className="text-stone-600">{preview ? `http://demo.nms.io:8000/live/${preview.name}.flv` : "—"}</code>
+            <code className="text-stone-600">{preview ? `${window.location.origin}${preview.key}.flv` : "—"}</code>
           </div>
         </div>
       </div>

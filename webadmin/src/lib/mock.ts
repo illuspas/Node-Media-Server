@@ -113,6 +113,6 @@ const POSTER_CAT: Record<string, string> = {
   live: "technology"
 };
 
-export function posterUrl(s: Stream): string {
-  return `http://static.photos/${POSTER_CAT[s.app] || "technology"}/640x360/${rndInt(1, 999)}`;
+export function posterUrl(app: string): string {
+  return `http://static.photos/${POSTER_CAT[app] || "technology"}/640x360/${rndInt(1, 999)}`;
 }

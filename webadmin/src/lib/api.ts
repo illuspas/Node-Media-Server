@@ -166,3 +166,40 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
   }
   return body.data;
 }
+
+/* ---------------- streams & sessions ---------------- */
+
+export interface ApiPublisher {
+  id: string;
+  ip: string;
+  protocol: string;
+  createTime: number;
+  /** FLV codec id (7 = H.264) or enhanced-RTMP fourcc ("hvc1", "av01", "vp09"). */
+  videoCodec: number | string;
+  videoWidth: number;
+  videoHeight: number;
+  videoFramerate: number;
+  audioCodec: number | string;
+  audioChannels: number;
+  audioSamplerate: number;
+  /** Cumulative bytes received from the publisher. */
+  inBytes: number;
+}
+
+export interface ApiStream {
+  key: string;
+  app: string;
+  name: string;
+  publisher: ApiPublisher | null;
+  subscribers: number;
+}
+
+/** List all active streams (see docs/api.md GET /api/v1/streams). */
+export function fetchStreams(): Promise<ApiStream[]> {
+  return apiFetch<{ streams: ApiStream[]; total: number }>("/streams").then(d => d.streams ?? []);
+}
+
+/** Terminate a session by id (see docs/api.md DELETE /api/v1/sessions/{id}). */
+export function deleteSession(id: string): Promise<void> {
+  return apiFetch(`/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }).then(() => undefined);
+}
