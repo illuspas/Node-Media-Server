@@ -6,7 +6,6 @@
 //
 //  LightweightStore — zero-dependency JSON document store.
 //
-//  Design (see docs/lightweight-store.md):
 //  - reads and writes hit an in-memory Map (read-your-writes, zero read IO);
 //  - mutations only mark the touched collection partitions dirty;
 //  - a scheduler flushes dirty partitions to disk, so N writes within one

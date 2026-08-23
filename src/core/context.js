@@ -7,12 +7,34 @@
 
 const EventEmitter = require("node:events");
 
+/**
+ * @typedef {import("../store/lightweight_store.js")} LightweightStore
+ */
+
+/**
+ * @typedef {import("../server/relay_manager.js")} RelayManager
+ */
+
 const Context = {
   config: {},
 
   sessions: new Map(),
 
   broadcasts: new Map(),
+
+  /**
+   * Persistent JSON store (relay tasks, record metadata, stream history).
+   * Assigned by the NodeMediaServer constructor once the store is created.
+   * @type {LightweightStore | null}
+   */
+  store: null,
+
+  /**
+   * Relay task manager, exposed for API access.
+   * Assigned by the NodeMediaServer constructor.
+   * @type {RelayManager | null}
+   */
+  relayManager: null,
 
   /**
    * Cumulative streaming network traffic (bytes) over the process lifetime.
