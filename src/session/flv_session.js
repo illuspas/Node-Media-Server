@@ -62,7 +62,7 @@ class FlvSession extends BaseSession {
     }
 
     /**@type {BroadcastServer} */
-    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
   }
 

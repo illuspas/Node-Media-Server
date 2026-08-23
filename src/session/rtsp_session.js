@@ -240,7 +240,7 @@ class RtspSession extends BaseSession {
    * Register this session to the broadcast system.
    */
   registerBroadcast = () => {
-    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
     Context.sessions.set(this.id, this);
 

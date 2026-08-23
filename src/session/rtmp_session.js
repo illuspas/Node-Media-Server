@@ -30,7 +30,8 @@ class RtmpSession extends BaseSession {
     this.ip = socket.remoteAddress + ":" + socket.remotePort;
     this.protocol = "rtmp";
     this.rtmp = new Rtmp();
-    this.broadcast = new BroadcastServer();
+    // placeholder until onConnect resolves the stream path; never registered in Context.broadcasts
+    this.broadcast = new BroadcastServer("");
   }
 
   run = () => {
@@ -63,7 +64,7 @@ class RtmpSession extends BaseSession {
     this.streamHost = req.host;
     this.streamPath = "/" + req.app + "/" + req.name;
     this.streamQuery = req.query;
-    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
   };
 

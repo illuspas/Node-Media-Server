@@ -110,7 +110,7 @@ test("pull session registers as publisher and broadcasts remote packets", async 
 test("push session subscribes to an existing local broadcast", async () => {
   const { server, url } = await createFakeRtmpServer();
   const streamPath = "/test/source";
-  const broadcast = new BroadcastServer();
+  const broadcast = new BroadcastServer(streamPath);
   const publisher = { id: "local-publisher" };
   broadcast.publisher = publisher;
   Context.broadcasts.set(streamPath, broadcast);

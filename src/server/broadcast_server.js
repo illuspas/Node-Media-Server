@@ -15,7 +15,13 @@ const logger = require("../core/logger.js");
 const { decodeAmf0Data } = require("../protocol/amf.js");
 
 class BroadcastServer {
-  constructor() {
+  /**
+   * @param {string} streamPath - Stream path this broadcast serves
+   */
+  constructor(streamPath) {
+    /** @type {string} */
+    this.streamPath = streamPath;
+
     /** @type {BaseSession | null} */
     this.publisher = null;
 
@@ -145,6 +151,7 @@ class BroadcastServer {
       Context.eventEmitter.emit("donePlay", session);
     }
     this.subscribers.delete(session.id);
+    this._destroyIfEmpty();
   };
 
   /**
@@ -185,6 +192,18 @@ class BroadcastServer {
       this.rtmpVideoHeader = null;
       this.flvGopCache?.clear();
       this.rtmpGopCache?.clear();
+      this._destroyIfEmpty();
+    }
+  };
+
+  /**
+   * Subscribers may stay attached across publish gaps waiting for a new publisher,
+   * so the broadcast is removed from Context.broadcasts only once it is fully empty.
+   */
+  _destroyIfEmpty = () => {
+    if (this.publisher === null && this.subscribers.size === 0 &&
+      Context.broadcasts.get(this.streamPath) === this) {
+      Context.broadcasts.delete(this.streamPath);
     }
   };
 

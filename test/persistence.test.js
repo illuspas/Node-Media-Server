@@ -166,7 +166,7 @@ test("history records publishers only; playCount is counted in memory per publis
   const historyServer = new NodeHistoryServer();
   historyServer.run();
 
-  const broadcast = new BroadcastServer();
+  const broadcast = new BroadcastServer("/live/a");
   Context.broadcasts.set("/live/a", broadcast);
 
   const base = {

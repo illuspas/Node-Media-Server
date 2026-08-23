@@ -33,7 +33,7 @@ class NodeRecordSession extends BaseSession {
     this.publisherId = session.id;
     this.fileStream = this.createWriteStreamWithDirsSync(filePath);
     /**@type {BroadcastServer} */
-    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
+    this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
   }
 
