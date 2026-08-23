@@ -10,7 +10,7 @@ export default defineConfig({
     // by the media server itself, so /api is same-origin.
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: process.env.NMS_API_TARGET || "http://localhost:8000",
         changeOrigin: true
       }
     }

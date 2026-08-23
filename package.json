@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "npx eslint;node bin/app.js",
     "start": "node bin/app.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "benchmark": "node --expose-gc benchmark/store.bench.js"
   },
   "keywords": [
     "rtmp",

@@ -15,6 +15,8 @@ const StreamsHandler = require("../api/handlers/streams.js");
 const SessionsHandler = require("../api/handlers/sessions.js");
 const StatsHandler = require("../api/handlers/stats.js");
 const RelayHandler = require("../api/handlers/relay.js");
+const RecordsHandler = require("../api/handlers/records.js");
+const HistoryHandler = require("../api/handlers/history.js");
 
 class ApiRouter {
   constructor() {
@@ -51,6 +53,15 @@ class ApiRouter {
     this.router.get("/relay/:streamPath", RelayHandler.getTaskStatus);
     this.router.post("/relay", RelayHandler.addPull);
     this.router.delete("/relay", RelayHandler.removePull);
+
+    // Recording metadata (persisted by the record server)
+    this.router.get("/records", RecordsHandler.listRecords);
+    this.router.get("/records/:id", RecordsHandler.getRecord);
+    this.router.delete("/records/:id", RecordsHandler.deleteRecord);
+
+    // Session history (publish/play), capped by store.maxHistory
+    this.router.get("/history", HistoryHandler.listHistory);
+    this.router.delete("/history", HistoryHandler.deleteHistory);
   }
 }
 

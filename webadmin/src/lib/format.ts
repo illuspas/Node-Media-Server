@@ -13,11 +13,12 @@ export function fmtNum(n: number): string {
   return Number(n).toLocaleString("zh-CN");
 }
 
-/** Format seconds as h:mm:ss / m:ss. */
+/** Format seconds as h:mm:ss / m:ss. Non-finite input formats as zero. */
 export function fmtDur(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.floor(sec % 60);
+  const total = Number.isFinite(sec) && sec > 0 ? sec : 0;
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = Math.floor(total % 60);
   const mm = String(m).padStart(2, "0");
   const ss = String(s).padStart(2, "0");
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
@@ -25,12 +26,13 @@ export function fmtDur(sec: number): string {
 
 /** Long-form duration for status lines: "3 天 4 小时" / "2 小时 15 分钟" / m:ss. */
 export function fmtDurLong(sec: number): string {
-  const days = Math.floor(sec / 86400);
-  const hours = Math.floor((sec % 86400) / 3600);
-  const mins = Math.floor((sec % 3600) / 60);
+  const total = Number.isFinite(sec) && sec > 0 ? sec : 0;
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const mins = Math.floor((total % 3600) / 60);
   if (days > 0) return `${days} 天 ${hours} 小时`;
   if (hours > 0) return `${hours} 小时 ${mins} 分钟`;
-  return fmtDur(sec);
+  return fmtDur(total);
 }
 
 /** Current local time as HH:mm. */

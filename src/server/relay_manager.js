@@ -6,11 +6,14 @@
 //
 
 const logger = require("../core/logger.js");
+const Context = require("../core/context.js");
 const RtspSession = require("../session/rtsp_session.js");
 const RtmpClientSession = require("../session/rtmp_client_session.js");
 
 /**
  * Relay Manager — manages RTSP and RTMP relay tasks.
+ * Tasks created via API are persisted in the store ("relay_tasks" collection)
+ * and restored automatically on restart.
  * @class
  */
 class RelayManager {
@@ -27,7 +30,7 @@ class RelayManager {
   // ─────────────────────────────────────────
 
   /**
-   * Start the relay manager.
+   * Start the relay manager and restore persisted tasks.
    * All tasks are managed via API — no config-driven static tasks.
    */
   run = () => {
@@ -37,7 +40,50 @@ class RelayManager {
     }
 
     this.isRunning = true;
+    this._restoreTasks();
     logger.info("RelayManager started (API-driven mode)");
+  };
+
+  /**
+   * Re-create relay tasks persisted by a previous run.
+   * @returns {void}
+   */
+  _restoreTasks = () => {
+    const store = Context.store;
+    if (!store?.opened) {
+      return;
+    }
+    const persisted = store.collection("relay_tasks").all();
+    if (persisted.length === 0) {
+      return;
+    }
+    logger.info(`RelayManager restoring ${persisted.length} persisted task(s)`);
+    for (const doc of persisted) {
+      try {
+        this.addTask(doc.config);
+      } catch (error) {
+        logger.error(`RelayManager restore task ${doc.id} failed: ${error.message}`);
+      }
+    }
+  };
+
+  /**
+   * Persist or drop a task config so task state survives restarts.
+   * @param {string} taskKey
+   * @param {object|null} config - Null removes the persisted task.
+   * @returns {void}
+   */
+  _persistTask = (taskKey, config) => {
+    const store = Context.store;
+    if (!store?.opened) {
+      return;
+    }
+    const relayTasks = store.collection("relay_tasks");
+    if (config === null) {
+      relayTasks.delete(taskKey);
+    } else {
+      relayTasks.set(taskKey, { config });
+    }
   };
 
   /**
@@ -114,6 +160,7 @@ class RelayManager {
       : new RtmpClientSession(sessionConfig);
     session.taskKey = taskKey;
     this.tasks.set(taskKey, session);
+    this._persistTask(taskKey, sessionConfig);
 
     // Start the session
     session.run().catch((error) => {
@@ -138,6 +185,7 @@ class RelayManager {
     logger.info(`RelayManager removing task: ${taskKey}`);
     session.close();
     this.tasks.delete(taskKey);
+    this._persistTask(taskKey, null);
     return true;
   };
 

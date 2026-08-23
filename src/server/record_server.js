@@ -30,7 +30,49 @@ class NodeRecordServer {
         let sess = new NodeRecordSession(session, filePath);
         sess.run();
       });
+      this._trackRecords();
     }
+  }
+
+  /**
+   * Persist recording metadata (files, duration, size) into the store's
+   * "records" collection so the webadmin can list and delete recordings.
+   * @returns {void}
+   */
+  _trackRecords() {
+    const store = Context.store;
+    if (!store) {
+      return;
+    }
+    Context.eventEmitter.on("postRecord", (session) => {
+      const records = store.collection("records");
+      records.set(session.id, {
+        streamPath: session.streamPath,
+        app: session.streamApp,
+        name: session.streamName,
+        filePath: session.filePath,
+        publisherId: session.publisherId,
+        startTime: session.createTime,
+        endTime: 0,
+        duration: 0,
+        size: 0,
+        status: "recording"
+      });
+    });
+    Context.eventEmitter.on("doneRecord", (session) => {
+      const records = store.collection("records");
+      const doc = records.get(session.id);
+      if (!doc || doc.status === "done") {
+        return;
+      }
+      const endTime = session.endTime || Date.now();
+      records.update(session.id, {
+        status: "done",
+        endTime,
+        duration: Math.max(0, endTime - session.createTime),
+        size: session.outBytes
+      });
+    });
   }
 
 };

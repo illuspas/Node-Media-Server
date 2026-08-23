@@ -30,6 +30,7 @@ class NodeRecordSession extends BaseSession {
     this.streamName = session.streamName;
     this.streamPath = session.streamPath;
     this.filePath = filePath;
+    this.publisherId = session.id;
     this.fileStream = this.createWriteStreamWithDirsSync(filePath);
     /**@type {BroadcastServer} */
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer();
@@ -50,14 +51,18 @@ class NodeRecordSession extends BaseSession {
     this.broadcast.postPlay(this);
     logger.info(`Record session ${this.id} ${this.streamPath} start record ${this.filePath}`);
     Context.eventEmitter.emit("postRecord", this);
-    Context.eventEmitter.on("donePublish", (session) => {
-      if (session.streamPath === this.streamPath) {
-        this.fileStream.close();
-        this.broadcast.donePlay(this);
-        logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
-        Context.eventEmitter.emit("doneRecord", this);
+    const onDonePublish = (session) => {
+      if (session.streamPath !== this.streamPath) {
+        return;
       }
-    });
+      // each record session closes exactly once, on its own publish cycle
+      Context.eventEmitter.off("donePublish", onDonePublish);
+      this.fileStream.close();
+      this.broadcast.donePlay(this);
+      logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
+      Context.eventEmitter.emit("doneRecord", this);
+    };
+    Context.eventEmitter.on("donePublish", onDonePublish);
   }
 
   /**

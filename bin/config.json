@@ -3,6 +3,10 @@
     "notify": {
         "url": ""
     },
+    "store": {
+        "path": "./data",
+        "maxHistory": 10000
+    },
     "auth": {
         "play": false,
         "publish": false,

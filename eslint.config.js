@@ -7,6 +7,7 @@ const jsdoc = require("eslint-plugin-jsdoc");
 module.exports = [
   pluginJs.configs.recommended,
   jsdoc.configs["flat/recommended"],
+  { ignores: ["webadmin/dist/**", "webadmin/node_modules/**"] },
   { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
   {
     languageOptions: { globals: globals.node },

@@ -115,6 +115,11 @@ Requests with a missing or invalid token receive:
 | GET      | /api/v1/relay/:streamPath | Get status of a specific relay task           | Yes  |
 | POST     | /api/v1/relay             | Add a relay (pull/push) task                  | Yes  |
 | DELETE   | /api/v1/relay             | Remove a relay task                           | Yes  |
+| GET      | /api/v1/records           | List recording metadata (persisted)           | Yes  |
+| GET      | /api/v1/records/:id       | Get one recording                             | Yes  |
+| DELETE   | /api/v1/records/:id       | Delete a recording (?file=true also deletes the flv file) | Yes |
+| GET      | /api/v1/history           | List persisted publish/play history           | Yes  |
+| DELETE   | /api/v1/history           | Clear history (?streamPath= limits the scope) | Yes  |
 
 ### Health Check
 
@@ -343,11 +348,55 @@ Content-Type: application/json
 
 For push tasks, pass either the full task key (`taskKey: "push:rtmp://dest/live/stream"`) or `mode: "push"` together with `url`. Returns 404 if the task does not exist.
 
+Relay tasks are persisted in the lightweight store (`store.path`, default `./data/relay_tasks.json`) and restored automatically on restart.
+
+### Recordings
+
+**List recordings**
+
+```bash
+GET /api/v1/records?status=done&streamPath=/live/camera1&page=1&pageSize=20
+```
+
+Query params: `status` (`recording` | `done`), `streamPath`, `page` (1-based), `pageSize` (max 100). Response `data` is a page object: `{ items, count, page, pageSize, totalDuration, totalSize }`, where each item contains `id, streamPath, app, name, filePath, publisherId, startTime, endTime, duration (ms), size (bytes), status` and `count`/aggregates cover the whole filter.
+
+**Delete a recording**
+
+```bash
+DELETE /api/v1/records/<id>         # remove the metadata entry only
+DELETE /api/v1/records/<id>?file=true  # also delete the flv file on disk
+```
+
+Deleting the file is only allowed for paths inside the configured `record.path`. Recordings currently in progress (status `recording`) are protected with 409 — kick the publisher session (`publisherId`) instead.
+
+### Session History
+
+Publish history only: plays are not stored as individual rows. Each play increments the stream's cumulative counter (persisted), and every publish entry carries that stream's `playCount` (历史播放量) as of the moment the publish ended.
+
+**List history**
+
+```bash
+GET /api/v1/history?streamPath=/live/camera1&ip=1.2.3.4&page=1&pageSize=20
+```
+
+Query params: `streamPath`, `ip`, `protocol`, `page`, `pageSize`. Response `data` is a page object: `{ items, count, page, pageSize }`; each item contains `id, protocol, streamPath, app, name, ip, startTime, endTime, duration, inBytes, outBytes, playCount`. History is capped at `store.maxHistory` publish entries (default 10000, oldest evicted first).
+
+**Clear history**
+
+```bash
+DELETE /api/v1/history                   # clear everything (resets all play counters)
+DELETE /api/v1/history?streamPath=/live/camera1  # clear one stream's history and its play counter
+```
+
 ## Configuration
 
 The API system is configured through the `auth.jwt` section of the configuration file (e.g. `bin/config.json`):
 
 ```json
+"store": {
+    "path": "./data",
+    "maxHistory": 10000
+},
 "auth": {
     "play": false,
     "publish": false,

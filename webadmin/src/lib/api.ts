@@ -261,6 +261,99 @@ export function removeRelayTask(taskKey: string): Promise<void> {
   return apiFetch("/relay", { method: "DELETE", body: JSON.stringify({ taskKey }) }).then(() => undefined);
 }
 
+/* ---------------- records ---------------- */
+
+/** Recording metadata persisted by the record server (GET /api/v1/records). */
+export interface ApiRecord {
+  id: string;
+  streamPath: string;
+  app: string;
+  name: string;
+  filePath: string;
+  /** Publisher session id, usable with DELETE /api/v1/sessions/{id} to stop recording. */
+  publisherId?: string;
+  startTime: number;
+  endTime: number;
+  /** Milliseconds. */
+  duration: number;
+  /** Bytes written. */
+  size: number;
+  status: "recording" | "done";
+}
+
+export interface RecordsPage {
+  items: ApiRecord[];
+  count: number;
+  page: number;
+  pageSize: number;
+  totalDuration: number;
+  totalSize: number;
+}
+
+export interface RecordsQuery {
+  streamPath?: string;
+  status?: "recording" | "done";
+  page?: number;
+  pageSize?: number;
+}
+
+/** List recordings, newest first (see GET /api/v1/records). */
+export function fetchRecords(query: RecordsQuery = {}): Promise<RecordsPage> {
+  const qs = new URLSearchParams();
+  if (query.streamPath) qs.set("streamPath", query.streamPath);
+  if (query.status) qs.set("status", query.status);
+  qs.set("page", String(query.page ?? 1));
+  qs.set("pageSize", String(query.pageSize ?? 20));
+  return apiFetch<RecordsPage>(`/records?${qs.toString()}`);
+}
+
+/** Delete a recording entry; also deletes the flv file when file=true. */
+export function deleteRecord(id: string, file = false): Promise<void> {
+  return apiFetch(`/records/${encodeURIComponent(id)}${file ? "?file=true" : ""}`, {
+    method: "DELETE"
+  }).then(() => undefined);
+}
+
+/* ---------------- history ---------------- */
+
+export interface ApiHistoryEntry {
+  id: string;
+  protocol: string;
+  streamPath: string;
+  app: string;
+  name: string;
+  ip: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  inBytes: number;
+  outBytes: number;
+  /** Cumulative play count for this stream path, snapshotted at publish end. */
+  playCount: number;
+}
+
+export interface HistoryPage {
+  items: ApiHistoryEntry[];
+  count: number;
+  page: number;
+  pageSize: number;
+}
+
+/** List persisted publish history (see GET /api/v1/history). */
+export function fetchHistory(query: {
+  streamPath?: string;
+  ip?: string;
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<HistoryPage> {
+  const qs = new URLSearchParams();
+  if (query.streamPath) qs.set("streamPath", query.streamPath);
+  if (query.ip) qs.set("ip", query.ip);
+  qs.set("page", String(query.page ?? 1));
+  qs.set("pageSize", String(query.pageSize ?? 20));
+  return apiFetch<HistoryPage>(`/history?${qs.toString()}`);
+}
+
 /* ---------------- stats ---------------- */
 
 export interface ApiStats {
