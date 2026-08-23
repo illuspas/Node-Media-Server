@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
 import { login } from "../lib/api";
 
@@ -8,20 +9,22 @@ interface LoginProps {
 }
 
 export default function Login({ onLoggedIn }: LoginProps) {
+  const { formatMessage } = useIntl();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const pageTitle = formatMessage({ id: "login.pageTitle" });
   useEffect(() => {
-    document.title = "登录 · NMS Console";
-  }, []);
+    document.title = `${pageTitle} · NMS Console`;
+  }, [pageTitle]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username.trim() || !password) {
-      setError("请输入用户名和密码");
+      setError(formatMessage({ id: "login.errRequired" }));
       return;
     }
     setBusy(true);
@@ -30,7 +33,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
       const { token, username: name } = await login(username.trim(), password);
       onLoggedIn(token, name);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "登录失败，请稍后重试");
+      setError(err instanceof Error ? err.message : formatMessage({ id: "login.errFailed" }));
     } finally {
       setBusy(false);
     }
@@ -45,7 +48,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
             <Icon name="radio" />
           </div>
           <h1 className="text-xl font-bold tracking-tight mt-3">NMS Console</h1>
-          <p className="text-sm text-stone-500 mt-1">Node-Media-Server 管理控制台</p>
+          <p className="text-sm text-stone-500 mt-1">{formatMessage({ id: "login.subtitle" })}</p>
         </div>
 
         <form className="card p-6 space-y-4" onSubmit={onSubmit}>
@@ -60,7 +63,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
           )}
 
           <div>
-            <label className="label" htmlFor="login-username">用户名</label>
+            <label className="label" htmlFor="login-username">{formatMessage({ id: "login.username" })}</label>
             <div className="relative">
               <Icon name="user" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <input
@@ -79,7 +82,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
           </div>
 
           <div>
-            <label className="label" htmlFor="login-password">密码</label>
+            <label className="label" htmlFor="login-password">{formatMessage({ id: "login.password" })}</label>
             <div className="relative">
               <Icon name="lock" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <input
@@ -88,7 +91,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
                 style={{ paddingLeft: "2.25rem", paddingRight: "2.5rem" }}
                 type={showPwd ? "text" : "password"}
                 autoComplete="current-password"
-                placeholder="请输入密码"
+                placeholder={formatMessage({ id: "login.passwordPlaceholder" })}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={busy}
@@ -96,7 +99,7 @@ export default function Login({ onLoggedIn }: LoginProps) {
               <button
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
-                title={showPwd ? "隐藏密码" : "显示密码"}
+                title={formatMessage({ id: showPwd ? "login.hidePassword" : "login.showPassword" })}
                 onClick={() => setShowPwd(v => !v)}
                 tabIndex={-1}
               >
@@ -112,19 +115,19 @@ export default function Login({ onLoggedIn }: LoginProps) {
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity=".25" />
                   <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
-                正在验证…
+                {formatMessage({ id: "login.verifying" })}
               </>
             ) : (
               <>
                 <Icon name="log-in" />
-                登 录
+                {formatMessage({ id: "login.submit" })}
               </>
             )}
           </button>
 
           <p className="help flex items-center gap-1.5">
             <Icon name="shield" className="w-3.5 h-3.5 shrink-0" />
-            采用挑战-响应（HMAC-SHA256）机制，密码不会以明文形式传输
+            {formatMessage({ id: "login.securityNote" })}
           </p>
         </form>
 

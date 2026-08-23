@@ -1,3 +1,5 @@
+import { getLocale, t } from "../i18n";
+
 /** Random float in [min, max). */
 export function rnd(min: number, max: number): number {
   return Math.random() * (max - min) + min;
@@ -24,15 +26,20 @@ export function fmtDur(sec: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
 }
 
-/** Long-form duration for status lines: "3 天 4 小时" / "2 小时 15 分钟" / m:ss. */
+/** Long-form duration for status lines: "3 天 4 小时" / "3 d 4 h" / m:ss. */
 export function fmtDurLong(sec: number): string {
   const total = Number.isFinite(sec) && sec > 0 ? sec : 0;
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const mins = Math.floor((total % 3600) / 60);
-  if (days > 0) return `${days} 天 ${hours} 小时`;
-  if (hours > 0) return `${hours} 小时 ${mins} 分钟`;
+  if (days > 0) return `${days} ${t("time.day")} ${hours} ${t("time.hour")}`;
+  if (hours > 0) return `${hours} ${t("time.hour")} ${mins} ${t("time.minute")}`;
   return fmtDur(total);
+}
+
+/** Locale-aware date-time string following the active UI locale. */
+export function fmtDateTime(ms: number): string {
+  return new Date(ms).toLocaleString(getLocale() === "zh-CN" ? "zh-CN" : "en-US", { hour12: false });
 }
 
 /** Current local time as HH:mm. */

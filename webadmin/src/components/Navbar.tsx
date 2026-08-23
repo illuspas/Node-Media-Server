@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useIntl } from "react-intl";
 import Icon from "./Icon";
 import { toast } from "../lib/toast";
+import { LOCALES, localeStore } from "../i18n";
 
 interface NavbarProps {
   title: string;
@@ -9,18 +11,23 @@ interface NavbarProps {
   onLogout: () => void;
 }
 
-const MENU_ITEMS: { msg: string; label: string }[] = [
-  { msg: "个人资料（演示功能）", label: "个人资料" },
-  { msg: "已切换到只读模式（演示）", label: "只读模式" }
+const MENU_ITEMS: { msgId: string; labelId: string }[] = [
+  { msgId: "navbar.profileToast", labelId: "navbar.profile" },
+  { msgId: "navbar.readonlyToast", labelId: "navbar.readonly" }
 ];
 
 export default function Navbar({ title, username, onMenuClick, onLogout }: NavbarProps) {
+  const { formatMessage, locale } = useIntl();
   const [userOpen, setUserOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+      const target = e.target as Node;
+      if (userRef.current && !userRef.current.contains(target)) setUserOpen(false);
+      if (langRef.current && !langRef.current.contains(target)) setLangOpen(false);
     };
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
@@ -29,7 +36,7 @@ export default function Navbar({ title, username, onMenuClick, onLogout }: Navba
   return (
     <header className="nb-header">
       <div className="nb-left">
-        <button className="nb-icon-btn" title="菜单" onClick={onMenuClick}>
+        <button className="nb-icon-btn" title={formatMessage({ id: "navbar.menu" })} onClick={onMenuClick}>
           <Icon name="menu" />
         </button>
         <div className="nb-sep" />
@@ -40,11 +47,11 @@ export default function Navbar({ title, username, onMenuClick, onLogout }: Navba
           <Icon name="search" />
           <input
             type="text"
-            placeholder="搜索流、任务、录像…"
+            placeholder={formatMessage({ id: "navbar.searchPlaceholder" })}
             onKeyDown={e => {
               const value = (e.target as HTMLInputElement).value.trim();
               if (e.key === "Enter" && value) {
-                toast(`正在搜索“${value}”（演示）`);
+                toast(formatMessage({ id: "navbar.searchToast" }, { value }));
                 (e.target as HTMLInputElement).value = "";
               }
             }}
@@ -52,12 +59,38 @@ export default function Navbar({ title, username, onMenuClick, onLogout }: Navba
         </div>
         <button
           className="nb-icon-btn"
-          title="通知"
-          onClick={() => toast("您有 3 条未读告警", "warning")}
+          title={formatMessage({ id: "navbar.notifications" })}
+          onClick={() => toast(formatMessage({ id: "navbar.notificationToast" }), "warning")}
         >
           <Icon name="bell" />
           <span className="nb-noti-dot" />
         </button>
+        <div ref={langRef} className={langOpen ? "nb-lang open" : "nb-lang"}>
+          <button
+            className="nb-icon-btn"
+            title={formatMessage({ id: "navbar.language" })}
+            aria-haspopup="menu"
+            aria-expanded={langOpen}
+            onClick={() => setLangOpen(v => !v)}
+          >
+            <Icon name="globe" />
+          </button>
+          <div className="nb-lang-menu">
+            {LOCALES.map(l => (
+              <button
+                key={l.value}
+                className={`nb-menu-item nb-lang-item ${l.value === locale ? "active" : ""}`}
+                onClick={() => {
+                  localeStore.set(l.value);
+                  setLangOpen(false);
+                }}
+              >
+                <span className="nb-lang-check">{l.value === locale && <Icon name="check" className="w-3.5 h-3.5" />}</span>
+                {l.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="nb-vsep" />
         <div
           ref={userRef}
@@ -78,20 +111,26 @@ export default function Navbar({ title, username, onMenuClick, onLogout }: Navba
             setUserOpen(v => !v);
           }}
         >
-          <div className="nb-avatar">{username ? username.charAt(0).toUpperCase() : "管"}</div>
+          <div className="nb-avatar">
+            {username ? username.charAt(0).toUpperCase() : formatMessage({ id: "navbar.avatarFallback" })}
+          </div>
           <div className="nb-meta">
-            <div className="name">{username || "管理员"}</div>
-            <div className="sub">已登录</div>
+            <div className="name">{username || formatMessage({ id: "navbar.admin" })}</div>
+            <div className="sub">{formatMessage({ id: "navbar.loggedIn" })}</div>
           </div>
           <Icon name="chevron-down" />
           <div className="nb-menu">
             {MENU_ITEMS.map(item => (
-              <button key={item.label} className="nb-menu-item" data-msg={item.msg}>
-                {item.label}
+              <button
+                key={item.labelId}
+                className="nb-menu-item"
+                data-msg={formatMessage({ id: item.msgId })}
+              >
+                {formatMessage({ id: item.labelId })}
               </button>
             ))}
             <div className="nb-menu-sep" />
-            <button className="nb-menu-item danger">退出登录</button>
+            <button className="nb-menu-item danger">{formatMessage({ id: "navbar.logout" })}</button>
           </div>
         </div>
       </div>

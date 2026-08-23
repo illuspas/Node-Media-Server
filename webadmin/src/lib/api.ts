@@ -3,6 +3,7 @@
  * Implements the two-step challenge-response login defined in docs/api.md
  * and attaches the JWT token to subsequent requests.
  */
+import { t } from "../i18n";
 
 const API_BASE = "/api/v1";
 const TOKEN_KEY = "nms_token";
@@ -69,14 +70,15 @@ async function hmacSha256Hex(password: string, challenge: string): Promise<strin
 /** Translate known server messages; fall back to the original text. */
 function friendlyMessage(message: string): string {
   const map: Record<string, string> = {
-    "Invalid username or password": "用户名或密码错误",
-    "Invalid or expired challenge": "登录质询已失效，请重试",
-    "Challenge expired": "登录质询已过期，请重试",
-    "Username is required": "请输入用户名",
-    "Challenge and response are required": "登录质询校验失败，请重试",
-    "JWT configuration not found": "服务端未配置认证信息"
+    "Invalid username or password": "api.err.invalidCredentials",
+    "Invalid or expired challenge": "api.err.invalidChallenge",
+    "Challenge expired": "api.err.challengeExpired",
+    "Username is required": "api.err.usernameRequired",
+    "Challenge and response are required": "api.err.challengeResponse",
+    "JWT configuration not found": "api.err.noJwt"
   };
-  return map[message] ?? message;
+  const id = map[message];
+  return id ? t(id) : message;
 }
 
 /**
@@ -95,12 +97,12 @@ export async function login(username: string, password: string): Promise<{ token
     });
     const body: ApiResponse<{ challenge: string }> = await res.json();
     if (!res.ok || !body.success) {
-      throw new ApiError(friendlyMessage(body.message || "无法获取登录质询"), res.status);
+      throw new ApiError(friendlyMessage(body.message || t("api.err.noChallenge")), res.status);
     }
     challenge = body.data.challenge;
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError("无法连接服务器，请确认媒体服务已启动", 0);
+    throw new ApiError(t("api.err.cannotConnect"), 0);
   }
 
   const response = await hmacSha256Hex(password, challenge);
@@ -113,12 +115,12 @@ export async function login(username: string, password: string): Promise<{ token
     });
     const body: ApiResponse<{ token: string; user: { username: string } }> = await res.json();
     if (!res.ok || !body.success) {
-      throw new ApiError(friendlyMessage(body.message || "登录失败"), res.status);
+      throw new ApiError(friendlyMessage(body.message || t("api.err.loginFailed")), res.status);
     }
     return { token: body.data.token, username: body.data.user.username };
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError("登录请求中断，请重试", 0);
+    throw new ApiError(t("api.err.loginInterrupted"), 0);
   }
 }
 
@@ -144,7 +146,7 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
   try {
     res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError("无法连接服务器", 0);
+    throw new ApiError(t("api.err.offline"), 0);
   }
 
   const body: ApiResponse<T> = await res.json().catch(() => ({
@@ -158,11 +160,11 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     }
-    throw new ApiError("登录已过期，请重新登录", 401);
+    throw new ApiError(t("api.err.unauthorized"), 401);
   }
 
   if (!res.ok || !body.success) {
-    throw new ApiError(body.message || body.error || `请求失败 (${res.status})`, res.status);
+    throw new ApiError(body.message || body.error || t("api.err.requestFailed", { status: res.status }), res.status);
   }
   return body.data;
 }

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
 import { fetchRelayTasks, addRelayTask, removeRelayTask } from "../lib/api";
 import type { ApiRelayTask, RelayTaskInput } from "../lib/api";
 import { fmtBytes, fmtDur } from "../lib/format";
 import { toast } from "../lib/toast";
+import { t } from "../i18n";
 
 const POLL_INTERVAL = 5000;
 
@@ -27,19 +29,20 @@ const EMPTY_FORM: RelayForm = {
   maxReconnectAttempts: ""
 };
 
-/** Mirror the server-side validation in src/api/handlers/relay.js. */
+/** Mirror the server-side validation in src/api/handlers/relay.js.
+ *  Returns a message id for the first problem found, or null when valid. */
 function validateForm(form: RelayForm): string | null {
-  if (!form.url.trim()) return "请填写远端地址";
+  if (!form.url.trim()) return "relay.validate.urlRequired";
   let parsed: URL;
   try {
     parsed = new URL(form.url.trim());
   } catch {
-    return "远端地址格式无效";
+    return "relay.validate.urlInvalid";
   }
-  if (parsed.protocol !== "rtsp:" && parsed.protocol !== "rtmp:") return "仅支持 rtsp:// 或 rtmp:// 地址";
-  if (form.mode === "push" && parsed.protocol !== "rtmp:") return "推流转发仅支持 RTMP 地址";
-  if (!form.streamPath.trim()) return "请填写本机流路径";
-  if (!form.streamPath.trim().startsWith("/")) return "本机流路径需以 / 开头，如 /live/camera1";
+  if (parsed.protocol !== "rtsp:" && parsed.protocol !== "rtmp:") return "relay.validate.scheme";
+  if (form.mode === "push" && parsed.protocol !== "rtmp:") return "relay.validate.pushRtmpOnly";
+  if (!form.streamPath.trim()) return "relay.validate.pathRequired";
+  if (!form.streamPath.trim().startsWith("/")) return "relay.validate.pathSlash";
   return null;
 }
 
@@ -58,6 +61,7 @@ function taskDuration(t: ApiRelayTask, now: number): number {
 }
 
 export default function Relay() {
+  const { formatMessage } = useIntl();
   const [tasks, setTasks] = useState<ApiRelayTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +76,7 @@ export default function Relay() {
       setTasks(await fetchRelayTasks());
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "加载转发任务失败");
+      setError(e instanceof Error ? e.message : t("relay.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -98,7 +102,7 @@ export default function Relay() {
     e.preventDefault();
     const problem = validateForm(form);
     if (problem) {
-      toast(problem, "warning");
+      toast(formatMessage({ id: problem }), "warning");
       return;
     }
     setSubmitting(true);
@@ -115,26 +119,26 @@ export default function Relay() {
     };
     try {
       await addRelayTask(input);
-      toast(`转发任务创建成功：${input.streamPath}`);
+      toast(formatMessage({ id: "relay.toastCreated" }, { path: input.streamPath }));
       setForm(f => ({ ...EMPTY_FORM, mode: f.mode }));
       await load(true);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "创建转发任务失败", "danger");
+      toast(err instanceof Error ? err.message : t("relay.toastCreateFailed"), "danger");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const remove = async (t: ApiRelayTask) => {
-    const key = t.taskKey;
+  const remove = async (task: ApiRelayTask) => {
+    const key = task.taskKey;
     if (!key || deleting) return;
     setDeleting(key);
     try {
       await removeRelayTask(key);
-      toast(`转发任务已删除：${t.streamPath}`, "danger");
+      toast(formatMessage({ id: "relay.toastDeleted" }, { path: task.streamPath }), "danger");
       await load(true);
     } catch (err) {
-      toast(err instanceof Error ? err.message : "删除任务失败", "danger");
+      toast(err instanceof Error ? err.message : t("relay.toastDeleteFailed"), "danger");
     } finally {
       setDeleting(null);
     }
@@ -142,18 +146,18 @@ export default function Relay() {
 
   // reconnectAttempts reset to 0 on every successful connect, so a non-zero
   // value means the task is in a reconnect cycle right now.
-  const running = tasks.filter(t => t.isRunning && t.reconnectAttempts === 0).length;
-  const totalBytes = tasks.reduce((a, t) => a + t.inBytes + t.outBytes, 0);
+  const running = tasks.filter(task => task.isRunning && task.reconnectAttempts === 0).length;
+  const totalBytes = tasks.reduce((a, task) => a + task.inBytes + task.outBytes, 0);
 
-  const urlLabel = form.mode === "push" ? "RTMP 推流地址" : "RTSP / RTMP 源地址";
+  const urlLabel = formatMessage({ id: form.mode === "push" ? "relay.urlLabelPush" : "relay.urlLabelPull" });
   const urlPlaceholder = form.mode === "push" ? "rtmp://cdn.example.com/live/key" : "rtsp://camera.example.com:554/stream";
 
   return (
     <main className="p-4 md:p-6 max-w-[1440px] mx-auto space-y-4 md:space-y-6">
       {/* header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">流转发</h1>
-        <p className="text-sm text-stone-500 mt-1">将本机流推送到外部平台，或从远端源拉回流进行分发</p>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{formatMessage({ id: "nav.relay" })}</h1>
+        <p className="text-sm text-stone-500 mt-1">{formatMessage({ id: "relay.subtitle" })}</p>
       </div>
 
       {/* error banner */}
@@ -161,10 +165,10 @@ export default function Relay() {
         <div className="card flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-red-200 bg-red-50">
           <div className="flex items-center gap-2 text-sm text-red-700">
             <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
-            转发任务加载失败：{error}
+            {formatMessage({ id: "relay.errBanner" }, { error })}
           </div>
           <button className="btn btn-secondary btn-sm" onClick={() => load()}>
-            重试
+            {formatMessage({ id: "common.retry" })}
           </button>
         </div>
       )}
@@ -173,7 +177,7 @@ export default function Relay() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">运行中任务</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "relay.statRunning" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{running}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
@@ -182,7 +186,7 @@ export default function Relay() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">任务总数</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "relay.statTotal" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{tasks.length}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600">
@@ -191,7 +195,7 @@ export default function Relay() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">累计转发流量</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "relay.statTraffic" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtBytes(totalBytes)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600">
@@ -203,11 +207,11 @@ export default function Relay() {
       <div className="grid gap-4 md:gap-6 lg:grid-cols-3 items-start">
         {/* create form */}
         <form className="card p-5 lg:sticky lg:top-20" onSubmit={submit}>
-          <h3 className="font-semibold">新建转发任务</h3>
-          <p className="text-xs text-stone-500 mt-0.5 mb-5">配置一条 push 推流或 pull 拉流规则</p>
+          <h3 className="font-semibold">{formatMessage({ id: "relay.createTitle" })}</h3>
+          <p className="text-xs text-stone-500 mt-0.5 mb-5">{formatMessage({ id: "relay.createSubtitle" })}</p>
 
           <div className="mb-4">
-            <label className="label">任务类型</label>
+            <label className="label">{formatMessage({ id: "relay.taskType" })}</label>
             <div className="seg w-full">
               <button
                 type="button"
@@ -215,7 +219,7 @@ export default function Relay() {
                 onClick={() => setForm(f => ({ ...f, mode: "push" }))}
               >
                 <Icon name="corner-up-right" className="w-3.5 h-3.5" />
-                推流转发
+                {formatMessage({ id: "relay.push" })}
               </button>
               <button
                 type="button"
@@ -223,7 +227,7 @@ export default function Relay() {
                 onClick={() => setForm(f => ({ ...f, mode: "pull" }))}
               >
                 <Icon name="corner-down-left" className="w-3.5 h-3.5" />
-                拉流代理
+                {formatMessage({ id: "relay.pull" })}
               </button>
             </div>
           </div>
@@ -238,12 +242,12 @@ export default function Relay() {
               onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
             />
             <p className="help">
-              {form.mode === "push" ? "本机流将被推送到该 RTMP 地址" : "从该地址拉流并代理到本机；支持 RTSP（仅拉流）与 RTMP"}
+              {formatMessage({ id: form.mode === "push" ? "relay.helpPush" : "relay.helpPull" })}
             </p>
           </div>
 
           <div className="mb-2">
-            <label className="label" htmlFor="r-path">本机流路径</label>
+            <label className="label" htmlFor="r-path">{formatMessage({ id: "relay.localPath" })}</label>
             <input
               id="r-path"
               className="input font-mono text-xs"
@@ -251,18 +255,18 @@ export default function Relay() {
               value={form.streamPath}
               onChange={e => setForm(f => ({ ...f, streamPath: e.target.value }))}
             />
-            <p className="help">以 / 开头的 app/name 路径；推流转发时须为已存在的本机流</p>
+            <p className="help">{formatMessage({ id: "relay.localPathHelp" })}</p>
           </div>
 
           <details className="mb-4 group">
             <summary className="text-[13px] font-medium text-stone-600 cursor-pointer select-none flex items-center gap-1.5 py-2">
               <Icon name="sliders" className="w-3.5 h-3.5" />
-              高级选项
+              {formatMessage({ id: "relay.advanced" })}
               <Icon name="chevron-down" className="w-3.5 h-3.5 ml-auto transition-transform group-open:rotate-180" />
             </summary>
             <div className="space-y-4 pt-1">
               <div>
-                <label className="label" htmlFor="r-transport">RTSP 传输协议</label>
+                <label className="label" htmlFor="r-transport">{formatMessage({ id: "relay.transport" })}</label>
                 <select
                   id="r-transport"
                   className="select"
@@ -272,12 +276,12 @@ export default function Relay() {
                   <option value="tcp">TCP</option>
                   <option value="udp">UDP</option>
                 </select>
-                <p className="help">仅对 RTSP 拉流生效</p>
+                <p className="help">{formatMessage({ id: "relay.transportHelp" })}</p>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">断线自动重连</p>
-                  <p className="text-xs text-stone-500 mt-0.5">连接失败时按指数退避自动重试</p>
+                  <p className="text-sm font-medium">{formatMessage({ id: "relay.reconnect" })}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{formatMessage({ id: "relay.reconnectHelp" })}</p>
                 </div>
                 <label className="switch">
                   <input
@@ -292,25 +296,25 @@ export default function Relay() {
               {form.reconnect && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="label" htmlFor="r-interval">重连间隔 (ms)</label>
+                    <label className="label" htmlFor="r-interval">{formatMessage({ id: "relay.reconnectInterval" })}</label>
                     <input
                       id="r-interval"
                       className="input"
                       type="number"
                       min={0}
-                      placeholder="默认 5000"
+                      placeholder={formatMessage({ id: "relay.reconnectIntervalPlaceholder" })}
                       value={form.reconnectInterval}
                       onChange={e => setForm(f => ({ ...f, reconnectInterval: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="label" htmlFor="r-max">最大重连次数</label>
+                    <label className="label" htmlFor="r-max">{formatMessage({ id: "relay.maxAttempts" })}</label>
                     <input
                       id="r-max"
                       className="input"
                       type="number"
                       min={0}
-                      placeholder="0 = 不限"
+                      placeholder={formatMessage({ id: "relay.maxAttemptsPlaceholder" })}
                       value={form.maxReconnectAttempts}
                       onChange={e => setForm(f => ({ ...f, maxReconnectAttempts: e.target.value }))}
                     />
@@ -323,7 +327,7 @@ export default function Relay() {
           <div className="flex gap-2 pt-1">
             <button type="submit" className="btn btn-primary flex-1" disabled={submitting}>
               {submitting && <Icon name="refresh-cw" className="w-3.5 h-3.5 animate-spin" />}
-              添加任务
+              {formatMessage({ id: "relay.addTask" })}
             </button>
             <button
               type="button"
@@ -331,7 +335,7 @@ export default function Relay() {
               onClick={() => setForm(f => ({ ...EMPTY_FORM, mode: f.mode }))}
               disabled={submitting}
             >
-              重置
+              {formatMessage({ id: "relay.reset" })}
             </button>
           </div>
         </form>
@@ -340,25 +344,25 @@ export default function Relay() {
         <div className="card overflow-hidden lg:col-span-2">
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
             <div>
-              <h3 className="font-semibold">转发任务</h3>
-              <p className="text-xs text-stone-500 mt-0.5">任务的创建与删除会实时下发到 Node-Media-Server</p>
+              <h3 className="font-semibold">{formatMessage({ id: "relay.tasksTitle" })}</h3>
+              <p className="text-xs text-stone-500 mt-0.5">{formatMessage({ id: "relay.tasksSubtitle" })}</p>
             </div>
             <button className="btn btn-ghost btn-sm" disabled={loading} onClick={() => load()}>
               <Icon name="refresh-cw" className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              刷新
+              {formatMessage({ id: "common.refresh" })}
             </button>
           </div>
           <div className="table-wrap">
             <table className="tbl">
               <thead>
                 <tr>
-                  <th>任务</th>
-                  <th>类型</th>
-                  <th>转发路径</th>
-                  <th>状态</th>
-                  <th>流量</th>
-                  <th>时长</th>
-                  <th className="text-right">操作</th>
+                  <th>{formatMessage({ id: "relay.colTask" })}</th>
+                  <th>{formatMessage({ id: "relay.colType" })}</th>
+                  <th>{formatMessage({ id: "relay.colPath" })}</th>
+                  <th>{formatMessage({ id: "common.status" })}</th>
+                  <th>{formatMessage({ id: "relay.colTraffic" })}</th>
+                  <th>{formatMessage({ id: "common.duration" })}</th>
+                  <th className="text-right">{formatMessage({ id: "common.actions" })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -367,26 +371,26 @@ export default function Relay() {
                     <td colSpan={7}>
                       <div className="flex items-center justify-center gap-2 py-14 text-stone-400">
                         <Icon name="refresh-cw" className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">正在加载转发任务…</span>
+                        <span className="text-sm">{formatMessage({ id: "relay.loading" })}</span>
                       </div>
                     </td>
                   </tr>
                 ) : tasks.length ? (
-                  tasks.map(t => {
-                    const mode = taskMode(t);
-                    const key = t.taskKey ?? t.id;
-                    const src = mode === "pull" ? taskUrl(t) : t.streamPath;
-                    const dst = mode === "pull" ? t.streamPath : taskUrl(t);
+                  tasks.map(task => {
+                    const mode = taskMode(task);
+                    const key = task.taskKey ?? task.id;
+                    const src = mode === "pull" ? taskUrl(task) : task.streamPath;
+                    const dst = mode === "pull" ? task.streamPath : taskUrl(task);
                     return (
                       <tr key={key}>
                         <td>
-                          <div className="font-medium font-mono text-[13px]">{t.streamPath}</div>
-                          <div className="text-xs text-stone-400 font-mono">{t.id}</div>
+                          <div className="font-medium font-mono text-[13px]">{task.streamPath}</div>
+                          <div className="text-xs text-stone-400 font-mono">{task.id}</div>
                         </td>
                         <td>
                           <span className={`badge ${mode === "push" ? "badge-neutral" : "badge-info"}`}>
                             <Icon name={mode === "push" ? "corner-up-right" : "corner-down-left"} className="w-3 h-3" />
-                            {mode === "push" ? "推流转发" : "拉流代理"} · {t.protocol.toUpperCase()}
+                            {formatMessage({ id: mode === "push" ? "relay.push" : "relay.pull" })} · {task.protocol.toUpperCase()}
                           </span>
                         </td>
                         <td>
@@ -401,31 +405,33 @@ export default function Relay() {
                           </div>
                         </td>
                         <td>
-                          {t.isClosing ? (
-                            <span className="badge badge-neutral">停止中</span>
-                          ) : t.reconnectAttempts > 0 ? (
-                            <span className="badge badge-warning">重连中 · {t.reconnectAttempts} 次</span>
-                          ) : t.isRunning ? (
+                          {task.isClosing ? (
+                            <span className="badge badge-neutral">{formatMessage({ id: "relay.stopping" })}</span>
+                          ) : task.reconnectAttempts > 0 ? (
+                            <span className="badge badge-warning">
+                              {formatMessage({ id: "relay.reconnecting" }, { count: task.reconnectAttempts })}
+                            </span>
+                          ) : task.isRunning ? (
                             <span className="badge badge-success">
                               <span className="dot-live" style={{ width: 6, height: 6 }} />
-                              &nbsp;运行中
+                              &nbsp;{formatMessage({ id: "relay.running" })}
                             </span>
                           ) : (
-                            <span className="badge badge-warning">连接中</span>
+                            <span className="badge badge-warning">{formatMessage({ id: "relay.connecting" })}</span>
                           )}
                         </td>
                         <td className="text-xs text-stone-500 tabular-nums whitespace-nowrap">
-                          <div>↓ {fmtBytes(t.inBytes)}</div>
-                          <div>↑ {fmtBytes(t.outBytes)}</div>
+                          <div>↓ {fmtBytes(task.inBytes)}</div>
+                          <div>↑ {fmtBytes(task.outBytes)}</div>
                         </td>
-                        <td className="tabular-nums">{fmtDur(taskDuration(t, tick))}</td>
+                        <td className="tabular-nums">{fmtDur(taskDuration(task, tick))}</td>
                         <td>
                           <div className="flex items-center gap-0.5 justify-end">
                             <button
                               className="btn btn-ghost btn-sm btn-icon text-red-600 hover:bg-red-50"
-                              title="删除任务"
+                              title={formatMessage({ id: "relay.deleteTask" })}
                               disabled={deleting === key}
-                              onClick={() => remove(t)}
+                              onClick={() => remove(task)}
                             >
                               <Icon name="trash-2" className={`w-3.5 h-3.5 ${deleting === key ? "animate-pulse" : ""}`} />
                             </button>
@@ -439,7 +445,7 @@ export default function Relay() {
                     <td colSpan={7}>
                       <div className="flex flex-col items-center justify-center py-14 text-stone-400">
                         <Icon name="inbox" className="w-8 h-8 mb-2" />
-                        <span className="text-sm">暂无转发任务，使用左侧表单创建</span>
+                        <span className="text-sm">{formatMessage({ id: "relay.empty" })}</span>
                       </div>
                     </td>
                   </tr>

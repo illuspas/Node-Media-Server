@@ -294,6 +294,19 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
 
 .nb-vsep { width: 1px; height: 22px; background: #e7e5e4; }
 
+/* ---------------- Language switcher ---------------- */
+.nb-lang { position: relative; }
+.nb-lang-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 150px;
+  background: #fff; border: 1px solid #e7e5e4; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(28,25,23,.1); padding: 4px;
+  display: none; z-index: 50;
+}
+.nb-lang.open .nb-lang-menu { display: block; }
+.nb-lang-item { gap: 6px; }
+.nb-lang-item.active { color: #1c1917; font-weight: 600; background: #f5f5f4; }
+.nb-lang-check { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
 .nb-user {
   position: relative; display: flex; align-items: center; gap: 10px;
   padding: 4px 8px 4px 4px; border-radius: 10px; cursor: pointer; transition: .15s;

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
-import { fmtBytes, fmtDur, fmtDurLong, fmtNum } from "../lib/format";
+import { fmtBytes, fmtDur, fmtDurLong, fmtNum, fmtDateTime } from "../lib/format";
 import { toast } from "../lib/toast";
+import { t } from "../i18n";
 import { ApiError, deleteHistory, fetchHistory } from "../lib/api";
 import type { ApiHistoryEntry, HistoryPage } from "../lib/api";
 
@@ -12,11 +14,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 /* publisher session protocols that can appear in the history store */
 const PROTOCOLS = ["rtmp", "rtsp", "flv"];
 
-function fmtTime(ms: number): string {
-  return new Date(ms).toLocaleString("zh-CN", { hour12: false });
-}
-
 export default function History() {
+  const { formatMessage } = useIntl();
   const [data, setData] = useState<HistoryPage>({
     items: [], count: 0, page: 1, pageSize: PAGE_SIZE,
   });
@@ -47,7 +46,7 @@ export default function History() {
       setError(null);
     } catch (err) {
       /* silent polling keeps the previous snapshot and banner */
-      if (!silent) setError(err instanceof ApiError ? err.message : "加载历史记录失败");
+      if (!silent) setError(err instanceof ApiError ? err.message : t("history.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -74,33 +73,33 @@ export default function History() {
   }, [load, page]);
 
   const removeStream = async (h: ApiHistoryEntry) => {
-    if (!window.confirm(`删除流 ${h.streamPath} 的全部历史记录？该流的播放量计数也会被重置。`)) return;
+    if (!window.confirm(formatMessage({ id: "history.confirmClearOne" }, { path: h.streamPath }))) return;
     setBusyPath(h.streamPath);
     try {
       await deleteHistory(h.streamPath);
-      toast(`已清除 ${h.streamPath} 的历史记录`);
+      toast(formatMessage({ id: "history.toastClearedStream" }, { path: h.streamPath }));
       if (data.items.length === 1 && page > 1) {
         setPage(page - 1);
       } else {
         load(page);
       }
     } catch (err) {
-      toast(err instanceof ApiError ? err.message : "删除失败", "danger");
+      toast(err instanceof ApiError ? err.message : t("history.toastDeleteFailed"), "danger");
     } finally {
       setBusyPath(null);
     }
   };
 
   const clearAll = async () => {
-    if (!window.confirm("确定清空全部历史记录？所有流的播放量计数也会被重置，此操作不可恢复。")) return;
+    if (!window.confirm(formatMessage({ id: "history.confirmClearAll" }))) return;
     setClearing(true);
     try {
       await deleteHistory();
-      toast("已清空全部历史记录");
+      toast(formatMessage({ id: "history.toastClearedAll" }));
       setPage(1);
       load(1);
     } catch (err) {
-      toast(err instanceof ApiError ? err.message : "清空失败", "danger");
+      toast(err instanceof ApiError ? err.message : t("history.toastClearFailed"), "danger");
     } finally {
       setClearing(false);
     }
@@ -116,13 +115,13 @@ export default function History() {
       {/* header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">流历史</h1>
-          <p className="text-sm text-stone-500 mt-1">回顾已结束推流的历史记录与播放统计</p>
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{formatMessage({ id: "nav.history" })}</h1>
+          <p className="text-sm text-stone-500 mt-1">{formatMessage({ id: "history.subtitle" })}</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="btn btn-secondary btn-sm" disabled={loading} onClick={() => load(page)}>
             <Icon name="refresh-cw" className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            刷新
+            {formatMessage({ id: "common.refresh" })}
           </button>
           <button
             className="btn btn-secondary btn-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
@@ -130,7 +129,7 @@ export default function History() {
             onClick={clearAll}
           >
             <Icon name="trash-2" className="w-3.5 h-3.5" />
-            清空历史
+            {formatMessage({ id: "history.clearAll" })}
           </button>
         </div>
       </div>
@@ -139,10 +138,10 @@ export default function History() {
         <div className="card flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-red-200 bg-red-50">
           <div className="flex items-center gap-2 text-sm text-red-700">
             <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
-            历史记录加载失败：{error}
+            {formatMessage({ id: "history.errBanner" }, { error })}
           </div>
           <button className="btn btn-secondary btn-sm" onClick={() => load(page)}>
-            重试
+            {formatMessage({ id: "common.retry" })}
           </button>
         </div>
       )}
@@ -151,7 +150,7 @@ export default function History() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">记录总数</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "history.statTotal" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtNum(data.count)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600">
@@ -160,7 +159,7 @@ export default function History() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">本页推流时长</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "history.statPageDuration" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtDurLong(pageDuration / 1000)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
@@ -169,7 +168,7 @@ export default function History() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">本页上行流量</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "history.statPageTraffic" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtBytes(pageInBytes)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
@@ -178,7 +177,7 @@ export default function History() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">本页涉及流数</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "history.statPageStreams" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtNum(pageStreams)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
@@ -194,7 +193,7 @@ export default function History() {
           <input
             className="input"
             style={{ paddingLeft: "2.25rem" }}
-            placeholder="搜索流路径 / 推流 IP…"
+            placeholder={formatMessage({ id: "history.searchPlaceholder" })}
             value={q}
             onChange={e => setQ(e.target.value)}
           />
@@ -207,7 +206,7 @@ export default function History() {
             setPage(1);
           }}
         >
-          <option value="">全部协议</option>
+          <option value="">{formatMessage({ id: "streams.allProtocols" })}</option>
           {PROTOCOLS.map(p => (
             <option key={p} value={p}>
               {p.toUpperCase()}
@@ -220,9 +219,9 @@ export default function History() {
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
-            <h3 className="font-semibold">推流记录</h3>
+            <h3 className="font-semibold">{formatMessage({ id: "history.recordsTitle" })}</h3>
             <p className="text-xs text-stone-500 mt-0.5">
-              共 {fmtNum(data.count)} 条，按开始时间倒序 · 播放量为该流的累计值
+              {formatMessage({ id: "history.recordsSubtitle" }, { count: fmtNum(data.count) })}
             </p>
           </div>
         </div>
@@ -230,15 +229,15 @@ export default function History() {
           <table className="tbl">
             <thead>
               <tr>
-                <th>流</th>
-                <th>协议</th>
-                <th>推流 IP</th>
-                <th>开始时间</th>
-                <th>结束时间</th>
-                <th>时长</th>
-                <th>上行流量</th>
-                <th>播放量</th>
-                <th className="text-right">操作</th>
+                <th>{formatMessage({ id: "common.stream" })}</th>
+                <th>{formatMessage({ id: "common.protocol" })}</th>
+                <th>{formatMessage({ id: "history.colIp" })}</th>
+                <th>{formatMessage({ id: "common.startTime" })}</th>
+                <th>{formatMessage({ id: "common.endTime" })}</th>
+                <th>{formatMessage({ id: "common.duration" })}</th>
+                <th>{formatMessage({ id: "history.colTraffic" })}</th>
+                <th>{formatMessage({ id: "history.colPlays" })}</th>
+                <th className="text-right">{formatMessage({ id: "common.actions" })}</th>
               </tr>
             </thead>
             <tbody>
@@ -247,7 +246,7 @@ export default function History() {
                   <td colSpan={9}>
                     <div className="flex items-center justify-center gap-2 py-14 text-stone-400">
                       <Icon name="refresh-cw" className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">正在加载历史记录…</span>
+                      <span className="text-sm">{formatMessage({ id: "history.loading" })}</span>
                     </div>
                   </td>
                 </tr>
@@ -269,8 +268,8 @@ export default function History() {
                       <span className="badge badge-outline">{h.protocol.toUpperCase()}</span>
                     </td>
                     <td className="text-stone-500 font-mono text-xs">{h.ip}</td>
-                    <td className="text-stone-500">{fmtTime(h.startTime)}</td>
-                    <td className="text-stone-500">{fmtTime(h.endTime)}</td>
+                    <td className="text-stone-500">{fmtDateTime(h.startTime)}</td>
+                    <td className="text-stone-500">{fmtDateTime(h.endTime)}</td>
                     <td className="tabular-nums">{fmtDur((h.duration ?? 0) / 1000)}</td>
                     <td className="tabular-nums">{fmtBytes(h.inBytes ?? 0)}</td>
                     <td className="tabular-nums">{fmtNum(h.playCount ?? 0)}</td>
@@ -278,10 +277,10 @@ export default function History() {
                       <div className="flex items-center justify-end gap-0.5">
                         <button
                           className="btn btn-ghost btn-sm btn-icon"
-                          title="复制流路径"
+                          title={formatMessage({ id: "history.copyPath" })}
                           onClick={() => {
                             navigator.clipboard?.writeText(h.streamPath).then(
-                              () => toast(`已复制：${h.streamPath}`),
+                              () => toast(formatMessage({ id: "records.toastCopied" }, { text: h.streamPath })),
                               () => toast(h.streamPath)
                             );
                           }}
@@ -290,7 +289,7 @@ export default function History() {
                         </button>
                         <button
                           className="btn btn-ghost btn-sm btn-icon text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          title="删除该流的全部历史"
+                          title={formatMessage({ id: "history.deleteStream" })}
                           disabled={busyPath === h.streamPath}
                           onClick={() => removeStream(h)}
                         >
@@ -306,7 +305,7 @@ export default function History() {
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
                       <Icon name={search || fProto ? "search" : "clock"} className="w-8 h-8 mb-2" />
                       <span className="text-sm">
-                        {search || fProto ? "未找到匹配的历史记录" : "还没有历史记录，推流结束后会自动归档"}
+                        {formatMessage({ id: search || fProto ? "history.emptyFiltered" : "history.empty" })}
                       </span>
                     </div>
                   </td>
@@ -318,7 +317,7 @@ export default function History() {
         {data.count > PAGE_SIZE && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-stone-200 text-sm">
             <span className="text-stone-500">
-              第 {data.page} / {totalPages} 页
+              {formatMessage({ id: "common.pageInfo" }, { page: data.page, pages: totalPages })}
             </span>
             <div className="flex gap-2">
               <button
@@ -326,14 +325,14 @@ export default function History() {
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
-                上一页
+                {formatMessage({ id: "common.prevPage" })}
               </button>
               <button
                 className="btn btn-secondary btn-sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
-                下一页
+                {formatMessage({ id: "common.nextPage" })}
               </button>
             </div>
           </div>

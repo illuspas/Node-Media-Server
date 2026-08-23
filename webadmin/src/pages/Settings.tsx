@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
 import { toast } from "../lib/toast";
 
 const TABS = [
-  { id: "general", label: "通用", icon: "sliders" },
-  { id: "rtmp", label: "RTMP 服务", icon: "server" },
-  { id: "http", label: "HTTP 服务", icon: "globe" },
-  { id: "auth", label: "安全认证", icon: "lock" },
-  { id: "storage", label: "录制存储", icon: "hard-drive" },
-  { id: "notify", label: "通知告警", icon: "bell" }
+  { id: "general", labelId: "settings.tab.general", icon: "sliders" },
+  { id: "rtmp", labelId: "settings.tab.rtmp", icon: "server" },
+  { id: "http", labelId: "settings.tab.http", icon: "globe" },
+  { id: "auth", labelId: "settings.tab.auth", icon: "lock" },
+  { id: "storage", labelId: "settings.tab.storage", icon: "hard-drive" },
+  { id: "notify", labelId: "settings.tab.notify", icon: "bell" }
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -36,45 +37,53 @@ function SwitchRow({ title, desc, defaultChecked = false }: SwitchRowProps) {
 }
 
 function FormActions() {
+  const { formatMessage } = useIntl();
   return (
     <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
       <button type="button" className="btn btn-ghost">
-        恢复默认
+        {formatMessage({ id: "settings.restoreDefaults" })}
       </button>
-      <button type="submit" className="btn btn-primary">
-        保存更改
+      <button type="submit" className="btn btn-primary" onClick={() => toast(formatMessage({ id: "settings.toastSaved" }))}>
+        {formatMessage({ id: "settings.save" })}
       </button>
     </div>
   );
 }
 
-function onSettingsSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  toast("设置已保存");
-}
-
 export default function Settings() {
+  const { formatMessage } = useIntl();
   const [tab, setTab] = useState<TabId>("general");
+
+  const t = (id: string) => formatMessage({ id });
+  const sw = (key: string) => ({
+    title: t(`settings.sw.${key}.title`),
+    desc: t(`settings.sw.${key}.desc`)
+  });
+
+  function onSettingsSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    toast(t("settings.toastSaved"));
+  }
 
   return (
     <main className="p-4 md:p-6 max-w-[1100px] mx-auto space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">系统设置</h1>
-        <p className="text-sm text-stone-500 mt-1">配置 Node-Media-Server 的运行参数，保存后即时生效</p>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{t("nav.settings")}</h1>
+        <p className="text-sm text-stone-500 mt-1">{t("settings.subtitle")}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
         {/* side nav */}
         <aside className="lg:w-56 shrink-0 mb-4 lg:mb-0">
           <nav className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
-            {TABS.map(t => (
+            {TABS.map(tabItem => (
               <button
-                key={t.id}
-                className={`snav ${t.id === tab ? "active" : ""}`}
-                onClick={() => setTab(t.id)}
+                key={tabItem.id}
+                className={`snav ${tabItem.id === tab ? "active" : ""}`}
+                onClick={() => setTab(tabItem.id)}
               >
-                <Icon name={t.icon} className="w-4 h-4" />
-                {t.label}
+                <Icon name={tabItem.icon} className="w-4 h-4" />
+                {t(tabItem.labelId)}
               </button>
             ))}
           </nav>
@@ -85,17 +94,17 @@ export default function Settings() {
           {tab === "general" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">通用</h2>
-                <p className="text-sm text-stone-500 mt-0.5">实例基础信息与全局行为</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.general")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.general.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="g-name">实例名称</label>
+                    <label className="label" htmlFor="g-name">{t("settings.field.instanceName")}</label>
                     <input id="g-name" className="input" defaultValue="NMS Console" />
                   </div>
                   <div>
-                    <label className="label" htmlFor="g-tz">服务器时区</label>
+                    <label className="label" htmlFor="g-tz">{t("settings.field.timezone")}</label>
                     <select id="g-tz" className="select" defaultValue="Asia/Shanghai (UTC+8)">
                       <option>Asia/Shanghai (UTC+8)</option>
                       <option>UTC</option>
@@ -104,12 +113,12 @@ export default function Settings() {
                     </select>
                   </div>
                   <div>
-                    <label className="label" htmlFor="g-keep">统计数据保留（天）</label>
+                    <label className="label" htmlFor="g-keep">{t("settings.field.keepDays")}</label>
                     <input id="g-keep" className="input" type="number" defaultValue={30} />
-                    <p className="help">超过保留期的会话与带宽记录将被自动清理。</p>
+                    <p className="help">{t("settings.field.keepDaysHelp")}</p>
                   </div>
                   <div>
-                    <label className="label" htmlFor="g-log">日志级别</label>
+                    <label className="label" htmlFor="g-log">{t("settings.field.logLevel")}</label>
                     <select id="g-log" className="select" defaultValue="info">
                       <option>info</option>
                       <option>debug</option>
@@ -118,7 +127,7 @@ export default function Settings() {
                     </select>
                   </div>
                 </div>
-                <SwitchRow title="自动检查更新" desc="每周检查一次 Node-Media-Server 新版本" defaultChecked />
+                <SwitchRow {...sw("autoUpdate")} defaultChecked />
                 <FormActions />
               </form>
             </section>
@@ -127,23 +136,23 @@ export default function Settings() {
           {tab === "rtmp" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">RTMP 服务</h2>
-                <p className="text-sm text-stone-500 mt-0.5">核心推流入口协议配置</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.rtmp")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.rtmp.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="rt-port">监听端口</label>
+                    <label className="label" htmlFor="rt-port">{t("settings.field.port")}</label>
                     <input id="rt-port" className="input font-mono" defaultValue={1935} />
                   </div>
                   <div>
-                    <label className="label" htmlFor="rt-chunk">Chunk Size</label>
+                    <label className="label" htmlFor="rt-chunk">{t("settings.field.chunkSize")}</label>
                     <input id="rt-chunk" className="input font-mono" defaultValue={60000} />
                   </div>
                 </div>
-                <SwitchRow title="GOP 缓存" desc="缓存最近一组关键帧，显著降低首帧等待时间" defaultChecked />
-                <SwitchRow title="同步转 HLS" desc="推流时自动生成 HLS 切片" defaultChecked />
-                <SwitchRow title="同步转 HTTP-FLV" desc="推流时自动开放 HTTP-FLV 播放地址" defaultChecked />
+                <SwitchRow {...sw("gop")} defaultChecked />
+                <SwitchRow {...sw("hls")} defaultChecked />
+                <SwitchRow {...sw("flv")} defaultChecked />
                 <FormActions />
               </form>
             </section>
@@ -152,30 +161,30 @@ export default function Settings() {
           {tab === "http" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">HTTP 服务</h2>
-                <p className="text-sm text-stone-500 mt-0.5">API 与播放网关配置</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.http")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.http.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="h-port">监听端口</label>
+                    <label className="label" htmlFor="h-port">{t("settings.field.port")}</label>
                     <input id="h-port" className="input font-mono" defaultValue={8000} />
                   </div>
                   <div>
-                    <label className="label" htmlFor="h-root">媒体根目录</label>
+                    <label className="label" htmlFor="h-root">{t("settings.field.mediaRoot")}</label>
                     <input id="h-root" className="input font-mono" defaultValue="/media" />
                   </div>
                   <div>
-                    <label className="label" htmlFor="h-hls">HLS 切片时长（秒）</label>
+                    <label className="label" htmlFor="h-hls">{t("settings.field.hlsDur")}</label>
                     <input id="h-hls" className="input font-mono" defaultValue={6} />
                   </div>
                   <div>
-                    <label className="label" htmlFor="h-frag">FLV 分片时长（秒）</label>
+                    <label className="label" htmlFor="h-frag">{t("settings.field.fragDur")}</label>
                     <input id="h-frag" className="input font-mono" defaultValue={4} />
                   </div>
                 </div>
-                <SwitchRow title="允许跨域（CORS）" desc="允许网页播放器跨域拉取 FLV / HLS 流" defaultChecked />
-                <SwitchRow title="开放管理 API" desc="外部系统可通过 /api 访问本控制台数据" defaultChecked />
+                <SwitchRow {...sw("cors")} defaultChecked />
+                <SwitchRow {...sw("api")} defaultChecked />
                 <FormActions />
               </form>
             </section>
@@ -184,24 +193,24 @@ export default function Settings() {
           {tab === "auth" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">安全认证</h2>
-                <p className="text-sm text-stone-500 mt-0.5">推拉流地址签名与访问控制</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.auth")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.auth.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
-                <SwitchRow title="推流鉴权" desc="发布地址必须携带签名参数方可推流" defaultChecked />
+                <SwitchRow {...sw("publishAuth")} defaultChecked />
                 <div>
-                  <label className="label" htmlFor="a-secret">签名密钥（Secret）</label>
+                  <label className="label" htmlFor="a-secret">{t("settings.field.secret")}</label>
                   <input id="a-secret" className="input font-mono" type="password" defaultValue="nms-secret-2024" />
-                  <p className="help">密钥用于生成 exp / sign 签名参数，请妥善保管。</p>
+                  <p className="help">{t("settings.field.secretHelp")}</p>
                 </div>
-                <SwitchRow title="播放鉴权" desc="HTTP-FLV / HLS 播放地址同样需要签名" />
+                <SwitchRow {...sw("playAuth")} />
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="a-exp">签名有效期（秒）</label>
+                    <label className="label" htmlFor="a-exp">{t("settings.field.expiry")}</label>
                     <input id="a-exp" className="input font-mono" defaultValue={300} />
                   </div>
                   <div>
-                    <label className="label" htmlFor="a-ip">限制单 IP 连接数</label>
+                    <label className="label" htmlFor="a-ip">{t("settings.field.ipLimit")}</label>
                     <input id="a-ip" className="input font-mono" defaultValue={8} />
                   </div>
                 </div>
@@ -213,17 +222,17 @@ export default function Settings() {
           {tab === "storage" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">录制存储</h2>
-                <p className="text-sm text-stone-500 mt-0.5">录像行为与磁盘策略</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.storage")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.storage.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="s-dir">录制目录</label>
+                    <label className="label" htmlFor="s-dir">{t("settings.field.recDir")}</label>
                     <input id="s-dir" className="input font-mono" defaultValue="/media/records" />
                   </div>
                   <div>
-                    <label className="label" htmlFor="s-fmt">文件格式</label>
+                    <label className="label" htmlFor="s-fmt">{t("settings.field.recFmt")}</label>
                     <select id="s-fmt" className="select" defaultValue="MP4">
                       <option>MP4</option>
                       <option>FLV</option>
@@ -231,16 +240,16 @@ export default function Settings() {
                     </select>
                   </div>
                   <div>
-                    <label className="label" htmlFor="s-keep">录像保留（天）</label>
+                    <label className="label" htmlFor="s-keep">{t("settings.field.recKeep")}</label>
                     <input id="s-keep" className="input font-mono" defaultValue={15} />
                   </div>
                   <div>
-                    <label className="label" htmlFor="s-seg">自动分段时长（分钟）</label>
+                    <label className="label" htmlFor="s-seg">{t("settings.field.recSeg")}</label>
                     <input id="s-seg" className="input font-mono" defaultValue={30} />
                   </div>
                 </div>
-                <SwitchRow title="新流自动录制" desc="检测到新推流时自动开始录制" />
-                <SwitchRow title="磁盘满自动清理" desc="空间不足 5% 时按时间顺序删除最早录像" defaultChecked />
+                <SwitchRow {...sw("autoRec")} />
+                <SwitchRow {...sw("diskClean")} defaultChecked />
                 <FormActions />
               </form>
             </section>
@@ -249,24 +258,24 @@ export default function Settings() {
           {tab === "notify" && (
             <section>
               <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">通知告警</h2>
-                <p className="text-sm text-stone-500 mt-0.5">关键事件推送到外部系统</p>
+                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.notify")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("settings.notify.subtitle")}</p>
               </div>
               <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
                 <div>
-                  <label className="label" htmlFor="n-hook">Webhook 地址</label>
+                  <label className="label" htmlFor="n-hook">{t("settings.field.webhook")}</label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input id="n-hook" className="input font-mono text-xs flex-1" defaultValue="https://hooks.example.com/nms/alert" />
-                    <button type="button" className="btn btn-secondary shrink-0" onClick={() => toast("Webhook 连接测试成功")}>
+                    <button type="button" className="btn btn-secondary shrink-0" onClick={() => toast(t("settings.toastWebhookOk"))}>
                       <Icon name="send" className="w-3.5 h-3.5" />
-                      测试连接
+                      {t("settings.testConnection")}
                     </button>
                   </div>
-                  <p className="help">以 JSON POST 推送事件，兼容钉钉 / 飞书 / 企业微信机器人格式。</p>
+                  <p className="help">{t("settings.webhookHelp")}</p>
                 </div>
-                <SwitchRow title="推流开始 / 结束" desc="流上下线时通知" defaultChecked />
-                <SwitchRow title="录制完成" desc="录像归档后通知" defaultChecked />
-                <SwitchRow title="服务异常告警" desc="端口不可用 / 码率异常波动时通知" defaultChecked />
+                <SwitchRow {...sw("notifyPublish")} defaultChecked />
+                <SwitchRow {...sw("notifyRecord")} defaultChecked />
+                <SwitchRow {...sw("notifyError")} defaultChecked />
                 <FormActions />
               </form>
             </section>

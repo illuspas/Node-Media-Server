@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useIntl } from "react-intl";
 import Chart from "chart.js/auto";
 import type { Chart as ChartType } from "chart.js";
 import Icon from "../components/Icon";
@@ -6,18 +7,21 @@ import CountUp from "../components/CountUp";
 import { fetchStats } from "../lib/api";
 import type { ApiStats } from "../lib/api";
 import { fmtBytes } from "../lib/format";
+import { t } from "../i18n";
 
 const POLL_INTERVAL = 2000;
 /** Rolling window for the bandwidth chart: 150 samples ≈ 5 minutes at 2s polls. */
 const NET_POINTS = 150;
 
 export default function Dashboard() {
+  const intl = useIntl();
+  const { formatMessage, locale } = intl;
   const [stats, setStats] = useState<ApiStats | null>(null);
   const [cpuPct, setCpuPct] = useState<number | null>(null);
   const [netMbps, setNetMbps] = useState<{ in: number; out: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [clock, setClock] = useState(() => new Date().toLocaleString("zh-CN", { hour12: false }));
+  const [now, setNow] = useState(() => new Date());
 
   const prevCpuRef = useRef<{ user: number; system: number; t: number } | null>(null);
   const cpuPctRef = useRef<number | null>(null);
@@ -72,7 +76,7 @@ export default function Dashboard() {
         chart.update("none");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "加载统计数据失败");
+      setError(e instanceof Error ? e.message : t("dashboard.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -80,16 +84,17 @@ export default function Dashboard() {
 
   /* clock */
   useEffect(() => {
-    const iv = setInterval(() => setClock(new Date().toLocaleString("zh-CN", { hour12: false })), 1000);
+    const iv = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(iv);
   }, []);
 
-  /* charts (created once, fed by load()) */
+  /* charts (created once, fed by load(); labels follow the locale effect) */
   useEffect(() => {
     Chart.defaults.font.family = 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif';
     Chart.defaults.font.size = 11;
     Chart.defaults.color = "#a8a29e";
 
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     if (netCanvasRef.current) {
       netChartRef.current = new Chart(netCanvasRef.current, {
         type: "line",
@@ -97,7 +102,7 @@ export default function Dashboard() {
           labels: [],
           datasets: [
             {
-              label: "接收 Mbps",
+              label: formatMessage({ id: "dashboard.chart.in" }),
               data: [],
               borderColor: "#171717",
               borderWidth: 2,
@@ -107,7 +112,7 @@ export default function Dashboard() {
               backgroundColor: "rgba(23,23,23,.06)"
             },
             {
-              label: "发送 Mbps",
+              label: formatMessage({ id: "dashboard.chart.out" }),
               data: [],
               borderColor: "#a8a29e",
               borderWidth: 1.5,
@@ -132,7 +137,13 @@ export default function Dashboard() {
               padding: 10,
               cornerRadius: 8,
               displayColors: false,
-              callbacks: { label: c => ` ${c.dataset.label}：${(c.parsed.y ?? 0).toFixed(2)} Mbps` }
+              callbacks: {
+                label: c =>
+                  formatMessage(
+                    { id: "dashboard.chart.tooltip" },
+                    { label: c.dataset.label ?? "", value: (c.parsed.y ?? 0).toFixed(2) }
+                  )
+              }
             }
           },
           scales: {
@@ -152,7 +163,24 @@ export default function Dashboard() {
       netChartRef.current?.destroy();
       netChartRef.current = null;
     };
+    // The chart instance lives for the component lifetime; label text is
+    // refreshed by the locale effect below instead of rebuilding the chart.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* keep chart labels and tooltip in the active locale */
+  useEffect(() => {
+    const chart = netChartRef.current;
+    if (!chart) return;
+    chart.data.datasets[0].label = formatMessage({ id: "dashboard.chart.in" });
+    chart.data.datasets[1].label = formatMessage({ id: "dashboard.chart.out" });
+    chart.options.plugins!.tooltip!.callbacks!.label = c =>
+      formatMessage(
+        { id: "dashboard.chart.tooltip" },
+        { label: c.dataset.label ?? "", value: (c.parsed.y ?? 0).toFixed(2) }
+      );
+    chart.update("none");
+  }, [locale, formatMessage]);
 
   /* poll the API, paused while the tab is hidden */
   useEffect(() => {
@@ -167,20 +195,23 @@ export default function Dashboard() {
   }, [load]);
 
   const mem = stats?.memory;
+  const clockLocale = locale === "zh-CN" ? "zh-CN" : "en-US";
 
   return (
     <main className="p-4 md:p-6 max-w-[1440px] mx-auto space-y-4 md:space-y-6">
       {/* page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">仪表盘</h1>
-          <p className="text-sm text-stone-500 mt-1">实时掌握服务器与会话的运行状态</p>
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{formatMessage({ id: "dashboard.title" })}</h1>
+          <p className="text-sm text-stone-500 mt-1">{formatMessage({ id: "dashboard.subtitle" })}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-stone-400 tabular-nums hidden sm:inline">{clock}</span>
+          <span className="text-xs text-stone-400 tabular-nums hidden sm:inline">
+            {now.toLocaleString(clockLocale, { hour12: false })}
+          </span>
           <button className="btn btn-secondary btn-sm" disabled={loading} onClick={() => void load()}>
             <Icon name="refresh-cw" className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            刷新
+            {formatMessage({ id: "common.refresh" })}
           </button>
         </div>
       </div>
@@ -190,10 +221,10 @@ export default function Dashboard() {
         <div className="card flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-red-200 bg-red-50">
           <div className="flex items-center gap-2 text-sm text-red-700">
             <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
-            统计数据加载失败：{error}
+            {formatMessage({ id: "dashboard.errBanner" }, { error })}
           </div>
           <button className="btn btn-secondary btn-sm" onClick={() => void load()}>
-            重试
+            {formatMessage({ id: "common.retry" })}
           </button>
         </div>
       )}
@@ -203,7 +234,7 @@ export default function Dashboard() {
         <div className="card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-stone-500">在线流</p>
+              <p className="text-sm text-stone-500">{formatMessage({ id: "dashboard.onlineStreams" })}</p>
               <p className="text-3xl font-semibold tracking-tight tabular-nums mt-1">
                 <CountUp value={stats?.sessions.publishers ?? 0} />
               </p>
@@ -214,14 +245,21 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-3">
             <Icon name="layers" className="w-3 h-3" />
-            会话总数 {stats?.sessions.total ?? 0}（发布 {stats?.sessions.publishers ?? 0} · 播放 {stats?.sessions.players ?? 0}）
+            {formatMessage(
+              { id: "dashboard.sessionsMeta" },
+              {
+                total: stats?.sessions.total ?? 0,
+                publishers: stats?.sessions.publishers ?? 0,
+                players: stats?.sessions.players ?? 0
+              }
+            )}
           </div>
         </div>
 
         <div className="card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-stone-500">播放端会话</p>
+              <p className="text-sm text-stone-500">{formatMessage({ id: "dashboard.playerSessions" })}</p>
               <p className="text-3xl font-semibold tracking-tight tabular-nums mt-1">
                 <CountUp value={stats?.sessions.players ?? 0} />
               </p>
@@ -232,14 +270,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-3">
             <Icon name="radio" className="w-3 h-3" />
-            发布端会话 {stats?.sessions.publishers ?? 0} 个
+            {formatMessage({ id: "dashboard.publisherSessionsMeta" }, { count: stats?.sessions.publishers ?? 0 })}
           </div>
         </div>
 
         <div className="card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-stone-500">进程 CPU</p>
+              <p className="text-sm text-stone-500">{formatMessage({ id: "dashboard.processCpu" })}</p>
               <p className="text-3xl font-semibold tracking-tight tabular-nums mt-1">
                 {cpuPct === null ? "—" : <CountUp value={cpuPct} format={v => v.toFixed(1)} />}
                 {cpuPct !== null && <span className="text-base font-medium text-stone-400 ml-1">%</span>}
@@ -251,14 +289,17 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-3">
             <Icon name="activity" className="w-3 h-3" />
-            Node {stats?.server.nodeVersion ?? "—"} · 采样间隔 {POLL_INTERVAL / 1000}s
+            {formatMessage(
+              { id: "dashboard.cpuMeta" },
+              { version: stats?.server.nodeVersion ?? "—", sec: POLL_INTERVAL / 1000 }
+            )}
           </div>
         </div>
 
         <div className="card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-stone-500">内存占用</p>
+              <p className="text-sm text-stone-500">{formatMessage({ id: "dashboard.memory" })}</p>
               <p className="text-3xl font-semibold tracking-tight tabular-nums mt-1" style={{ fontSize: "1.55rem" }}>
                 {mem ? fmtBytes(mem.rss) : "—"}
               </p>
@@ -269,7 +310,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-3">
             <Icon name="layers" className="w-3 h-3" />
-            堆内存 {fmtBytes(mem?.heapUsed ?? 0)} / {fmtBytes(mem?.heapTotal ?? 0)} · PID {stats?.server.pid ?? "—"}
+            {formatMessage(
+              { id: "dashboard.heapMeta" },
+              {
+                used: fmtBytes(mem?.heapUsed ?? 0),
+                total: fmtBytes(mem?.heapTotal ?? 0),
+                pid: stats?.server.pid ?? "—"
+              }
+            )}
           </div>
         </div>
       </div>
@@ -278,16 +326,24 @@ export default function Dashboard() {
       <div className="card">
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
-            <h3 className="font-semibold">网络用量</h3>
+            <h3 className="font-semibold">{formatMessage({ id: "dashboard.netUsage" })}</h3>
             <p className="text-xs text-stone-500 mt-0.5">
               {netMbps
-                ? `↓ ${netMbps.in.toFixed(1)} / ↑ ${netMbps.out.toFixed(1)} Mbps · 累计 ↓${fmtBytes(stats?.network.inBytes ?? 0)} ↑${fmtBytes(stats?.network.outBytes ?? 0)}`
-                : `每 ${POLL_INTERVAL / 1000} 秒采样 · 约 5 分钟滚动窗口`}
+                ? formatMessage(
+                    { id: "dashboard.netMeta" },
+                    {
+                      in: netMbps.in.toFixed(1),
+                      out: netMbps.out.toFixed(1),
+                      inTotal: fmtBytes(stats?.network.inBytes ?? 0),
+                      outTotal: fmtBytes(stats?.network.outBytes ?? 0)
+                    }
+                  )
+                : formatMessage({ id: "dashboard.netMetaIdle" }, { sec: POLL_INTERVAL / 1000 })}
             </p>
           </div>
           <span className="badge badge-outline">
             <span className="dot-live" style={{ width: 6, height: 6 }} />
-            &nbsp;实时
+            &nbsp;{formatMessage({ id: "dashboard.live" })}
           </span>
         </div>
         <div className="p-5">

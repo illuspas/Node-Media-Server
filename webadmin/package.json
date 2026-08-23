@@ -16,6 +16,7 @@
     "feather-icons": "^4.29.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-intl": "^10.1.23",
     "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.3.3"
   },

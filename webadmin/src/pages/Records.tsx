@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
-import { fmtBytes, fmtDur, fmtDurLong } from "../lib/format";
+import { fmtBytes, fmtDur, fmtDurLong, fmtDateTime } from "../lib/format";
 import { toast } from "../lib/toast";
+import { t } from "../i18n";
 import {
   ApiError,
   deleteRecord,
@@ -15,16 +17,13 @@ const POLL_ACTIVE_MS = 3000;
 const POLL_FILES_MS = 10000;
 const PAGE_SIZE = 20;
 
-function fmtTime(ms: number): string {
-  return new Date(ms).toLocaleString("zh-CN", { hour12: false });
-}
-
 function fileBaseName(path: string): string {
   const idx = path.lastIndexOf("/");
   return idx >= 0 ? path.slice(idx + 1) : path;
 }
 
 export default function Records() {
+  const { formatMessage } = useIntl();
   const [active, setActive] = useState<ApiRecord[]>([]);
   const [files, setFiles] = useState<RecordsPage>({
     items: [], count: 0, page: 1, pageSize: PAGE_SIZE, totalDuration: 0, totalSize: 0,
@@ -46,7 +45,7 @@ export default function Records() {
       });
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "加载录像列表失败");
+      setError(err instanceof ApiError ? err.message : t("records.errLoad"));
     }
   }, []);
 
@@ -74,27 +73,27 @@ export default function Records() {
   /** Stop the recording by kicking its publisher; the record finalizes itself. */
   const stopRecording = async (rec: ApiRecord) => {
     if (!rec.publisherId) {
-      toast("该记录缺少推流会话信息，无法远程停止", "danger");
+      toast(formatMessage({ id: "records.noPublisher" }), "danger");
       return;
     }
     setBusyId(rec.id);
     try {
       await deleteSession(rec.publisherId);
-      toast(`已断开 ${rec.streamPath} 的推流，录像即将完成`);
+      toast(formatMessage({ id: "records.toastStopped" }, { path: rec.streamPath }));
       setTimeout(loadActive, 500);
     } catch (err) {
-      toast(err instanceof ApiError ? err.message : "停止录制失败", "danger");
+      toast(err instanceof ApiError ? err.message : t("records.toastStopFailed"), "danger");
     } finally {
       setBusyId(null);
     }
   };
 
   const removeFile = async (rec: ApiRecord) => {
-    if (!window.confirm(`删除录像 ${fileBaseName(rec.filePath)}？磁盘上的文件也会一并删除。`)) return;
+    if (!window.confirm(formatMessage({ id: "records.confirmDeleteFile" }, { name: fileBaseName(rec.filePath) }))) return;
     setBusyId(rec.id);
     try {
       await deleteRecord(rec.id, true);
-      toast(`已删除 ${fileBaseName(rec.filePath)}`);
+      toast(formatMessage({ id: "records.toastDeleted" }, { name: fileBaseName(rec.filePath) }));
       const remaining = files.count - 1;
       if (remaining > 0 && (files.items?.length ?? 0) === 1 && page > 1) {
         setPage(page - 1);
@@ -102,7 +101,7 @@ export default function Records() {
         loadFiles(page);
       }
     } catch (err) {
-      toast(err instanceof ApiError ? err.message : "删除失败", "danger");
+      toast(err instanceof ApiError ? err.message : t("records.toastDeleteFailed"), "danger");
     } finally {
       setBusyId(null);
     }
@@ -114,8 +113,8 @@ export default function Records() {
     <main className="p-4 md:p-6 max-w-[1440px] mx-auto space-y-4 md:space-y-6">
       {/* header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">流录像</h1>
-        <p className="text-sm text-stone-500 mt-1">在线录制、归档与管理所有录像文件</p>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{formatMessage({ id: "nav.records" })}</h1>
+        <p className="text-sm text-stone-500 mt-1">{formatMessage({ id: "records.subtitle" })}</p>
       </div>
 
       {error && (
@@ -126,7 +125,7 @@ export default function Records() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">录制中任务</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "records.statActive" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{active.length}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-500">
@@ -135,7 +134,7 @@ export default function Records() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">归档文件</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "records.statFiles" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{files.count}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600">
@@ -144,7 +143,7 @@ export default function Records() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">累计录制时长</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "records.statDuration" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtDurLong(files.totalDuration / 1000)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-600">
@@ -153,7 +152,7 @@ export default function Records() {
         </div>
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-stone-500">录像总大小</p>
+            <p className="text-xs text-stone-500">{formatMessage({ id: "records.statSize" })}</p>
             <p className="text-2xl font-semibold tabular-nums mt-0.5">{fmtBytes(files.totalSize)}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
@@ -166,8 +165,8 @@ export default function Records() {
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
-            <h3 className="font-semibold">正在录制</h3>
-            <p className="text-xs text-stone-500 mt-0.5">每 3 秒自动刷新</p>
+            <h3 className="font-semibold">{formatMessage({ id: "records.activeTitle" })}</h3>
+            <p className="text-xs text-stone-500 mt-0.5">{formatMessage({ id: "records.activeSubtitle" })}</p>
           </div>
           <span className="badge badge-danger">LIVE</span>
         </div>
@@ -175,11 +174,11 @@ export default function Records() {
           <table className="tbl">
             <thead>
               <tr>
-                <th>流</th>
-                <th>已录时长</th>
-                <th>开始时间</th>
-                <th>状态</th>
-                <th className="text-right">操作</th>
+                <th>{formatMessage({ id: "common.stream" })}</th>
+                <th>{formatMessage({ id: "records.colRecorded" })}</th>
+                <th>{formatMessage({ id: "common.startTime" })}</th>
+                <th>{formatMessage({ id: "common.status" })}</th>
+                <th className="text-right">{formatMessage({ id: "common.actions" })}</th>
               </tr>
             </thead>
             <tbody>
@@ -196,11 +195,11 @@ export default function Records() {
                       </div>
                     </td>
                     <td className="tabular-nums">{fmtDur((Date.now() - t.startTime) / 1000)}</td>
-                    <td className="text-stone-500">{fmtTime(t.startTime)}</td>
+                    <td className="text-stone-500">{fmtDateTime(t.startTime)}</td>
                     <td>
                       <span className="badge badge-danger">
                         <span className="dot-live" style={{ width: 6, height: 6, background: "#ef4444", animation: "none" }} />
-                        &nbsp;录制中
+                        &nbsp;{formatMessage({ id: "records.recording" })}
                       </span>
                     </td>
                     <td>
@@ -210,7 +209,7 @@ export default function Records() {
                         onClick={() => stopRecording(t)}
                       >
                         <Icon name="square" className="w-3 h-3" />
-                        停止录制
+                        {formatMessage({ id: "records.stopRecording" })}
                       </button>
                     </td>
                   </tr>
@@ -220,7 +219,7 @@ export default function Records() {
                   <td colSpan={5}>
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
                       <Icon name="disc" className="w-8 h-8 mb-2" />
-                      <span className="text-sm">当前没有正在录制的流</span>
+                      <span className="text-sm">{formatMessage({ id: "records.emptyActive" })}</span>
                     </div>
                   </td>
                 </tr>
@@ -234,23 +233,25 @@ export default function Records() {
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
           <div>
-            <h3 className="font-semibold">录像文件库</h3>
-            <p className="text-xs text-stone-500 mt-0.5">共 {files.count} 个文件，按录制时间倒序</p>
+            <h3 className="font-semibold">{formatMessage({ id: "records.libraryTitle" })}</h3>
+            <p className="text-xs text-stone-500 mt-0.5">
+              {formatMessage({ id: "records.librarySubtitle" }, { count: files.count })}
+            </p>
           </div>
           <Link to="/settings" className="text-sm text-stone-500 hover:text-neutral-900 inline-flex items-center gap-1 transition-colors">
-            录制设置 <Icon name="arrow-right" className="w-3.5 h-3.5" />
+            {formatMessage({ id: "records.settingsLink" })} <Icon name="arrow-right" className="w-3.5 h-3.5" />
           </Link>
         </div>
         <div className="table-wrap">
           <table className="tbl">
             <thead>
               <tr>
-                <th>文件名</th>
-                <th>所属流</th>
-                <th>大小</th>
-                <th>时长</th>
-                <th>录制时间</th>
-                <th className="text-right">操作</th>
+                <th>{formatMessage({ id: "records.colFile" })}</th>
+                <th>{formatMessage({ id: "records.colOwner" })}</th>
+                <th>{formatMessage({ id: "records.colSize" })}</th>
+                <th>{formatMessage({ id: "common.duration" })}</th>
+                <th>{formatMessage({ id: "records.colTime" })}</th>
+                <th className="text-right">{formatMessage({ id: "common.actions" })}</th>
               </tr>
             </thead>
             <tbody>
@@ -268,15 +269,15 @@ export default function Records() {
                     <td className="text-stone-500 font-mono text-xs">{f.streamPath}</td>
                     <td className="tabular-nums">{fmtBytes(f.size)}</td>
                     <td className="tabular-nums">{fmtDur(f.duration / 1000)}</td>
-                    <td className="text-stone-500">{fmtTime(f.startTime)}</td>
+                    <td className="text-stone-500">{fmtDateTime(f.startTime)}</td>
                     <td>
                       <div className="flex items-center gap-0.5">
                         <button
                           className="btn btn-ghost btn-sm btn-icon"
-                          title="复制文件路径"
+                          title={formatMessage({ id: "records.copyPath" })}
                           onClick={() => {
                             navigator.clipboard?.writeText(f.filePath).then(
-                              () => toast(`已复制：${f.filePath}`),
+                              () => toast(formatMessage({ id: "records.toastCopied" }, { text: f.filePath })),
                               () => toast(f.filePath)
                             );
                           }}
@@ -285,7 +286,7 @@ export default function Records() {
                         </button>
                         <button
                           className="btn btn-ghost btn-sm btn-icon text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          title="删除（含磁盘文件）"
+                          title={formatMessage({ id: "records.deleteFile" })}
                           disabled={busyId === f.id}
                           onClick={() => removeFile(f)}
                         >
@@ -300,7 +301,7 @@ export default function Records() {
                   <td colSpan={6}>
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
                       <Icon name="film" className="w-8 h-8 mb-2" />
-                      <span className="text-sm">还没有已完成的录像</span>
+                      <span className="text-sm">{formatMessage({ id: "records.emptyFiles" })}</span>
                     </div>
                   </td>
                 </tr>
@@ -311,7 +312,7 @@ export default function Records() {
         {files.count > PAGE_SIZE && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-stone-200 text-sm">
             <span className="text-stone-500">
-              第 {files.page} / {totalPages} 页
+              {formatMessage({ id: "common.pageInfo" }, { page: files.page, pages: totalPages })}
             </span>
             <div className="flex gap-2">
               <button
@@ -319,14 +320,14 @@ export default function Records() {
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
-                上一页
+                {formatMessage({ id: "common.prevPage" })}
               </button>
               <button
                 className="btn btn-secondary btn-sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
               >
-                下一页
+                {formatMessage({ id: "common.nextPage" })}
               </button>
             </div>
           </div>

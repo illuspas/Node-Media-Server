@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Route, Routes, useLocation } from "react-router-dom";
+import { useIntl } from "react-intl";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import ToastHost from "./components/ToastHost";
@@ -12,23 +13,24 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import { getToken, getUsername, saveSession, clearSession, UNAUTHORIZED_EVENT } from "./lib/api";
 import { toast } from "./lib/toast";
+import { t } from "./i18n";
 
-const HOME = { path: "/", title: "仪表盘" } as const;
+const HOME = { path: "/", titleId: "nav.dashboard" } as const;
 
-function titleFor(pathname: string): string {
+function titleIdFor(pathname: string): string {
   switch (pathname) {
     case "/streams":
-      return "流列表";
+      return "nav.streams";
     case "/relay":
-      return "流转发";
+      return "nav.relay";
     case "/records":
-      return "流录像";
+      return "nav.records";
     case "/history":
-      return "流历史";
+      return "nav.history";
     case "/settings":
-      return "系统设置";
+      return "nav.settings";
     default:
-      return HOME.title;
+      return HOME.titleId;
   }
 }
 
@@ -39,10 +41,11 @@ interface ShellProps {
 
 function Shell({ username, onLogout }: ShellProps) {
   const location = useLocation();
+  const { formatMessage } = useIntl();
   // Sidebar stays open only while the route it was opened on is still current.
   const [openLocationKey, setOpenLocationKey] = useState<string | null>(null);
   const sidebarOpen = openLocationKey === location.key;
-  const title = titleFor(location.pathname);
+  const title = formatMessage({ id: titleIdFor(location.pathname) });
 
   useEffect(() => {
     document.title = `${title} · NMS Console`;
@@ -80,7 +83,8 @@ export default function App() {
   useEffect(() => {
     const onUnauthorized = () => {
       setAuth({ token: null, username: null });
-      toast("登录已过期，请重新登录", "warning");
+      // t() reads the live locale, unlike a useIntl snapshot captured at mount.
+      toast(t("app.toast.sessionExpired"), "warning");
     };
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
@@ -107,7 +111,7 @@ export default function App() {
         onLogout={() => {
           clearSession();
           setAuth({ token: null, username: null });
-          toast("已退出登录");
+          toast(t("app.toast.loggedOut"));
         }}
       />
     </HashRouter>
