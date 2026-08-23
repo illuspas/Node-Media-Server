@@ -1,0 +1,17 @@
+# VCS and CI
+.git
+.github
+
+# Local dependencies (installed inside the image; must not leak into the context)
+node_modules
+**/node_modules
+
+# Built console (rebuilt by the webadmin-builder stage)
+webadmin/dist
+
+# Runtime data and logs
+data
+logs
+*.log
+
+.DS_Store

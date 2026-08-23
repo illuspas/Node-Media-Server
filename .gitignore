@@ -28,4 +28,7 @@ node_modules
 .lock-wscript
 .tmp/
 
+# Compiled webadmin bundle, rebuilt by `npm run build:webadmin` before publish
+webadmin/dist
+
 data/

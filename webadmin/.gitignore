@@ -8,7 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist is ignored by the root .gitignore (webadmin/dist); listing it here would
+# also exclude it from `npm pack`, which ships webadmin/dist via the files whitelist
 dist-ssr
 *.local
 

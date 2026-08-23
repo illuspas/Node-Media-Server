@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Served by the media server under /admin; asset URLs must be prefixed accordingly
+  base: "/admin/",
   plugins: [react(), tailwindcss()],
   server: {
     // Dev proxy to the NMS admin API; in production the webadmin is served

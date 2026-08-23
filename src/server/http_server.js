@@ -6,6 +6,7 @@
 //
 
 const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
 const http = require("http");
 const http2 = require("http2");
@@ -26,6 +27,13 @@ class NodeHttpServer {
     if (Context.config.static?.router && Context.config.static?.root) {
       // @ts-ignore
       app.use(Context.config.static.router, express.static(Context.config.static.root));
+    }
+
+    // Serve the bundled webadmin console (built from webadmin/, shipped in the npm package)
+    const webadminRoot = path.resolve(__dirname, "../../webadmin/dist");
+    if (fs.existsSync(webadminRoot)) {
+      // @ts-ignore
+      app.use("/admin", express.static(webadminRoot));
     }
 
     // @ts-ignore
