@@ -18,7 +18,7 @@ class HistoryHandler {
   /**
    * List publish history entries, newest first by default. Each entry carries
    * the stream's cumulative playCount at the time that publish ended.
-   * GET /api/v1/history?streamPath=&ip=&page=1&pageSize=20
+   * GET /api/v1/history?streamPath=&ip=&search=&page=1&pageSize=20
    * @param {express.Request} req
    * @param {express.Response} res
    */
@@ -32,6 +32,13 @@ class HistoryHandler {
       const filter = {};
       if (typeof req.query.streamPath === "string" && req.query.streamPath) {
         filter.streamPath = req.query.streamPath;
+      }
+      if (typeof req.query.search === "string" && req.query.search) {
+        // substring match across streamPath and ip for the console's search box
+        filter.$or = [
+          { streamPath: { $contains: req.query.search } },
+          { ip: { $contains: req.query.search } }
+        ];
       }
       if (typeof req.query.ip === "string" && req.query.ip) {
         filter.ip = req.query.ip;

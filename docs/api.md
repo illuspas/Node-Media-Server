@@ -379,7 +379,7 @@ Publish history only: plays are not stored as individual rows. Each play increme
 GET /api/v1/history?streamPath=/live/camera1&ip=1.2.3.4&page=1&pageSize=20
 ```
 
-Query params: `streamPath`, `ip`, `protocol`, `page`, `pageSize`. Response `data` is a page object: `{ items, count, page, pageSize }`; each item contains `id, protocol, streamPath, app, name, ip, startTime, endTime, duration, inBytes, outBytes, playCount`. History is capped at `store.maxHistory` publish entries (default 10000, oldest evicted first).
+Query params: `streamPath`, `ip`, `protocol` (exact matches), `search` (substring match on streamPath or ip), `page`, `pageSize`. Response `data` is a page object: `{ items, count, page, pageSize }`; each item contains `id, protocol, streamPath, app, name, ip, startTime, endTime, duration, inBytes, outBytes, playCount`. History is capped at `store.maxHistory` publish entries (default 10000, oldest evicted first).
 
 **Clear history**
 

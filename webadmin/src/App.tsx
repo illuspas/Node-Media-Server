@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Streams from "./pages/Streams";
 import Relay from "./pages/Relay";
 import Records from "./pages/Records";
+import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import { getToken, getUsername, saveSession, clearSession, UNAUTHORIZED_EVENT } from "./lib/api";
@@ -22,6 +23,8 @@ function titleFor(pathname: string): string {
       return "流转发";
     case "/records":
       return "流录像";
+    case "/history":
+      return "流历史";
     case "/settings":
       return "系统设置";
     default:
@@ -61,6 +64,7 @@ function Shell({ username, onLogout }: ShellProps) {
           <Route path="/streams" element={<Streams />} />
           <Route path="/relay" element={<Relay />} />
           <Route path="/records" element={<Records />} />
+          <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

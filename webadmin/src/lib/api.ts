@@ -343,15 +343,28 @@ export interface HistoryPage {
 export function fetchHistory(query: {
   streamPath?: string;
   ip?: string;
+  protocol?: string;
+  search?: string;
   page?: number;
   pageSize?: number;
 } = {}): Promise<HistoryPage> {
   const qs = new URLSearchParams();
   if (query.streamPath) qs.set("streamPath", query.streamPath);
   if (query.ip) qs.set("ip", query.ip);
+  if (query.protocol) qs.set("protocol", query.protocol);
+  if (query.search) qs.set("search", query.search);
   qs.set("page", String(query.page ?? 1));
   qs.set("pageSize", String(query.pageSize ?? 20));
   return apiFetch<HistoryPage>(`/history?${qs.toString()}`);
+}
+
+/**
+ * Clear history; also resets the affected play counters.
+ * Without a streamPath the whole history is cleared.
+ */
+export function deleteHistory(streamPath?: string): Promise<void> {
+  const qs = streamPath ? `?streamPath=${encodeURIComponent(streamPath)}` : "";
+  return apiFetch(`/history${qs}`, { method: "DELETE" }).then(() => undefined);
 }
 
 /* ---------------- stats ---------------- */

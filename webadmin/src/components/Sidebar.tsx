@@ -28,7 +28,8 @@ const NAV_GROUPS: { section: string; links: NavLinkItem[] }[] = [
     links: [
       { to: "/streams", label: "流列表", icon: "video" },
       { to: "/relay", label: "流转发", icon: "repeat" },
-      { to: "/records", label: "流录像", icon: "disc" }
+      { to: "/records", label: "流录像", icon: "disc" },
+      { to: "/history", label: "流历史", icon: "clock" }
     ]
   },
   {
