@@ -17,6 +17,7 @@ const LightweightStore = require("../src/store/lightweight_store.js");
 const RelayManager = require("../src/server/relay_manager.js");
 const NodeRecordServer = require("../src/server/record_server.js");
 const NodeHistoryServer = require("../src/server/history_server.js");
+const BroadcastServer = require("../src/server/broadcast_server.js");
 const RecordsHandler = require("../src/api/handlers/records.js");
 const HistoryHandler = require("../src/api/handlers/history.js");
 const Context = require("../src/core/context.js");
@@ -157,7 +158,7 @@ test("recording metadata lifecycle: recording -> done, persisted with size and d
   resetContext();
 });
 
-test("history records publishers only; plays accumulate as per-stream playCount", async () => {
+test("history records publishers only; playCount is counted in memory per publish", async () => {
   resetContext();
   Context.config = { store: { maxHistory: 5 } };
   const store = await openStore();
@@ -165,39 +166,52 @@ test("history records publishers only; plays accumulate as per-stream playCount"
   const historyServer = new NodeHistoryServer();
   historyServer.run();
 
+  const broadcast = new BroadcastServer();
+  Context.broadcasts.set("/live/a", broadcast);
+
   const base = {
-    ip: "1.2.3.4",
+    ip: "9.9.9.9",
     protocol: "rtmp",
     streamApp: "live",
     streamName: "a",
     streamPath: "/live/a",
+    streamQuery: {},
     createTime: Date.now() - 60000,
     endTime: Date.now(),
     inBytes: 100,
     outBytes: 200
   };
+  const publisher = { ...base, id: "s1", isPublisher: true, playCount: 0 };
+  broadcast.publisher = publisher;
 
-  // plays do not create history rows, they bump the stream's counter
-  Context.eventEmitter.emit("postPlay", { ...base, id: "p1" });
-  Context.eventEmitter.emit("postPlay", { ...base, id: "p2", protocol: "flv" });
-  Context.eventEmitter.emit("postPlay", { ...base, id: "internal", ip: "" }); // record/relay: ignored
+  /**
+   * @param {object} [overrides]
+   * @returns {object}
+   */
+  const player = (overrides = {}) => ({ ...base, id: "p", sendBuffer: () => {}, ...overrides });
 
+  // external plays bump the publisher's in-memory counter; no history rows are created
+  broadcast.postPlay(player({ id: "p1" }));
+  broadcast.postPlay(player({ id: "p2", protocol: "flv" }));
+  broadcast.postPlay(player({ id: "internal", ip: "" })); // record/relay player: ignored
   const history = store.collection("stream_history");
   assert.equal(history.count(), 0, "plays are not stored as history rows");
-  assert.equal(store.collection("play_stats").get("/live/a").count, 2);
+  assert.equal(publisher.playCount, 2);
 
-  // first publish entry snapshots the cumulative play count
-  Context.eventEmitter.emit("donePublish", { ...base, id: "s1", isPublisher: true });
+  // the publish entry carries the count accumulated during that publish
+  Context.eventEmitter.emit("donePublish", publisher);
   const entry = history.get("s1");
   assert.equal(entry.playCount, 2);
   assert.equal(entry.duration, 60000);
 
-  // plays between publishes keep accumulating; relay pulls (ip "") are not recorded
-  Context.eventEmitter.emit("postPlay", { ...base, id: "p3" });
+  // the next publish on the same path starts from zero; relay pulls (ip "") are not recorded
+  const publisher2 = { ...base, id: "s2", isPublisher: true, playCount: 0 };
+  broadcast.publisher = publisher2;
+  broadcast.postPlay(player({ id: "p3" }));
   Context.eventEmitter.emit("donePublish", { ...base, id: "relay", ip: "" });
-  Context.eventEmitter.emit("donePublish", { ...base, id: "s2", isPublisher: true });
+  Context.eventEmitter.emit("donePublish", publisher2);
   assert.equal(history.count(), 2);
-  assert.equal(history.get("s2").playCount, 3);
+  assert.equal(history.get("s2").playCount, 1);
 
   // cap applies to publisher entries only
   for (let i = 0; i < 10; i++) {
@@ -205,18 +219,8 @@ test("history records publishers only; plays accumulate as per-stream playCount"
   }
   assert.equal(history.count(), 5);
 
-  // the counter persists across restarts
   historyServer.stop();
   await store.close();
-  const store2 = new LightweightStore({ dir: store.options.dir, signals: false });
-  await store2.open();
-  Context.store = store2;
-  const server2 = new NodeHistoryServer();
-  server2.run();
-  Context.eventEmitter.emit("postPlay", { ...base, id: "p4" });
-  assert.equal(store2.collection("play_stats").get("/live/a").count, 4);
-  server2.stop();
-  await store2.close();
   resetContext();
 });
 
@@ -259,7 +263,6 @@ test("records and history API handlers serve the store data", async () => {
   const history = store.collection("stream_history");
   history.set("h1", { id: "h1", streamPath: "/live/a", ip: "1.1.1.1", startTime: 1, protocol: "rtmp", playCount: 7 });
   history.set("h2", { id: "h2", streamPath: "/live/a", ip: "2.2.2.2", startTime: 2, protocol: "rtmp", playCount: 9 });
-  store.collection("play_stats").set("/live/a", { count: 9 });
 
   // list: newest first, filters, pagination
   let mock = mockRes();
@@ -301,7 +304,7 @@ test("records and history API handlers serve the store data", async () => {
   assert.equal(mock.state.body.fileDeleted, true);
   assert.equal(records.count(), 2);
 
-  // history list (publisher entries with playCount) + deleteMany resets play stats
+  // history list (publisher entries with playCount) + deleteMany
   mock = mockRes();
   HistoryHandler.listHistory({ query: {} }, mock.res);
   assert.equal(mock.state.body.data.count, 2);
@@ -317,7 +320,6 @@ test("records and history API handlers serve the store data", async () => {
   HistoryHandler.deleteHistory({ query: { streamPath: "/live/a" } }, mock.res);
   assert.ok(mock.state.body.message.includes("Removed 2"));
   assert.equal(history.count(), 0);
-  assert.equal(store.collection("play_stats").count(), 0, "play counter reset with the history");
 
   await store.close();
   resetContext();

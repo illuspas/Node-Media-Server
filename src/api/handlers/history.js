@@ -11,13 +11,13 @@ const Context = require("../../core/context.js");
 /**
  * History API Handler — query persisted publish history (the store's
  * "stream_history" collection, capped by store.maxHistory). Each entry
- * carries the stream's cumulative playCount at publish time.
+ * carries the playCount the publisher counted during that publish.
  * @class
  */
 class HistoryHandler {
   /**
    * List publish history entries, newest first by default. Each entry carries
-   * the stream's cumulative playCount at the time that publish ended.
+   * the number of plays during that publish.
    * GET /api/v1/history?streamPath=&ip=&search=&page=1&pageSize=20
    * @param {express.Request} req
    * @param {express.Response} res
@@ -64,8 +64,7 @@ class HistoryHandler {
   };
 
   /**
-   * Delete history entries and reset the affected play counters.
-   * Without a streamPath the whole history is cleared.
+   * Delete history entries. Without a streamPath the whole history is cleared.
    * DELETE /api/v1/history?streamPath=/live/x
    * @param {express.Request} req
    * @param {express.Response} res
@@ -78,15 +77,12 @@ class HistoryHandler {
         return;
       }
       const history = store.collection("stream_history");
-      const playStats = store.collection("play_stats");
       const streamPath = req.query.streamPath;
       if (typeof streamPath === "string" && streamPath) {
         const removed = history.deleteMany({ streamPath });
-        playStats.delete(streamPath); // reset the stream's play counter too
         res.json({ success: true, message: `Removed ${removed} history record(s) for ${streamPath}` });
       } else {
         const removed = history.clear();
-        playStats.clear();
         res.json({ success: true, message: `Cleared ${removed} history record(s)` });
       }
       logger.info(`API: History cleanup (${streamPath ?? "all"})`);

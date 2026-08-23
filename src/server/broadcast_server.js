@@ -92,6 +92,10 @@ class BroadcastServer {
     }
     if (session.ip !== "") {
       Context.eventEmitter.emit("postPlay", session);
+      // count external plays on the publisher; internal sessions (record, relay push) have an empty ip
+      if (this.publisher !== null) {
+        this.publisher.playCount += 1;
+      }
     }
     switch (session.protocol) {
     case "flv":
