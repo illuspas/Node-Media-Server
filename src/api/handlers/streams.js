@@ -24,6 +24,7 @@ class StreamsHandler {
           key,
           app,
           name,
+          status: broadcast.getPublishStatus(),
           publisher: broadcast.publisher ? {
             id: broadcast.publisher.id,
             ip: broadcast.publisher.ip,
@@ -84,6 +85,7 @@ class StreamsHandler {
         key,
         app,
         name,
+        status: broadcast.getPublishStatus(),
         publisher: broadcast.publisher ? {
           id: broadcast.publisher.id,
           ip: broadcast.publisher.ip,

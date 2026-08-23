@@ -14,6 +14,25 @@ const Context = require("../core/context.js");
 const logger = require("../core/logger.js");
 const { decodeAmf0Data } = require("../protocol/amf.js");
 
+/** Grace window after a publisher disconnects during which the same client may resume */
+const PUBLISH_GRACE_MS = 3 * 60 * 1000;
+
+/** Publisher stats carried over when the same client resumes within the grace window */
+const RESUMABLE_FIELDS = [
+  "createTime", "inBytes", "outBytes", "playCount",
+  "videoCodec", "videoWidth", "videoHeight", "videoFramerate", "videoDatarate",
+  "audioCodec", "audioChannels", "audioSamplerate", "audioDatarate"
+];
+
+/**
+ * Session ips are "address:port"; two connections of the same client differ in port only.
+ * @param {string} ip
+ * @returns {string}
+ */
+function addressOf(ip) {
+  return ip.replace(/:\d+$/, "");
+}
+
 class BroadcastServer {
   /**
    * @param {string} streamPath - Stream path this broadcast serves
@@ -54,6 +73,12 @@ class BroadcastServer {
 
     /**@type {Set<Buffer> | null} */
     this.rtmpGopCache = null;
+
+    /** @type {number} */
+    this.publishGraceMs = PUBLISH_GRACE_MS;
+
+    /** @type {object | null} */
+    this._publishGraceTimer = null;
   }
 
   /**
@@ -167,6 +192,15 @@ class BroadcastServer {
       }
     }
 
+    if (this._publishGraceTimer !== null) {
+      if (this.publisher !== null && addressOf(session.ip) === addressOf(this.publisher.ip)) {
+        this._resumePublish(session);
+      } else {
+        // a different client takes over the path; close the pending publish record first
+        this._finishPublish();
+      }
+    }
+
     Context.eventEmitter.emit("postPublish", session);
     if (this.publisher == null) {
       this.publisher = session;
@@ -177,23 +211,70 @@ class BroadcastServer {
   };
 
   /**
+   * The publisher disconnected: freeze its stats and keep the publish alive for
+   * the grace window so the same client can resume without losing its record.
    * @param {BaseSession} session
    */
   donePublish = (session) => {
-    if (session === this.publisher) {
-      session.endTime = Date.now();
-      Context.eventEmitter.emit("donePublish", session);
-      this.publisher = null;
-      this.flvMetaData = null;
-      this.flvAudioHeader = null;
-      this.flvVideoHeader = null;
-      this.rtmpMetaData = null;
-      this.rtmpAudioHeader = null;
-      this.rtmpVideoHeader = null;
-      this.flvGopCache?.clear();
-      this.rtmpGopCache?.clear();
-      this._destroyIfEmpty();
+    if (session !== this.publisher || this._publishGraceTimer !== null) {
+      return;
     }
+    session.endTime = Date.now();
+    this._publishGraceTimer = setTimeout(this._finishPublish, this.publishGraceMs);
+    this._publishGraceTimer.unref();
+  };
+
+  /**
+   * The same client reconnected within the grace window: carry the accumulated
+   * stats over to the new session and free the publisher slot for it.
+   * @param {BaseSession} session
+   */
+  _resumePublish = (session) => {
+    const prev = this.publisher;
+    clearTimeout(this._publishGraceTimer);
+    this._publishGraceTimer = null;
+    this.publisher = null;
+    for (const field of RESUMABLE_FIELDS) {
+      session[field] = prev[field];
+    }
+  };
+
+  /**
+   * End the publish for real: emit donePublish with the stats frozen at
+   * disconnect time, drop caches and unregister the broadcast if empty.
+   */
+  _finishPublish = () => {
+    if (this._publishGraceTimer !== null) {
+      clearTimeout(this._publishGraceTimer);
+      this._publishGraceTimer = null;
+    }
+    if (this.publisher === null) {
+      return;
+    }
+    const session = this.publisher;
+    this.publisher = null;
+    Context.eventEmitter.emit("donePublish", session);
+    this.flvMetaData = null;
+    this.flvAudioHeader = null;
+    this.flvVideoHeader = null;
+    this.rtmpMetaData = null;
+    this.rtmpAudioHeader = null;
+    this.rtmpVideoHeader = null;
+    this.flvGopCache?.clear();
+    this.rtmpGopCache?.clear();
+    this._destroyIfEmpty();
+  };
+
+  /**
+   * Real publish state: the publisher object is held through the grace window,
+   * so a non-null publisher alone does not mean the stream is live.
+   * @returns {"publishing" | "reconnecting" | "idle"}
+   */
+  getPublishStatus = () => {
+    if (this._publishGraceTimer !== null) {
+      return "reconnecting";
+    }
+    return this.publisher !== null ? "publishing" : "idle";
   };
 
   /**

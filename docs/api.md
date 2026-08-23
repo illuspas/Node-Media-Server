@@ -183,7 +183,7 @@ Returns server metadata, an overview of the active configuration (ports, static/
 GET /api/v1/streams
 ```
 
-List all active streams with detailed information including codecs, resolution, framerate, and subscriber count.
+List all active streams with detailed information including codecs, resolution, framerate, and subscriber count. `status` is the real publish state: `publishing` (live), `reconnecting` (publisher dropped, the stream is held for the grace window awaiting the same client), or `idle` (no publisher, e.g. only waiting players).
 
 ```json
 {
@@ -194,6 +194,7 @@ List all active streams with detailed information including codecs, resolution, 
         "key": "/live/stream",
         "app": "live",
         "name": "stream",
+        "status": "publishing",
         "publisher": {
           "id": "session_id",
           "ip": "192.168.1.100",

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
 import { posterUrl } from "../lib/mock";
 import { fetchStreams, deleteSession } from "../lib/api";
-import type { ApiStream } from "../lib/api";
+import type { ApiStream, StreamStatus } from "../lib/api";
 import { fmtNum, fmtDur, fmtBytes } from "../lib/format";
 import { toast } from "../lib/toast";
 
@@ -51,6 +51,14 @@ function avgBitrateMbps(s: ApiStream, now: number): number {
   if (seconds < 1) return 0;
   return (p.inBytes * 8) / seconds / 1e6;
 }
+
+/* Real publish state from the server: "reconnecting" entries are held for the
+   same client to resume within the grace window. */
+const STATUS_BADGE: Record<StreamStatus, { label: string; cls: string; live?: boolean }> = {
+  publishing: { label: "推流中", cls: "badge-success", live: true },
+  reconnecting: { label: "等待重连", cls: "badge-warning" },
+  idle: { label: "等待推流", cls: "badge-neutral" }
+};
 
 export default function Streams() {
   const [list, setList] = useState<ApiStream[]>([]);
@@ -119,7 +127,18 @@ export default function Streams() {
   const rows = filtered.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
 
   const totalViewers = list.reduce((a, s) => a + s.subscribers, 0);
+  const totalPublishing = list.filter(s => s.status === "publishing").length;
   const totalInBytes = list.reduce((a, s) => a + (s.publisher?.inBytes ?? 0), 0);
+
+  const statusBadge = (s: ApiStream) => {
+    const st = STATUS_BADGE[s.status];
+    return (
+      <span className={`badge ${st.cls}`}>
+        {st.live && <span className="dot-live" style={{ width: 6, height: 6 }} />}
+        &nbsp;{st.label}
+      </span>
+    );
+  };
 
   const toggleRec = (s: ApiStream) => {
     const rec = !recFlags[s.key];
@@ -128,7 +147,7 @@ export default function Streams() {
   };
 
   const kick = async (s: ApiStream) => {
-    if (!s.publisher || kicking) return;
+    if (!s.publisher || s.status !== "publishing" || kicking) return;
     setKicking(s.key);
     try {
       await deleteSession(s.publisher.id);
@@ -189,7 +208,7 @@ export default function Streams() {
         <div className="card px-5 py-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-stone-500">推流中</p>
-            <p className="text-2xl font-semibold tabular-nums mt-0.5">{list.length}</p>
+            <p className="text-2xl font-semibold tabular-nums mt-0.5">{totalPublishing}</p>
           </div>
           <span className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
             <Icon name="radio" className="w-4 h-4" />
@@ -324,10 +343,7 @@ export default function Streams() {
                       <td className="tabular-nums">{fmtNum(s.subscribers)}</td>
                       <td className="tabular-nums">{p ? fmtDur((tick - p.createTime) / 1000) : "—"}</td>
                       <td>
-                        <span className="badge badge-success">
-                          <span className="dot-live" style={{ width: 6, height: 6 }} />
-                          &nbsp;推流中
-                        </span>
+                        {statusBadge(s)}
                       </td>
                       <td>
                         <div className="flex items-center gap-0.5">
@@ -344,7 +360,7 @@ export default function Streams() {
                           <button
                             className="btn btn-ghost btn-sm btn-icon text-red-600 hover:bg-red-50"
                             title="断开"
-                            disabled={!p || kicking === s.key}
+                            disabled={s.status !== "publishing" || kicking === s.key}
                             onClick={() => kick(s)}
                           >
                             <Icon name="slash" className={`w-3.5 h-3.5 ${kicking === s.key ? "animate-spin" : ""}`} />
@@ -398,10 +414,7 @@ export default function Streams() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="badge badge-success">
-                <span className="dot-live" style={{ width: 6, height: 6 }} />
-                &nbsp;推流中
-              </span>
+              {preview && statusBadge(preview)}
               <button className="btn btn-ghost btn-icon" title="关闭" onClick={() => setPreview(null)}>
                 <Icon name="x" className="w-4 h-4" />
               </button>

@@ -186,10 +186,14 @@ export interface ApiPublisher {
   inBytes: number;
 }
 
+/** Real publish state; "reconnecting" = publisher dropped, held for the grace window. */
+export type StreamStatus = "publishing" | "reconnecting" | "idle";
+
 export interface ApiStream {
   key: string;
   app: string;
   name: string;
+  status: StreamStatus;
   publisher: ApiPublisher | null;
   subscribers: number;
 }
