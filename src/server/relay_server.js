@@ -33,7 +33,7 @@ class NodeRelayServer {
    * Start the relay manager and restore persisted tasks.
    * All tasks are managed via API — no config-driven static tasks.
    */
-  run = () => {
+  run() {
     if (this.isRunning) {
       logger.warn("NodeRelayServer already running");
       return;
@@ -42,13 +42,13 @@ class NodeRelayServer {
     this.isRunning = true;
     this._restoreTasks();
     logger.info("NodeRelayServer started (API-driven mode)");
-  };
+  }
 
   /**
    * Re-create relay tasks persisted by a previous run.
    * @returns {void}
    */
-  _restoreTasks = () => {
+  _restoreTasks() {
     const store = Context.store;
     if (!store?.opened) {
       return;
@@ -65,7 +65,7 @@ class NodeRelayServer {
         logger.error(`NodeRelayServer restore task ${doc.id} failed: ${error.message}`);
       }
     }
-  };
+  }
 
   /**
    * Persist or drop a task config so task state survives restarts.
@@ -73,7 +73,7 @@ class NodeRelayServer {
    * @param {object|null} config - Null removes the persisted task.
    * @returns {void}
    */
-  _persistTask = (taskKey, config) => {
+  _persistTask(taskKey, config) {
     const store = Context.store;
     if (!store?.opened) {
       return;
@@ -84,12 +84,12 @@ class NodeRelayServer {
     } else {
       relayTasks.set(taskKey, { config });
     }
-  };
+  }
 
   /**
    * Stop all relay tasks.
    */
-  stop = () => {
+  stop() {
     if (!this.isRunning) {
       return;
     }
@@ -105,7 +105,7 @@ class NodeRelayServer {
 
     this.tasks.clear();
     logger.info("NodeRelayServer stopped");
-  };
+  }
 
   // ─────────────────────────────────────────
   // Task Management
@@ -123,7 +123,7 @@ class NodeRelayServer {
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)
    * @returns {(RtspSession|RtmpClientSession)} The created session
    */
-  addTask = (config) => {
+  addTask(config) {
     const url = config.url || config.rtspUrl;
     const { streamPath } = config;
 
@@ -167,14 +167,14 @@ class NodeRelayServer {
     });
 
     return session;
-  };
+  }
 
   /**
    * Remove a relay task by its task key.
    * @param {string} taskKey - Stream path or push URL key
    * @returns {boolean} True if task was found and removed
    */
-  removeTask = (taskKey) => {
+  removeTask(taskKey) {
     const session = this.tasks.get(taskKey);
     if (!session) {
       logger.warn(`NodeRelayServer task not found: ${taskKey}`);
@@ -186,40 +186,40 @@ class NodeRelayServer {
     this.tasks.delete(taskKey);
     this._persistTask(taskKey, null);
     return true;
-  };
+  }
 
   /**
    * List all relay tasks.
    * @returns {object[]} Array of task status objects
    */
-  listTasks = () => {
+  listTasks() {
     const result = [];
     for (const [taskKey, session] of this.tasks) {
       result.push({ taskKey, ...session.getStatus() });
     }
     return result;
-  };
+  }
 
   /**
    * Get status of a specific task.
    * @param {string} taskKey - Stream path or push URL key
    * @returns {object|null} Task status or null if not found
    */
-  getTaskStatus = (taskKey) => {
+  getTaskStatus(taskKey) {
     const session = this.tasks.get(taskKey);
     if (!session) {
       return null;
     }
     return { taskKey, ...session.getStatus() };
-  };
+  }
 
   /**
    * Get task count.
    * @returns {number}
    */
-  getTaskCount = () => {
+  getTaskCount() {
     return this.tasks.size;
-  };
+  }
 }
 
 module.exports = NodeRelayServer;

@@ -29,20 +29,20 @@ class NodeRtmpServer {
     }
   }
 
-  run = () => {
+  run() {
     this.tcpServer?.listen(Context.config.rtmp.port, Context.config.bind, () => {
       logger.log(`Rtmp Server listening on port ${Context.config.bind}:${Context.config.rtmp.port}`);
     });
     this.tlsServer?.listen(Context.config.rtmps.port, Context.config.bind, () => {
       logger.log(`Rtmps Server listening on port ${Context.config.bind}:${Context.config.rtmps.port}`);
     });
-  };
+  }
 
   /**
    * Stop listeners and destroy all live RTMP/RTMPS connections.
    * @returns {void}
    */
-  stop = () => {
+  stop() {
     this.tcpServer?.close(() => {
       logger.log("Rtmp Server stopped");
     });
@@ -52,7 +52,7 @@ class NodeRtmpServer {
     for (const socket of this._sockets) {
       socket.destroy();
     }
-  };
+  }
 
   /**
    * @param {net.Socket} socket 

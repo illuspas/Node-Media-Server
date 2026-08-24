@@ -79,7 +79,7 @@ class NodeHttpServer {
 
   }
 
-  run = () => {
+  run() {
     this.httpServer?.listen(Context.config.http.port, Context.config.bind, () => {
       logger.info(`HTTP server listening on port ${Context.config.bind}:${Context.config.http.port}`);
     });
@@ -92,13 +92,13 @@ class NodeHttpServer {
     this.wssServer?.on("listening", () => {
       logger.info(`WebSocket server listening on port ${Context.config.bind}:${Context.config.https.port}`);
     });
-  };
+  }
 
   /**
    * Stop HTTP/HTTPS listeners, close WebSocket servers and their clients.
    * @returns {void}
    */
-  stop = () => {
+  stop() {
     for (const ws of this.wsServer?.clients ?? []) {
       ws.close();
     }
@@ -113,7 +113,7 @@ class NodeHttpServer {
     this.httpsServer?.close(() => {
       logger.info("HTTPS server stopped");
     });
-  };
+  }
 
   /**
    * @param {express.Request | http.IncomingMessage} req
