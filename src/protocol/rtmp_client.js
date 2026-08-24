@@ -438,6 +438,30 @@ class RtmpClient extends Rtmp {
   };
 
   /**
+   * Handle user control messages: answer server pings with a pong.
+   * Event types follow both the nginx-rtmp convention (6=ping, 7=pong)
+   * and the FMS convention (7=ping request, 8=pong).
+   * @returns {void}
+   */
+  eventHandler = () => {
+    const payload = this.parserPacket.payload;
+    if (payload.length < 6) {
+      return;
+    }
+    const eventType = payload.readUInt16BE(0);
+    if (eventType === 6 || eventType === 7) {
+      const pong = Buffer.alloc(18);
+      pong[0] = 0x02;
+      pong.writeUIntBE(0, 1, 3);
+      pong.writeUIntBE(6, 4, 3);
+      pong[7] = 0x04;
+      pong.writeUInt16BE(eventType === 6 ? 7 : 8, 12);
+      payload.copy(pong, 14, 2, 6);
+      this.onOutputCallback(pong);
+    }
+  };
+
+  /**
    * Start the RTMP ping heartbeat.
    * @param {number} [interval]
    * @returns {void}
