@@ -41,7 +41,9 @@ class NodeMediaServer {
       maxOps: storeConfig.maxOps,
       pretty: storeConfig.pretty,
       durability: storeConfig.durability,
-      partitions: storeConfig.partitions
+      // Partition layout is fixed by the system: changing it after data exists
+      // strands stale shard files that resurrect deleted docs on reload.
+      partitions: 1
     });
     Context.store = this.store;
 
