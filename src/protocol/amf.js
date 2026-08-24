@@ -329,7 +329,6 @@ function amf0decArray(buf) {
 function amf0encArray(a) {
   let l = 0;
   if (a instanceof Array) l = a.length; else l = Object.keys(a).length;
-  logger.debug("Array encode", l, a);
   let buf = Buffer.alloc(5);
   buf.writeUInt8(8, 0);
   buf.writeUInt32BE(l, 1);
