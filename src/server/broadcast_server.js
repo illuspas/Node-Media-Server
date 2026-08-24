@@ -15,7 +15,7 @@ const logger = require("../core/logger.js");
 const { decodeAmf0Data } = require("../protocol/amf.js");
 
 /** Grace window after a publisher disconnects during which the same client may resume */
-const PUBLISH_GRACE_MS = 3 * 60 * 1000;
+const PUBLISH_GRACE_MS = 30 * 1000;
 
 /** Publisher stats carried over when the same client resumes within the grace window */
 const RESUMABLE_FIELDS = [

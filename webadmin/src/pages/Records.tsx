@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
 import { fmtBytes, fmtDur, fmtDurLong, fmtDateTime } from "../lib/format";
@@ -12,10 +11,12 @@ import {
   fetchRecords,
 } from "../lib/api";
 import type { ApiRecord, RecordsPage } from "../lib/api";
+import { presetDates, rangeWindow, type RangeValue } from "../lib/timerange";
 
 const POLL_ACTIVE_MS = 3000;
 const POLL_FILES_MS = 10000;
 const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
 
 function fileBaseName(path: string): string {
   const idx = path.lastIndexOf("/");
@@ -29,12 +30,24 @@ export default function Records() {
     items: [], count: 0, page: 1, pageSize: PAGE_SIZE, totalDuration: 0, totalSize: 0,
   });
   const [page, setPage] = useState(1);
+  const [q, setQ] = useState("");
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [fRange, setFRange] = useState<RangeValue>("7d");
+  /* the date boxes always show the active window; presets rewrite them */
+  const [customStart, setCustomStart] = useState(() => presetDates("7d").start);
+  const [customEnd, setCustomEnd] = useState(() => presetDates("7d").end);
 
   const loadFiles = useCallback(async (targetPage: number) => {
     try {
-      const body = await fetchRecords({ status: "done", page: targetPage, pageSize: PAGE_SIZE });
+      const body = await fetchRecords({
+        status: "done",
+        search: search || undefined,
+        page: targetPage,
+        pageSize: PAGE_SIZE,
+        ...rangeWindow(fRange, customStart, customEnd),
+      });
       setFiles({
         items: body.items ?? [],
         count: body.count ?? 0,
@@ -47,7 +60,16 @@ export default function Records() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("records.errLoad"));
     }
-  }, []);
+  }, [search, fRange, customStart, customEnd]);
+
+  /* debounce the search box into a server-side query */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(q.trim());
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const loadActive = useCallback(async () => {
     try {
@@ -231,16 +253,71 @@ export default function Records() {
 
       {/* files */}
       <div className="card overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-5 py-4 border-b border-stone-200">
           <div>
             <h3 className="font-semibold">{formatMessage({ id: "records.libraryTitle" })}</h3>
             <p className="text-xs text-stone-500 mt-0.5">
               {formatMessage({ id: "records.librarySubtitle" }, { count: files.count })}
             </p>
           </div>
-          <Link to="/settings" className="text-sm text-stone-500 hover:text-neutral-900 inline-flex items-center gap-1 transition-colors">
-            {formatMessage({ id: "records.settingsLink" })} <Icon name="arrow-right" className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-44">
+              <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+              <input
+                className="input h-10 text-sm"
+                style={{ paddingLeft: "2.25rem" }}
+                placeholder={formatMessage({ id: "records.searchPlaceholder" })}
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+            </div>
+            <div className="flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 h-10">
+              {(["today", "7d", "30d", "custom"] as const).map(v => (
+                <button
+                  key={v}
+                  className={`h-full px-3 text-sm rounded-[0.45rem] transition-colors ${
+                    fRange === v
+                      ? "bg-white border border-stone-200 text-stone-900 shadow-sm font-medium"
+                      : "text-stone-500 hover:text-stone-800"
+                  }`}
+                  onClick={() => {
+                    setFRange(v);
+                    if (v !== "custom") {
+                      const { start, end } = presetDates(v);
+                      setCustomStart(start);
+                      setCustomEnd(end);
+                    }
+                    setPage(1);
+                  }}
+                >
+                  {formatMessage({ id: `history.range.${v}` })}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                className="input h-10 text-sm"
+                value={customStart}
+                onChange={e => {
+                  setCustomStart(e.target.value);
+                  setFRange("custom");
+                  setPage(1);
+                }}
+              />
+              <span className="text-stone-400">–</span>
+              <input
+                type="date"
+                className="input h-10 text-sm"
+                value={customEnd}
+                onChange={e => {
+                  setCustomEnd(e.target.value);
+                  setFRange("custom");
+                  setPage(1);
+                }}
+              />
+            </div>
+          </div>
         </div>
         <div className="table-wrap">
           <table className="tbl">
@@ -300,8 +377,10 @@ export default function Records() {
                 <tr>
                   <td colSpan={6}>
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
-                      <Icon name="film" className="w-8 h-8 mb-2" />
-                      <span className="text-sm">{formatMessage({ id: "records.emptyFiles" })}</span>
+                      <Icon name={search ? "search" : "film"} className="w-8 h-8 mb-2" />
+                      <span className="text-sm">
+                        {formatMessage({ id: search ? "records.emptyFiltered" : "records.emptyFiles" })}
+                      </span>
                     </div>
                   </td>
                 </tr>
