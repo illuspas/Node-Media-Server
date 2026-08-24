@@ -157,8 +157,6 @@ const zhCN: Record<MessageKey, string> = {
   "relay.localPath": "本机流路径",
   "relay.localPathHelp": "以 / 开头的 app/name 路径；推流转发时须为已存在的本机流",
   "relay.advanced": "高级选项",
-  "relay.transport": "RTSP 传输协议",
-  "relay.transportHelp": "仅对 RTSP 拉流生效",
   "relay.reconnect": "断线自动重连",
   "relay.reconnectHelp": "连接失败时按指数退避自动重试",
   "relay.reconnectInterval": "重连间隔 (ms)",

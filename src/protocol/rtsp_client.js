@@ -904,16 +904,6 @@ class RtspClient {
   };
 
   /**
-   * Build Transport header for UDP unicast mode
-   * @param {number} rtpPort - Client RTP port
-   * @param {number} rtcpPort - Client RTCP port
-   * @returns {string} Transport header value
-   */
-  static buildUDPTransport = (rtpPort, rtcpPort) => {
-    return `RTP/AVP;unicast;client_port=${rtpPort}-${rtcpPort}`;
-  };
-
-  /**
    * Parse Transport response header to extract server-assigned values
    * @param {string} transportHeader - Transport header from SETUP response
    * @returns {{[key: string]: string}} Parsed transport parameters

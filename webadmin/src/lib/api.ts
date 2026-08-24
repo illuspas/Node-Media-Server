@@ -258,7 +258,6 @@ export interface ApiRelayTask {
   url?: string;
   rtspUrl?: string;
   streamPath: string;
-  transport?: string;
   isRunning: boolean;
   isClosing: boolean;
   reconnectAttempts: number;
@@ -273,7 +272,6 @@ export interface RelayTaskInput {
   url: string;
   mode: "pull" | "push";
   streamPath: string;
-  transport?: string;
   reconnect?: boolean;
   reconnectInterval?: number;
   maxReconnectAttempts?: number;

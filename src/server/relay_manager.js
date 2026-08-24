@@ -118,7 +118,6 @@ class RelayManager {
    * @param {string} [config.url] - Remote RTSP/RTMP URL
    * @param {"pull"|"push"} [config.mode] - Relay direction
    * @param {string} config.streamPath - Stream path (e.g. "/live/camera1")
-   * @param {"tcp"|"udp"} [config.transport] - Transport mode (default "tcp")
    * @param {boolean} [config.reconnect] - Enable auto-reconnect (default true)
    * @param {number} [config.reconnectInterval] - Initial reconnect interval ms
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)

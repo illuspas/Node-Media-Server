@@ -155,8 +155,6 @@ const en = {
   "relay.localPath": "Local stream path",
   "relay.localPathHelp": "app/name path starting with /; for push it must be an existing local stream",
   "relay.advanced": "Advanced options",
-  "relay.transport": "RTSP transport",
-  "relay.transportHelp": "Applies to RTSP pulls only",
   "relay.reconnect": "Auto-reconnect",
   "relay.reconnectHelp": "Retry with exponential backoff on failure",
   "relay.reconnectInterval": "Reconnect interval (ms)",

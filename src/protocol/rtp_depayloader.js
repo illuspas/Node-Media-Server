@@ -609,7 +609,6 @@ class H265Depayloader extends TrackDepayloader {
   }
 
   _initFromFmtp = () => {
-    const sprop = this.fmtp["sprop-vps"];
     // H.265 params may come as sprop-vps, sprop-sps, sprop-pps
     if (this.fmtp["sprop-sps"]) {
       this.sps = Buffer.from(this.fmtp["sprop-sps"], "base64");
@@ -620,6 +619,7 @@ class H265Depayloader extends TrackDepayloader {
     if (this.fmtp["sprop-vps"]) {
       this.vps = Buffer.from(this.fmtp["sprop-vps"], "base64");
     }
+    this._tryBuildConfig();
   };
 
   /**
@@ -693,19 +693,27 @@ class H265Depayloader extends TrackDepayloader {
     const nalType = H265Depayloader.getH265NalType(payload);
 
     if (nalType === H265_NAL_TYPE_VPS) {
-      this.vps = Buffer.from(payload);
+      this.vps = this._stripStartCode(Buffer.from(payload));
+      this._tryBuildConfig();
       return packets;
     }
     if (nalType === H265_NAL_TYPE_SPS) {
-      this.sps = Buffer.from(payload);
+      this.sps = this._stripStartCode(Buffer.from(payload));
+      this._tryBuildConfig();
       return packets;
     }
     if (nalType === H265_NAL_TYPE_PPS) {
-      this.pps = Buffer.from(payload);
+      this.pps = this._stripStartCode(Buffer.from(payload));
+      this._tryBuildConfig();
       return packets;
     }
 
     if (H265Depayloader.isVcl(nalType)) {
+      // Emit HEVC sequence header before the first VCL frame
+      if (!this.headerEmitted && this.hevcConfigRecord) {
+        packets.push(this._createVideoHeaderPacket(this.hevcConfigRecord, rtpPacket.timestamp));
+        this.headerEmitted = true;
+      }
       const isKeyframe = H265Depayloader.isKeyframe(nalType);
       const data = this._buildH265VideoNaluPayload(payload, isKeyframe, 0);
       packets.push(this._createVideoNalPacket(data, isKeyframe, rtpPacket.timestamp));
@@ -732,17 +740,24 @@ class H265Depayloader extends TrackDepayloader {
 
       const nalType = H265Depayloader.getH265NalType(nalu);
       if (nalType === H265_NAL_TYPE_VPS) {
-        this.vps = Buffer.from(nalu);
+        this.vps = this._stripStartCode(Buffer.from(nalu));
+        this._tryBuildConfig();
       } else if (nalType === H265_NAL_TYPE_SPS) {
-        this.sps = Buffer.from(nalu);
+        this.sps = this._stripStartCode(Buffer.from(nalu));
+        this._tryBuildConfig();
       } else if (nalType === H265_NAL_TYPE_PPS) {
-        this.pps = Buffer.from(nalu);
+        this.pps = this._stripStartCode(Buffer.from(nalu));
+        this._tryBuildConfig();
       } else if (H265Depayloader.isVcl(nalType)) {
         vclNalus.push(nalu);
       }
     }
 
     if (vclNalus.length > 0) {
+      if (!this.headerEmitted && this.hevcConfigRecord) {
+        packets.push(this._createVideoHeaderPacket(this.hevcConfigRecord, rtpPacket.timestamp));
+        this.headerEmitted = true;
+      }
       const isKeyframe = vclNalus.some((n) => H265Depayloader.isKeyframe(H265Depayloader.getH265NalType(n)));
       const data = this._buildH265MultiNaluPayload(vclNalus, isKeyframe, 0);
       packets.push(this._createVideoNalPacket(data, isKeyframe, rtpPacket.timestamp));
@@ -796,9 +811,18 @@ class H265Depayloader extends TrackDepayloader {
       this.fuStarted = false;
       this.fuBuffers = [];
 
+      /** @type {AVPacket[]} */
+      const packets = [];
+
+      if (!this.headerEmitted && this.hevcConfigRecord) {
+        packets.push(this._createVideoHeaderPacket(this.hevcConfigRecord, this.fuTimestamp));
+        this.headerEmitted = true;
+      }
+
       const isKeyframe = H265Depayloader.isKeyframe(fuType);
       const data = this._buildH265VideoNaluPayload(completeNal, isKeyframe, 0);
-      return [this._createVideoNalPacket(data, isKeyframe, this.fuTimestamp)];
+      packets.push(this._createVideoNalPacket(data, isKeyframe, this.fuTimestamp));
+      return packets;
     }
 
     if (fuPayload.length > 0) {
@@ -808,36 +832,24 @@ class H265Depayloader extends TrackDepayloader {
   };
 
   /**
-   * Build Enhanced FLV video tag body for H.265 NAL unit
-   * Uses ExHeader format: (0x80|frameType) << 4 | packetType, fourcc "hvc1"
+   * Build Enhanced FLV video tag body for H.265 NAL unit (CodedFrames)
+   * [0]=0x80|frameType<<4|0x01, [1-4]="hvc1", [5-7]=cts, [8-11]=naluLength, [12..]=nalu
    * @param {Buffer} nalu
    * @param {boolean} isKeyframe
    * @param {number} compositionTime
    * @returns {Buffer}
    */
   _buildH265VideoNaluPayload = (nalu, isKeyframe, compositionTime) => {
-    const headerSize = 5 + 4; // exHeader(1) + packetType(1) + fourcc(4)... actually:
-    // Enhanced FLV: [0]=isExHeader<<3|frameType<<4|packetType, [1-4]=fourcc, [5-7]=cts, [8-11]=naluLength, [12..]=nalu
-    // Wait, let me use the standard enhanced FLV format
-    // Byte 0: (frameType & 0x07) << 4 | (isExHeader << 3) | (packetType & 0x0F)
-    // But actually: isExHeader is bit 3 of the upper nibble
-    // Standard: first nibble = frameType|isExHeader, second nibble = packetType
-
-    const buf = Buffer.alloc(8 + 4 + nalu.length);
-    // Enhanced FLV ExHeader: byte0 bit3=1 means ex header
-    buf[0] = ((isKeyframe ? FLV_FRAME_KEY : FLV_FRAME_INTER) << 4) | 0x80 | 0x01;
-    // Wait this is getting confusing. Let me use the format from flv.js:
-    // isExHeader = (data[0] >> 4 & 0b1000) !== 0
-    // So bit 3 of upper nibble: byte0 = (1<<7) | (frameType<<4) | packetType
-    buf[0] = 0x80 | ((isKeyframe ? 1 : 2) << 4) | 1; // isExHeader=1, frameType, CodedFrames=1
-    buf.write("hvc1", 1, 4, "ascii"); // fourcc
+    const buf = Buffer.alloc(12 + nalu.length);
+    buf[0] = 0x80 | ((isKeyframe ? FLV_FRAME_KEY : FLV_FRAME_INTER) << 4) | 0x01;
+    buf.write("hvc1", 1, 4, "ascii");
     buf[5] = (compositionTime >> 16) & 0xFF;
     buf[6] = (compositionTime >> 8) & 0xFF;
     buf[7] = compositionTime & 0xFF;
     buf.writeUInt32BE(nalu.length, 8);
     nalu.copy(buf, 12);
 
-    return buf.subarray(0, 12 + nalu.length);
+    return buf;
   };
 
   _buildH265MultiNaluPayload = (nalus, isKeyframe, compositionTime) => {
@@ -862,6 +874,159 @@ class H265Depayloader extends TrackDepayloader {
     }
 
     return buf.subarray(0, offset);
+  };
+
+  /**
+   * Strip Annex-B start codes (0x000001 / 0x00000001) if present.
+   * HEVCDecoderConfigurationRecord expects raw NAL units without start codes.
+   * @param {Buffer} nalu
+   * @returns {Buffer}
+   */
+  _stripStartCode = (nalu) => {
+    if (nalu.length > 4 && nalu[0] === 0 && nalu[1] === 0 && nalu[2] === 0 && nalu[3] === 1) {
+      return nalu.subarray(4);
+    }
+    if (nalu.length > 3 && nalu[0] === 0 && nalu[1] === 0 && nalu[2] === 1) {
+      return nalu.subarray(3);
+    }
+    return nalu;
+  };
+
+  /**
+   * Try to build HEVCDecoderConfigurationRecord from VPS+SPS+PPS.
+   * Only rebuilds if any of them actually changed.
+   */
+  _tryBuildConfig = () => {
+    if (this.vps && this.sps && this.pps) {
+      const newRecord = this._buildHevcConfigRecord(this.vps, this.sps, this.pps);
+      if (!this.hevcConfigRecord || !this.hevcConfigRecord.equals(newRecord)) {
+        this.hevcConfigRecord = newRecord;
+        this.headerEmitted = false; // Re-emit header on config change
+        logger.debug(`H265: HEVC config record built (VPS ${this.vps.length}B + SPS ${this.sps.length}B + PPS ${this.pps.length}B)`);
+      }
+    }
+  };
+
+  /**
+   * Build HEVCDecoderConfigurationRecord (ISO 14496-15, 8.3.3.1.2)
+   * @param {Buffer} vps - Raw VPS NAL unit
+   * @param {Buffer} sps - Raw SPS NAL unit
+   * @param {Buffer} pps - Raw PPS NAL unit
+   * @returns {Buffer}
+   */
+  _buildHevcConfigRecord = (vps, sps, pps) => {
+    /** @type {Buffer[]} */
+    const naluBuffers = [vps, sps, pps];
+    const nalTypes = [H265_NAL_TYPE_VPS, H265_NAL_TYPE_SPS, H265_NAL_TYPE_PPS];
+
+    let arraysSize = 0;
+    for (const nalu of naluBuffers) {
+      arraysSize += 1 + 2 + 2 + nalu.length; // array header + numNalus + length + data
+    }
+
+    const buf = Buffer.alloc(23 + arraysSize);
+    let offset = 0;
+
+    // Parse profile_tier_level from SPS (after the 2-byte NAL header)
+    const ptl = this._parseSpsProfileTierLevel(sps);
+
+    buf[offset++] = 0x01; // configurationVersion
+    buf[offset++] = (ptl.profileSpace << 6) | (ptl.tierFlag << 5) | ptl.profileIdc;
+    buf.writeUInt32BE(ptl.profileCompatFlags, offset); offset += 4;
+    ptl.constraintFlags.copy(buf, offset); offset += 6;
+    buf[offset++] = ptl.levelIdc;
+    buf.writeUInt16BE(0xF000, offset); offset += 2; // reserved + min_spatial_segmentation_idc = 0
+    buf[offset++] = 0xFC; // reserved + parallelismType = 0 (unknown)
+    buf[offset++] = 0xFC | 0x01; // reserved + chroma_format_idc = 1 (4:2:0)
+    buf[offset++] = 0xF8; // reserved + bitDepthLumaMinus8 = 0
+    buf[offset++] = 0xF8; // reserved + bitDepthChromaMinus8 = 0
+    buf.writeUInt16BE(0, offset); offset += 2; // avgFrameRate = 0
+    buf[offset++] = 0x0F; // constantFrameRate=0, numTemporalLayers=1, temporalIdNested=1, lengthSizeMinusOne=3
+    buf[offset++] = 3; // numOfArrays
+
+    for (let i = 0; i < naluBuffers.length; i++) {
+      const nalu = naluBuffers[i];
+      buf[offset++] = 0x80 | nalTypes[i]; // array_completeness=1 | NAL_unit_type
+      buf.writeUInt16BE(1, offset); offset += 2; // numNalus = 1
+      buf.writeUInt16BE(nalu.length, offset); offset += 2;
+      nalu.copy(buf, offset); offset += nalu.length;
+    }
+
+    return buf.subarray(0, offset);
+  };
+
+  /**
+   * Parse general profile_tier_level from an SPS NAL unit (ISO 23008-2, 7.3.2.2).
+   * @param {Buffer} sps - Raw SPS NAL unit (no start code)
+   * @returns {{profileSpace: number, tierFlag: number, profileIdc: number,
+   *            profileCompatFlags: number, constraintFlags: Buffer, levelIdc: number}}
+   *          constraintFlags is the 6-byte general_constraint_indicator_flags (48 bits,
+   *          returned as bytes because it exceeds JavaScript's 32-bit bitwise range).
+   */
+  _parseSpsProfileTierLevel = (sps) => {
+    // Remove emulation prevention bytes (0x000003) for RBSP access
+    const rbsp = Buffer.alloc(sps.length);
+    let rbspLen = 0;
+    for (let i = 0; i < sps.length; i++) {
+      if (i >= 2 && sps[i - 2] === 0 && sps[i - 1] === 0 && sps[i] === 3) {
+        continue; // skip emulation prevention byte
+      }
+      rbsp[rbspLen++] = sps[i];
+    }
+
+    /**
+     * @param {number} start
+     * @param {number} count - Must be <= 31 to stay within 32-bit bitwise range
+     * @returns {number}
+     */
+    const readBitsAt = (start, count) => {
+      let value = 0;
+      for (let i = 0; i < count && (start + i) < (rbspLen * 8); i++) {
+        const byteIdx = (start + i) >> 3;
+        const bitIdx = 7 - ((start + i) & 7);
+        value = (value << 1) | ((rbsp[byteIdx] >> bitIdx) & 1);
+      }
+      return value;
+    };
+
+    // NAL header (16 bits) + sps_video_parameter_set_id(4) + sps_max_sub_layers_minus1(3) + sps_temporal_id_nested(1)
+    let pos = 24;
+    const profileSpace = readBitsAt(pos, 2); pos += 2;
+    const tierFlag = readBitsAt(pos, 1); pos += 1;
+    const profileIdc = readBitsAt(pos, 5); pos += 5;
+    const profileCompatFlags = readBitsAt(pos, 32) >>> 0; pos += 32;
+    const constraintFlags = Buffer.alloc(6);
+    for (let i = 0; i < 6; i++) {
+      constraintFlags[i] = readBitsAt(pos, 8); pos += 8;
+    }
+    const levelIdc = readBitsAt(pos, 8);
+
+    return { profileSpace, tierFlag, profileIdc, profileCompatFlags, constraintFlags, levelIdc };
+  };
+
+  /**
+   * Create AVPacket for the Enhanced FLV HEVC sequence start tag.
+   * Format per enhanced-rtmp-v1: [0x80|frameType<<4|0x00] "hvc1" HEVCDecoderConfigurationRecord
+   * @param {Buffer} configRecord
+   * @param {number} timestamp
+   * @returns {AVPacket}
+   */
+  _createVideoHeaderPacket = (configRecord, timestamp) => {
+    const pkt = new AVPacket();
+    pkt.codec_type = FLV_VIDEO_TYPE;
+    pkt.codec_id = 0x31637668; // fourcc "hvc1" as uint32
+    pkt.flags = 2; // video header
+    pkt.pts = timestamp;
+    pkt.dts = timestamp;
+
+    // Enhanced FLV: byte0 = isExHeader(0x80) | keyFrame(1<<4) | PacketTypeSequenceStart(0)
+    pkt.data = Buffer.alloc(5 + configRecord.length);
+    pkt.data[0] = 0x80 | (FLV_FRAME_KEY << 4);
+    pkt.data.write("hvc1", 1, 4, "ascii");
+    configRecord.copy(pkt.data, 5);
+    pkt.size = pkt.data.length;
+
+    return pkt;
   };
 
   _createVideoNalPacket = (flvBody, isKeyframe, timestamp) => {

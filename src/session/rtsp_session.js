@@ -32,7 +32,6 @@ class RtspSession extends BaseSession {
    * @param {object} config
    * @param {string} config.rtspUrl - Full RTSP URL
    * @param {string} config.streamPath - Stream path (e.g. "/live/camera1")
-   * @param {"tcp"|"udp"} [config.transport] - Transport mode (default "tcp")
    * @param {boolean} [config.reconnect] - Enable auto-reconnect (default true)
    * @param {number} [config.reconnectInterval] - Initial reconnect interval ms
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)
@@ -47,7 +46,6 @@ class RtspSession extends BaseSession {
     this.streamPath = config.streamPath;
     this.streamApp = config.streamPath.split("/")[1] || "live";
     this.streamName = config.streamPath.split("/")[2] || "stream";
-    this.transport = config.transport || "tcp";
 
     // Reconnect config
     this.reconnectEnabled = config.reconnect !== false;
@@ -69,10 +67,6 @@ class RtspSession extends BaseSession {
     // State
     this.isRunning = false;
     this.isClosing = false;
-
-    // UDP sockets (if UDP mode)
-    this.rtpSocket = null;
-    this.rtcpSocket = null;
 
     // Setup callbacks
     this.rtspClient.onRtpDataCallback = this.onRtpData;
@@ -160,80 +154,20 @@ class RtspSession extends BaseSession {
   setupTrack = async (media) => {
     const trackUrl = RtspClient.buildTrackUrl(this.rtspUrl, media.control);
 
-    if (this.transport === "tcp") {
-      // TCP interleaved mode
-      const { rtpChannel, rtcpChannel } = this.rtspClient.allocateChannel();
-      const transportHeader = RtspClient.buildTCPInterleavedTransport(rtpChannel, rtcpChannel);
+    // TCP interleaved mode
+    const { rtpChannel, rtcpChannel } = this.rtspClient.allocateChannel();
+    const transportHeader = RtspClient.buildTCPInterleavedTransport(rtpChannel, rtcpChannel);
 
-      logger.debug(`RTSP session ${this.id} SETUP ${media.type} TCP interleaved=${rtpChannel}-${rtcpChannel}`);
+    logger.debug(`RTSP session ${this.id} SETUP ${media.type} TCP interleaved=${rtpChannel}-${rtcpChannel}`);
 
-      const setupRes = await this.rtspClient.setup(trackUrl, transportHeader);
-      if (setupRes.statusCode !== 200) {
-        logger.warn(`RTSP session ${this.id} SETUP ${media.type} failed: ${setupRes.statusCode}`);
-        return;
-      }
-
-      // Register track with depayloader
-      this.depayloader.addTrack(media.payloadType, media.codec, media.clockRate, media.fmtp);
-
-    } else {
-      // UDP mode — create UDP sockets
-      await this.setupUDPTrack(media, trackUrl);
+    const setupRes = await this.rtspClient.setup(trackUrl, transportHeader);
+    if (setupRes.statusCode !== 200) {
+      logger.warn(`RTSP session ${this.id} SETUP ${media.type} failed: ${setupRes.statusCode}`);
+      return;
     }
-  };
 
-  /**
-   * SETUP a track in UDP mode.
-   * @param {import("../protocol/sdp.js").SdpMedia} media
-   * @param {string} trackUrl
-   */
-  setupUDPTrack = async (media, trackUrl) => {
-    const dgram = require("dgram");
-
-    // Create UDP sockets for RTP and RTCP
-    const rtpSocket = dgram.createSocket("udp4");
-    const rtcpSocket = dgram.createSocket("udp4");
-
-    return new Promise((resolve, reject) => {
-      rtpSocket.on("error", (err) => {
-        logger.error(`RTSP UDP RTP socket error: ${err.message}`);
-        reject(err);
-      });
-
-      rtpSocket.on("message", (msg) => {
-        // onRtpData counts every packet once for both UDP and TCP interleaved
-        this.onRtpData(0, msg);
-      });
-
-      rtpSocket.bind(0, () => {
-        const rtpPort = rtpSocket.address().port;
-
-        rtcpSocket.on("error", (err) => {
-          logger.error(`RTSP UDP RTCP socket error: ${err.message}`);
-        });
-
-        rtcpSocket.bind(0, () => {
-          const rtcpPort = rtcpSocket.address().port;
-
-          const transportHeader = RtspClient.buildUDPTransport(rtpPort, rtcpPort);
-
-          this.rtspClient.setup(trackUrl, transportHeader).then((setupRes) => {
-            if (setupRes.statusCode === 200) {
-              this.rtpSocket = rtpSocket;
-              this.rtcpSocket = rtcpSocket;
-              this.depayloader.addTrack(media.payloadType, media.codec, media.clockRate, media.fmtp);
-              logger.debug(`RTSP session ${this.id} SETUP ${media.type} UDP client_port=${rtpPort}-${rtcpPort}`);
-              resolve();
-            } else {
-              rtpSocket.close();
-              rtcpSocket.close();
-              logger.warn(`RTSP session ${this.id} SETUP ${media.type} UDP failed: ${setupRes.statusCode}`);
-              resolve();
-            }
-          }).catch(reject);
-        });
-      });
-    });
+    // Register track with depayloader
+    this.depayloader.addTrack(media.payloadType, media.codec, media.clockRate, media.fmtp);
   };
 
   /**
@@ -258,7 +192,7 @@ class RtspSession extends BaseSession {
   // ─────────────────────────────────────────
 
   /**
-   * Handle incoming RTP/RTCP data from TCP interleaved or UDP.
+   * Handle incoming RTP/RTCP data from TCP interleaved channel.
    * @param {number} channel - Interleaved channel number
    * @param {Buffer} data - Raw RTP/RTCP data
    */
@@ -401,16 +335,6 @@ class RtspSession extends BaseSession {
     // Disconnect RTSP client
     this.rtspClient.disconnect();
 
-    // Close UDP sockets
-    if (this.rtpSocket) {
-      this.rtpSocket.close();
-      this.rtpSocket = null;
-    }
-    if (this.rtcpSocket) {
-      this.rtcpSocket.close();
-      this.rtcpSocket = null;
-    }
-
     // Remove from broadcast
     if (this.broadcast) {
       this.broadcast.donePublish(this);
@@ -443,7 +367,6 @@ class RtspSession extends BaseSession {
       protocol: this.protocol,
       rtspUrl: this.rtspUrl,
       streamPath: this.streamPath,
-      transport: this.transport,
       isRunning: this.isRunning,
       isClosing: this.isClosing,
       reconnectAttempts: this.reconnectAttempts,

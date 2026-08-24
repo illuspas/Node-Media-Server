@@ -16,7 +16,7 @@ class RelayHandler {
   /**
    * Add a new RTSP/RTMP relay task.
    * POST /api/v1/relay
-   * Body: { url, mode?, streamPath, transport?, reconnect?, reconnectInterval?, maxReconnectAttempts? }
+   * Body: { url, mode?, streamPath, reconnect?, reconnectInterval?, maxReconnectAttempts? }
    * @param {express.Request} req
    * @param {express.Response} res
    */
@@ -27,7 +27,6 @@ class RelayHandler {
         rtspUrl,
         mode = "pull",
         streamPath,
-        transport,
         reconnect,
         reconnectInterval,
         maxReconnectAttempts
@@ -84,7 +83,6 @@ class RelayHandler {
         rtspUrl,
         streamPath,
         mode,
-        transport: transport || "tcp",
         reconnect: reconnect !== false,
         reconnectInterval,
         maxReconnectAttempts

@@ -13,7 +13,6 @@ interface RelayForm {
   mode: "push" | "pull";
   url: string;
   streamPath: string;
-  transport: string;
   reconnect: boolean;
   reconnectInterval: string;
   maxReconnectAttempts: string;
@@ -23,7 +22,6 @@ const EMPTY_FORM: RelayForm = {
   mode: "push",
   url: "",
   streamPath: "",
-  transport: "tcp",
   reconnect: true,
   reconnectInterval: "",
   maxReconnectAttempts: ""
@@ -112,7 +110,6 @@ export default function Relay() {
       url: form.url.trim(),
       mode: form.mode,
       streamPath: form.streamPath.trim(),
-      transport: form.transport,
       reconnect: form.reconnect,
       ...(form.reconnect && Number.isFinite(interval) && interval > 0 ? { reconnectInterval: interval } : {}),
       ...(form.reconnect && Number.isFinite(maxAttempts) && maxAttempts > 0 ? { maxReconnectAttempts: maxAttempts } : {})
@@ -265,19 +262,6 @@ export default function Relay() {
               <Icon name="chevron-down" className="w-3.5 h-3.5 ml-auto transition-transform group-open:rotate-180" />
             </summary>
             <div className="space-y-4 pt-1">
-              <div>
-                <label className="label" htmlFor="r-transport">{formatMessage({ id: "relay.transport" })}</label>
-                <select
-                  id="r-transport"
-                  className="select"
-                  value={form.transport}
-                  onChange={e => setForm(f => ({ ...f, transport: e.target.value }))}
-                >
-                  <option value="tcp">TCP</option>
-                  <option value="udp">UDP</option>
-                </select>
-                <p className="help">{formatMessage({ id: "relay.transportHelp" })}</p>
-              </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">{formatMessage({ id: "relay.reconnect" })}</p>
