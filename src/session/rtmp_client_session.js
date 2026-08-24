@@ -110,6 +110,8 @@ class RtmpClientSession extends BaseSession {
    * Register a pull session as the local stream publisher.
    */
   registerPull = () => {
+    // Carry the remote address as this session's ip so the publish history records the origin
+    this.ip = `${this.rtmpClient.urlInfo.host}:${this.rtmpClient.urlInfo.port}`;
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
     const error = this.broadcast.postPublish(this);

@@ -12,8 +12,8 @@ const Context = require("../core/context.js");
  * Persists finished publish sessions into the store's "stream_history"
  * collection, capped by store.maxHistory. Plays are not stored as separate
  * history rows; the publisher's history entry carries the playCount the
- * publisher session counted in memory during this publish. Internal
- * sessions (record, relay pull) have an empty ip and are skipped.
+ * publisher session counted in memory during this publish. Relay pull
+ * sessions carry the remote address as their ip and are recorded too.
  * @class
  */
 class NodeHistoryServer {
@@ -43,7 +43,7 @@ class NodeHistoryServer {
      * @param {import("../session/base_session.js")} session
      */
     this._onDonePublish = (session) => {
-      if (session.ip === "" || !session.endTime) {
+      if (!session.endTime) {
         return;
       }
       try {

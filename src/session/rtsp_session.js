@@ -116,6 +116,13 @@ class RtspSession extends BaseSession {
 
     this.isRunning = true;
     this.createTime = Date.now();
+    // Carry the remote address as this session's ip so the publish history records the origin
+    try {
+      const url = new URL(this.rtspUrl);
+      this.ip = `${url.hostname}:${url.port || 554}`;
+    } catch (error) {
+      this.ip = this.rtspUrl;
+    }
 
     logger.info(`RTSP session ${this.id} starting pull from ${this.rtspUrl} → ${this.streamPath}`);
 
