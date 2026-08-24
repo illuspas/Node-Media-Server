@@ -79,6 +79,12 @@ class BroadcastServer {
 
     /** @type {object | null} */
     this._publishGraceTimer = null;
+
+    /** Last dts per media track from the current publish, keyed by codec_type (8 audio, 9 video) */
+    this._lastDts = {};
+
+    /** dts offset applied to incoming packets when a publish resumes, keyed by codec_type */
+    this._dtsOffset = {};
   }
 
   /**
@@ -237,6 +243,10 @@ class BroadcastServer {
     for (const field of RESUMABLE_FIELDS) {
       session[field] = prev[field];
     }
+    // continue the timeline: shift the new session's timestamps past the previous last dts
+    for (const codecType of [8, 9]) {
+      this._dtsOffset[codecType] = this._lastDts[codecType] || 0;
+    }
   };
 
   /**
@@ -262,6 +272,8 @@ class BroadcastServer {
     this.rtmpVideoHeader = null;
     this.flvGopCache?.clear();
     this.rtmpGopCache?.clear();
+    this._lastDts = {};
+    this._dtsOffset = {};
     this._destroyIfEmpty();
   };
 
@@ -292,6 +304,15 @@ class BroadcastServer {
    * @param {AVPacket} packet 
    */
   broadcastMessage = (packet) => {
+    // resumed publishes keep the timeline continuous: shift timestamps past the previous publish's last dts
+    const dtsOffset = this._dtsOffset[packet.codec_type] || 0;
+    if (dtsOffset > 0 && (packet.flags === 1 || packet.flags === 3 || packet.flags === 4)) {
+      packet.dts += dtsOffset;
+      packet.pts += dtsOffset;
+    }
+    if (packet.codec_type === 8 || packet.codec_type === 9) {
+      this._lastDts[packet.codec_type] = packet.dts;
+    }
     if (packet.flags == 5) {
       let metadata = decodeAmf0Data(packet.data);
       // RTMP publishers send "@setDataFrame onMetaData {...}"; our RTSP pull
