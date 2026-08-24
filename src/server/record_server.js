@@ -17,6 +17,7 @@ class NodeRecordServer {
       const filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
       const sess = new NodeRecordSession(session, filePath);
       sess.run();
+      Context.sessions.set(sess.id, sess);
     };
   }
 

@@ -73,6 +73,7 @@ class NodeRecordSession extends BaseSession {
     }
     this._stopped = true;
     this.endTime = Date.now();
+    Context.sessions.delete(this.id);
     this.fileStream.close();
     this.broadcast.donePlay(this);
     logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
