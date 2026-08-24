@@ -106,6 +106,8 @@ class RtpDepayloader {
 
   /**
    * Feed an RTP packet. May return 0 or more AVPackets.
+   * Timestamps are normalized: RTP clock (e.g. 90kHz) is converted to FLV/RTMP
+   * milliseconds (timebase 1/1000), rebased on this track's first frame.
    * @param {import("./rtp.js").RtpPacket} rtpPacket - Parsed RTP packet
    * @returns {AVPacket[]} Zero or more complete AVPackets
    */
@@ -115,7 +117,13 @@ class RtpDepayloader {
       logger.trace(`RtpDepayloader: no track for pt=${rtpPacket.payloadType}`);
       return [];
     }
-    return track.feed(rtpPacket);
+    const packets = track.feed(rtpPacket);
+    for (const pkt of packets) {
+      const ms = track.toMilliseconds(pkt.pts);
+      pkt.pts = ms;
+      pkt.dts = ms;
+    }
+    return packets;
   };
 }
 
@@ -136,6 +144,12 @@ class TrackDepayloader {
     this.clockRate = clockRate;
     /** @type {number} Last received RTP sequence number */
     this.lastSeq = -1;
+    /** @type {number} RTP timestamp of this track's first frame (-1 until set) */
+    this.firstRtpTimestamp = -1;
+    /** @type {number} Last accepted RTP timestamp */
+    this.lastRtpTimestamp = 0;
+    /** @type {number} Accumulated RTP clock ticks since the first frame (survives wraparound) */
+    this.elapsedTicks = 0;
   }
 
   /**
@@ -152,6 +166,28 @@ class TrackDepayloader {
     }
     this.lastSeq = seq;
     return false;
+  };
+
+  /**
+   * Convert an RTP timestamp to FLV/RTMP milliseconds (timebase 1/1000),
+   * rebased on this track's first frame so audio and video both start near 0
+   * and stay aligned. Accumulates forward deltas so 32-bit RTP timestamp
+   * wraparound is handled; backward (out-of-order) jumps are ignored.
+   * @param {number} rtpTimestamp
+   * @returns {number} Milliseconds since the track's first frame
+   */
+  toMilliseconds = (rtpTimestamp) => {
+    if (this.firstRtpTimestamp < 0) {
+      this.firstRtpTimestamp = rtpTimestamp;
+      this.lastRtpTimestamp = rtpTimestamp;
+      this.elapsedTicks = 0;
+    }
+    const delta = (rtpTimestamp - this.lastRtpTimestamp) >>> 0;
+    if (delta < 0x80000000) {
+      this.elapsedTicks += delta;
+      this.lastRtpTimestamp = rtpTimestamp;
+    }
+    return Math.round(this.elapsedTicks * 1000 / this.clockRate);
   };
 }
 
