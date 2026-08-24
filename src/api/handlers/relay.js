@@ -69,16 +69,16 @@ class RelayHandler {
         return;
       }
 
-      const relayManager = Context.relayManager;
-      if (!relayManager) {
+      const relayServer = Context.relayServer;
+      if (!relayServer) {
         res.status(500).json({
           success: false,
-          error: "RelayManager not initialized"
+          error: "NodeRelayServer not initialized"
         });
         return;
       }
 
-      const session = relayManager.addTask({
+      const session = relayServer.addTask({
         url,
         rtspUrl,
         streamPath,
@@ -124,16 +124,16 @@ class RelayHandler {
         return;
       }
 
-      const relayManager = Context.relayManager;
-      if (!relayManager) {
+      const relayServer = Context.relayServer;
+      if (!relayServer) {
         res.status(500).json({
           success: false,
-          error: "RelayManager not initialized"
+          error: "NodeRelayServer not initialized"
         });
         return;
       }
 
-      const removed = relayManager.removeTask(removeKey);
+      const removed = relayServer.removeTask(removeKey);
 
       if (removed) {
         res.json({
@@ -164,16 +164,16 @@ class RelayHandler {
    */
   static listTasks = (req, res) => {
     try {
-      const relayManager = Context.relayManager;
-      if (!relayManager) {
+      const relayServer = Context.relayServer;
+      if (!relayServer) {
         res.status(500).json({
           success: false,
-          error: "RelayManager not initialized"
+          error: "NodeRelayServer not initialized"
         });
         return;
       }
 
-      const tasks = relayManager.listTasks();
+      const tasks = relayServer.listTasks();
 
       res.json({
         success: true,
@@ -199,16 +199,16 @@ class RelayHandler {
     try {
       const streamPath = decodeURIComponent(req.params.streamPath);
 
-      const relayManager = Context.relayManager;
-      if (!relayManager) {
+      const relayServer = Context.relayServer;
+      if (!relayServer) {
         res.status(500).json({
           success: false,
-          error: "RelayManager not initialized"
+          error: "NodeRelayServer not initialized"
         });
         return;
       }
 
-      const status = relayManager.getTaskStatus(streamPath);
+      const status = relayServer.getTaskStatus(streamPath);
 
       if (status) {
         res.json({

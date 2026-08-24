@@ -31,6 +31,7 @@ class NodeRecordServer {
         sess.run();
       });
       this._trackRecords();
+      this._recoverStaleRecords();
     }
   }
 
@@ -73,6 +74,34 @@ class NodeRecordServer {
         size: session.outBytes
       });
     });
+  }
+
+  /**
+   * Mark records left in "recording" state by a previous unclean shutdown
+   * as done, using the actual file size and modification time when available.
+   * Must be called after the store has finished loading persisted collections.
+   * @returns {void}
+   */
+  _recoverStaleRecords() {
+    const records = Context.store.collection("records");
+    for (const doc of records.find({ status: "recording" })) {
+      let size = doc.size;
+      let endTime = Date.now();
+      try {
+        const stat = fs.statSync(doc.filePath);
+        size = stat.size;
+        endTime = stat.mtimeMs;
+      } catch (error) {
+        logger.warn(`Recovering record ${doc.id}: file ${doc.filePath} not accessible, using fallback values`);
+      }
+      records.update(doc.id, {
+        status: "done",
+        endTime,
+        duration: Math.max(0, endTime - doc.startTime),
+        size
+      });
+      logger.info(`Recovered stale record ${doc.id} ${doc.streamPath}, marked as done`);
+    }
   }
 
 };

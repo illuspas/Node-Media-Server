@@ -14,7 +14,7 @@ const NodeRtmpServer = require("./server/rtmp_server.js");
 const NodeRecordServer = require("./server/record_server.js");
 const NodeNotifyServer = require("./server/notify_server.js");
 const NodeHistoryServer = require("./server/history_server.js");
-const RelayManager = require("./server/relay_manager.js");
+const NodeRelayServer = require("./server/relay_server.js");
 const LightweightStore = require("./store/lightweight_store.js");
 
 class NodeMediaServer {
@@ -31,7 +31,7 @@ class NodeMediaServer {
     this.recordServer = new NodeRecordServer();
     this.notifyServer = new NodeNotifyServer();
     this.historyServer = new NodeHistoryServer();
-    this.relayManager = new RelayManager();
+    this.relayServer = new NodeRelayServer();
 
     // Lightweight JSON store: relay tasks, record metadata, stream history
     const storeConfig = config.store ?? {};
@@ -48,7 +48,7 @@ class NodeMediaServer {
     Context.store = this.store;
 
     // Expose relay manager to context for API access
-    Context.relayManager = this.relayManager;
+    Context.relayServer = this.relayServer;
   }
 
   /**
@@ -60,25 +60,19 @@ class NodeMediaServer {
     Context.eventEmitter.on(eventName, listener);
   }
 
-  run() {
+  async run() {
     this.httpServer.run();
     this.rtmpServer.run();
-    this.recordServer.run();
     this.notifyServer.run();
-
-    // Open the store first, then restore persisted state (relay tasks).
-    // Servers that only append data (records/history) queue in memory and
-    // flush once the store is open, so they don't need to wait.
-    this.storeReady = this.store.open().then(() => {
+    try {
+      await this.store.open();
+      this.recordServer.run();
+      this.relayServer.run();
       this.historyServer.run();
-      this.relayManager.run();
       logger.info(`Store ready at ${this.store.options.dir}`);
-    }).catch((error) => {
+    } catch (error) {
       logger.error(`Store open failed, persistence disabled: ${error.message}`);
-      this.relayManager.run();
-    });
-
-    return this.storeReady;
+    }
   }
 
   /**
@@ -86,7 +80,7 @@ class NodeMediaServer {
    * @returns {Promise<void>}
    */
   async stop() {
-    this.relayManager.stop();
+    this.relayServer.stop();
     if (this.store.opened) {
       await this.store.close();
     }

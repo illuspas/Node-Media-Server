@@ -16,7 +16,7 @@ const RtmpClientSession = require("../session/rtmp_client_session.js");
  * and restored automatically on restart.
  * @class
  */
-class RelayManager {
+class NodeRelayServer {
   constructor() {
     /** @type {Map<string, (RtspSession|RtmpClientSession)>} taskKey -> session */
     this.tasks = new Map();
@@ -35,13 +35,13 @@ class RelayManager {
    */
   run = () => {
     if (this.isRunning) {
-      logger.warn("RelayManager already running");
+      logger.warn("NodeRelayServer already running");
       return;
     }
 
     this.isRunning = true;
     this._restoreTasks();
-    logger.info("RelayManager started (API-driven mode)");
+    logger.info("NodeRelayServer started (API-driven mode)");
   };
 
   /**
@@ -57,12 +57,12 @@ class RelayManager {
     if (persisted.length === 0) {
       return;
     }
-    logger.info(`RelayManager restoring ${persisted.length} persisted task(s)`);
+    logger.info(`NodeRelayServer restoring ${persisted.length} persisted task(s)`);
     for (const doc of persisted) {
       try {
         this.addTask(doc.config);
       } catch (error) {
-        logger.error(`RelayManager restore task ${doc.id} failed: ${error.message}`);
+        logger.error(`NodeRelayServer restore task ${doc.id} failed: ${error.message}`);
       }
     }
   };
@@ -95,16 +95,16 @@ class RelayManager {
     }
 
     this.isRunning = false;
-    logger.info("RelayManager stopping all tasks");
+    logger.info("NodeRelayServer stopping all tasks");
 
     // Close all sessions
     for (const [streamPath, session] of this.tasks) {
-      logger.info(`RelayManager stopping task: ${streamPath}`);
+      logger.info(`NodeRelayServer stopping task: ${streamPath}`);
       session.close();
     }
 
     this.tasks.clear();
-    logger.info("RelayManager stopped");
+    logger.info("NodeRelayServer stopped");
   };
 
   // ─────────────────────────────────────────
@@ -147,11 +147,11 @@ class RelayManager {
       : streamPath;
     // Check if task already exists
     if (this.tasks.has(taskKey)) {
-      logger.warn(`RelayManager task already exists: ${taskKey}`);
+      logger.warn(`NodeRelayServer task already exists: ${taskKey}`);
       return this.tasks.get(taskKey);
     }
 
-    logger.info(`RelayManager adding task: ${url} → ${streamPath} (${mode})`);
+    logger.info(`NodeRelayServer adding task: ${url} → ${streamPath} (${mode})`);
 
     const sessionConfig = { ...config, url, mode, rtspUrl: url };
     const session = parsedUrl.protocol === "rtsp:"
@@ -163,7 +163,7 @@ class RelayManager {
 
     // Start the session
     session.run().catch((error) => {
-      logger.error(`RelayManager task ${taskKey} start failed: ${error.message}`);
+      logger.error(`NodeRelayServer task ${taskKey} start failed: ${error.message}`);
     });
 
     return session;
@@ -177,11 +177,11 @@ class RelayManager {
   removeTask = (taskKey) => {
     const session = this.tasks.get(taskKey);
     if (!session) {
-      logger.warn(`RelayManager task not found: ${taskKey}`);
+      logger.warn(`NodeRelayServer task not found: ${taskKey}`);
       return false;
     }
 
-    logger.info(`RelayManager removing task: ${taskKey}`);
+    logger.info(`NodeRelayServer removing task: ${taskKey}`);
     session.close();
     this.tasks.delete(taskKey);
     this._persistTask(taskKey, null);
@@ -222,4 +222,4 @@ class RelayManager {
   };
 }
 
-module.exports = RelayManager;
+module.exports = NodeRelayServer;

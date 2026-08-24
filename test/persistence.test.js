@@ -14,7 +14,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const LightweightStore = require("../src/store/lightweight_store.js");
-const RelayManager = require("../src/server/relay_manager.js");
+const NodeRelayServer = require("../src/server/relay_server.js");
 const NodeRecordServer = require("../src/server/record_server.js");
 const NodeHistoryServer = require("../src/server/history_server.js");
 const BroadcastServer = require("../src/server/broadcast_server.js");
@@ -53,14 +53,14 @@ function resetContext() {
   Context.sessions.clear();
   Context.store = null;
   Context.config = {};
-  Context.relayManager = null;
+  Context.relayServer = null;
 }
 
 test("relay tasks persist across manager restart and delete is persisted too", async () => {
   resetContext();
   const store = await openStore();
 
-  const first = new RelayManager();
+  const first = new NodeRelayServer();
   first.run();
   first.addTask({ url: "rtmp://127.0.0.1:1/live/x", streamPath: "/live/x", mode: "pull", reconnect: false });
   first.addTask({ url: "rtmp://127.0.0.1:1/out", streamPath: "/live/x", mode: "push", reconnect: false });
@@ -74,7 +74,7 @@ test("relay tasks persist across manager restart and delete is persisted too", a
   const store2 = new LightweightStore({ dir: store.options.dir, signals: false });
   await store2.open();
   Context.store = store2;
-  const second = new RelayManager();
+  const second = new NodeRelayServer();
   second.run();
   assert.equal(second.getTaskCount(), 2, "tasks restored from disk");
   assert.ok(second.getTaskStatus("/live/x"), "pull task restored");
@@ -89,7 +89,7 @@ test("relay tasks persist across manager restart and delete is persisted too", a
   const store3 = new LightweightStore({ dir: store.options.dir, signals: false });
   await store3.open();
   Context.store = store3;
-  const third = new RelayManager();
+  const third = new NodeRelayServer();
   third.run();
   assert.equal(third.getTaskCount(), 1, "only the surviving task is restored");
   third.stop();

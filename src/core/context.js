@@ -12,7 +12,7 @@ const EventEmitter = require("node:events");
  */
 
 /**
- * @typedef {import("../server/relay_manager.js")} RelayManager
+ * @typedef {import("../server/relay_server.js")} NodeRelayServer
  */
 
 const Context = {
@@ -39,9 +39,9 @@ const Context = {
   /**
    * Relay task manager, exposed for API access.
    * Assigned by the NodeMediaServer constructor.
-   * @type {RelayManager | null}
+   * @type {NodeRelayServer | null}
    */
-  relayManager: null,
+  relayServer: null,
 
   /**
    * Cumulative streaming network traffic (bytes) over the process lifetime.

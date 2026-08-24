@@ -11,7 +11,7 @@ const test = require("node:test");
 const Rtmp = require("../src/protocol/rtmp.js");
 const RtmpClient = require("../src/protocol/rtmp_client.js");
 const RtmpClientSession = require("../src/session/rtmp_client_session.js");
-const RelayManager = require("../src/server/relay_manager.js");
+const NodeRelayServer = require("../src/server/relay_server.js");
 const BroadcastServer = require("../src/server/broadcast_server.js");
 const Context = require("../src/core/context.js");
 
@@ -126,8 +126,8 @@ test("push session subscribes to an existing local broadcast", async () => {
   }
 });
 
-test("RelayManager routes RTMP pull and push tasks to distinct keys", () => {
-  const manager = new RelayManager();
+test("NodeRelayServer routes RTMP pull and push tasks to distinct keys", () => {
+  const manager = new NodeRelayServer();
   const pull = manager.addTask({
     url: "rtmp://example.com/live/input",
     mode: "pull",
