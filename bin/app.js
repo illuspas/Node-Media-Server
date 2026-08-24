@@ -25,13 +25,20 @@ function generateRandomPassword(length = 16) {
 
 let configChanged = false;
 
-// Check and replace default admin password
+const { isHashed, hashPassword } = require("../src/api/handlers/password_hash.js");
+
+// Check and replace default admin password, and migrate plaintext
+// passwords to scrypt hashes
 if (config.auth?.jwt?.users) {
   config.auth.jwt.users = config.auth.jwt.users.map(user => {
-    if (user.username === "admin" && user.password === "admin-default-password-change-me") {
+    if (user.username === "admin" && (user.password === "admin-default-password-change-me" || user.password === "")) {
       const newPassword = generateRandomPassword(16);
       console.log(`🔒 Security: Replacing default admin password with: ${newPassword}`);
-      user.password = newPassword;
+      user.password = hashPassword(newPassword);
+      configChanged = true;
+    } else if (user.password && !isHashed(user.password)) {
+      console.log(`🔒 Security: Upgrading password storage for user ${user.username} to scrypt hash`);
+      user.password = hashPassword(user.password);
       configChanged = true;
     }
     return user;

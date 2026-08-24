@@ -80,7 +80,6 @@ const zhCN: Record<MessageKey, string> = {
   "login.errFailed": "登录失败，请稍后重试",
   "login.submit": "登 录",
   "login.verifying": "正在验证…",
-  "login.securityNote": "采用挑战-响应（HMAC-SHA256）机制，密码不会以明文形式传输",
 
   /* ---------------- 仪表盘 ---------------- */
   "dashboard.title": "仪表盘",
@@ -299,21 +298,18 @@ const zhCN: Record<MessageKey, string> = {
   "settings.errBanner": "配置加载失败：{error}",
 
   /* ---------------- API 错误 ---------------- */
+  "api.err.credentialsRequired": "请输入用户名和密码",
   "api.err.invalidCredentials": "用户名或密码错误",
-  "api.err.invalidChallenge": "登录质询已失效，请重试",
-  "api.err.challengeExpired": "登录质询已过期，请重试",
-  "api.err.usernameRequired": "请输入用户名",
-  "api.err.challengeResponse": "登录质询校验失败，请重试",
+  "api.err.accountLocked": "登录失败次数过多，请稍后再试",
+  "api.err.loginRateLimited": "登录请求过于频繁，请稍后再试",
   "api.err.noJwt": "服务端未配置认证信息",
   "api.err.pwdRequired": "旧密码和新密码为必填项",
   "api.err.pwdTooShort": "新密码长度至少 6 位",
   "api.err.pwdOldIncorrect": "旧密码错误",
   "api.err.pwdSame": "新密码不能与旧密码相同",
   "api.err.pwdUserNotFound": "当前用户不存在",
-  "api.err.noChallenge": "无法获取登录质询",
   "api.err.cannotConnect": "无法连接服务器，请确认媒体服务已启动",
   "api.err.loginFailed": "登录失败",
-  "api.err.loginInterrupted": "登录请求中断，请重试",
   "api.err.offline": "无法连接服务器",
   "api.err.unauthorized": "登录已过期，请重新登录",
   "api.err.requestFailed": "请求失败（{status}）",

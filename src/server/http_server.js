@@ -19,6 +19,7 @@ const FlvSession = require("../session/flv_session.js");
 const http2Express = require("../vendor/http2-express");
 const ApiRouter = require("../routers/api.js");
 const { jwtAuth, jwtErrorHandler } = require("../api/middleware/auth.js");
+const { loginLimiter } = require("../api/middleware/login_rate_limit.js");
 
 class NodeHttpServer {
   constructor() {
@@ -42,6 +43,9 @@ class NodeHttpServer {
     if (Context.config.auth?.jwt) {
       // @ts-ignore
       app.use(express.json());
+      // Rate-limit login attempts before JWT handling (login is unauthenticated)
+      // @ts-ignore
+      app.use("/api/v1/login", loginLimiter);
       // Apply JWT authentication middleware to API routes
       // @ts-ignore
       app.use("/api/v1", jwtAuth, jwtErrorHandler);

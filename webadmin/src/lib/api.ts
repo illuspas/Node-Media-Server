@@ -1,6 +1,6 @@
 /**
  * REST API client for the NMS admin API (`/api/v1`, same origin).
- * Implements the two-step challenge-response login defined in docs/api.md
+ * Implements the username/password login defined in docs/api.md
  * and attaches the JWT token to subsequent requests.
  */
 import { t } from "../i18n";
@@ -49,32 +49,15 @@ export function clearSession(): void {
   localStorage.removeItem(USER_KEY);
 }
 
-/* ---------------- challenge-response login ---------------- */
-
-/** Compute HMAC-SHA256(password, challenge) as a hex digest via WebCrypto. */
-async function hmacSha256Hex(password: string, challenge: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(challenge));
-  return Array.from(new Uint8Array(signature))
-    .map(byte => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
+/* ---------------- login ---------------- */
 
 /** Translate known server messages; fall back to the original text. */
 function friendlyMessage(message: string): string {
   const map: Record<string, string> = {
     "Invalid username or password": "api.err.invalidCredentials",
-    "Invalid or expired challenge": "api.err.invalidChallenge",
-    "Challenge expired": "api.err.challengeExpired",
-    "Username is required": "api.err.usernameRequired",
-    "Challenge and response are required": "api.err.challengeResponse",
+    "Too many failed login attempts, please try again later": "api.err.accountLocked",
+    "Too many login requests, please try again later": "api.err.loginRateLimited",
+    "Username and password are required": "api.err.credentialsRequired",
     "JWT configuration not found": "api.err.noJwt",
     "oldPassword and newPassword are required": "api.err.pwdRequired",
     "New password must be at least 6 characters": "api.err.pwdTooShort",
@@ -87,46 +70,31 @@ function friendlyMessage(message: string): string {
 }
 
 /**
- * Perform the two-step challenge-response login.
+ * Perform a username/password login.
  * @param username - configured admin username
- * @param password - plaintext password, used only as a local HMAC key
+ * @param password - plaintext password
  * @returns the JWT token and the confirmed username
  */
 export async function login(username: string, password: string): Promise<{ token: string; username: string }> {
-  let challenge: string;
+  let res: Response;
   try {
-    const res = await fetch(`${API_BASE}/login`, {
+    res = await fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username, password })
     });
-    const body: ApiResponse<{ challenge: string }> = await res.json();
-    if (!res.ok || !body.success) {
-      throw new ApiError(friendlyMessage(body.message || t("api.err.noChallenge")), res.status);
-    }
-    challenge = body.data.challenge;
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
+  } catch {
     throw new ApiError(t("api.err.cannotConnect"), 0);
   }
-
-  const response = await hmacSha256Hex(password, challenge);
-
-  try {
-    const res = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, challenge, response })
-    });
-    const body: ApiResponse<{ token: string; user: { username: string } }> = await res.json();
-    if (!res.ok || !body.success) {
-      throw new ApiError(friendlyMessage(body.message || t("api.err.loginFailed")), res.status);
-    }
-    return { token: body.data.token, username: body.data.user.username };
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
-    throw new ApiError(t("api.err.loginInterrupted"), 0);
+  const body: ApiResponse<{ token: string; user: { username: string } }> = await res.json().catch(() => ({
+    success: false,
+    data: null as never,
+    message: res.statusText
+  }));
+  if (!res.ok || !body.success) {
+    throw new ApiError(friendlyMessage(body.message || t("api.err.loginFailed")), res.status);
   }
+  return { token: body.data.token, username: body.data.user.username };
 }
 
 /**

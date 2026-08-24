@@ -78,7 +78,6 @@ const en = {
   "login.errFailed": "Sign-in failed, please try again later",
   "login.submit": "Sign in",
   "login.verifying": "Verifying…",
-  "login.securityNote": "Uses challenge-response (HMAC-SHA256); your password is never sent in plaintext",
 
   /* ---------------- dashboard ---------------- */
   "dashboard.title": "Dashboard",
@@ -297,21 +296,18 @@ const en = {
   "settings.errBanner": "Failed to load configuration: {error}",
 
   /* ---------------- api errors ---------------- */
+  "api.err.credentialsRequired": "Username and password are required",
   "api.err.invalidCredentials": "Invalid username or password",
-  "api.err.invalidChallenge": "Sign-in challenge is invalid, please retry",
-  "api.err.challengeExpired": "Sign-in challenge has expired, please retry",
-  "api.err.usernameRequired": "Username is required",
-  "api.err.challengeResponse": "Challenge verification failed, please retry",
+  "api.err.accountLocked": "Too many failed login attempts, please try again later",
+  "api.err.loginRateLimited": "Too many login requests, please try again later",
   "api.err.noJwt": "Server has no auth configuration",
   "api.err.pwdRequired": "Old and new passwords are required",
   "api.err.pwdTooShort": "New password must be at least 6 characters",
   "api.err.pwdOldIncorrect": "Old password is incorrect",
   "api.err.pwdSame": "New password must be different from the old one",
   "api.err.pwdUserNotFound": "Current user not found",
-  "api.err.noChallenge": "Could not get a sign-in challenge",
   "api.err.cannotConnect": "Cannot reach the server; make sure Node-Media-Server is running",
   "api.err.loginFailed": "Sign-in failed",
-  "api.err.loginInterrupted": "Sign-in request was interrupted, please retry",
   "api.err.offline": "Cannot reach the server",
   "api.err.unauthorized": "Session expired, please sign in again",
   "api.err.requestFailed": "Request failed ({status})",

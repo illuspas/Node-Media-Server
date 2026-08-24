@@ -19,36 +19,9 @@ Node-Media-Server v4.2.0 provides a REST API for server management and monitorin
 
 ## Authentication
 
-### Login (Challenge-Response)
+### Login (Username/Password)
 
-Login is a two-step process that prevents credential replay attacks without requiring HTTPS.
-
-**Step 1: Request a challenge**
-
-```bash
-POST /api/v1/login
-Content-Type: application/json
-
-{
-  "username": "your_username"
-}
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "challenge": "a_random_nonce_string"
-  },
-  "message": "Challenge issued"
-}
-```
-
-**Step 2: Submit challenge response**
-
-Compute `response = HMAC-SHA256(password, challenge)` (hex-encoded digest, password used as the HMAC key) and submit:
+Submit the configured username and password directly:
 
 ```bash
 POST /api/v1/login
@@ -56,8 +29,7 @@ Content-Type: application/json
 
 {
   "username": "your_username",
-  "challenge": "a_random_nonce_string",
-  "response": "hmac_sha256_hex_digest"
+  "password": "your_password"
 }
 ```
 
@@ -77,7 +49,12 @@ Response:
 }
 ```
 
-Each challenge is single-use and expires after 60 seconds.
+Passwords are stored in the config file as scrypt hashes (`scrypt$N$r$p$salt$hash`). Legacy plaintext entries are transparently upgraded to hashes on the first successful login or at server startup. Use HTTPS in production — the plaintext password crosses the network during login.
+
+Brute-force protection:
+
+- **Per-IP rate limit**: `POST /api/v1/login` is limited to 10 requests per minute per IP (HTTP 429 when exceeded).
+- **Account lockout**: after 5 consecutive failed logins for the same username from the same IP, further attempts are rejected with HTTP 429 for 15 minutes; a successful login resets the counter.
 
 ### Using the API
 
@@ -126,7 +103,7 @@ Validates the old password against the configured user, then updates `auth.jwt.u
 
 | Method   | Path                      | Description                                   | Auth |
 | -------- | ------------------------- | --------------------------------------------- | ---- |
-| POST     | /api/v1/login             | Two-step challenge-response login             | No   |
+| POST     | /api/v1/login             | Username/password login                        | No   |
 | POST     | /api/v1/password          | Change the current user's password            | Yes  |
 | GET      | /api/v1/health            | Server health check                           | No   |
 | GET      | /api/v1/info              | Server version and configuration information  | Yes  |
@@ -444,9 +421,9 @@ The API system is configured through the `auth.jwt` section of the configuration
 
 ## Security Features
 
-### Challenge-Response Authentication
+### Password Storage
 
-Login uses a challenge-response protocol (HMAC-SHA256) to prevent credential replay attacks. Passwords never cross the network — even on plain HTTP. Each challenge is single-use and expires after 60 seconds. The digest comparison uses `crypto.timingSafeEqual` to prevent timing attacks.
+Passwords in `auth.jwt.users` are stored as scrypt hashes (`scrypt$N$r$p$salt$hash`, hashed with `crypto.scryptSync` and compared via `crypto.timingSafeEqual`). Legacy plaintext entries are migrated automatically at startup or on first login. Because the plaintext password is submitted during login, use HTTPS in production.
 
 ### JWT Configuration
 
@@ -460,17 +437,10 @@ Login uses a challenge-response protocol (HMAC-SHA256) to prevent credential rep
 ### Using curl
 
 ```bash
-# Step 1: Request challenge
-CHALLENGE=$(curl -s -X POST http://localhost:8000/api/v1/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['data']['challenge'])")
-
-# Step 2: Compute response and login
-RESPONSE=$(echo -n "$CHALLENGE" | openssl dgst -sha256 -hmac "your_password" | awk '{print $NF}')
-
+# Login
 curl -X POST http://localhost:8000/api/v1/login \
   -H "Content-Type: application/json" \
-  -d "{\"username\":\"admin\",\"challenge\":\"$CHALLENGE\",\"response\":\"$RESPONSE\"}"
+  -d '{"username":"admin","password":"your_password"}'
 
 # Get server stats
 curl -X GET http://localhost:8000/api/v1/stats \
@@ -504,22 +474,11 @@ curl -X DELETE http://localhost:8000/api/v1/relay \
 ### Using JavaScript
 
 ```javascript
-const crypto = require('crypto');
-
-// Step 1: Request challenge
-const challengeRes = await fetch('http://localhost:8000/api/v1/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username: 'admin' })
-});
-const { data: { challenge } } = await challengeRes.json();
-
-// Step 2: Compute response and login
-const response = crypto.createHmac('sha256', 'your_password').update(challenge).digest('hex');
+// Login
 const loginRes = await fetch('http://localhost:8000/api/v1/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ username: 'admin', challenge, response })
+  body: JSON.stringify({ username: 'admin', password: 'your_password' })
 });
 const { data: { token } } = await loginRes.json();
 

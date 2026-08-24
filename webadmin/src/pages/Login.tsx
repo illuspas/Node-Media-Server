@@ -4,7 +4,7 @@ import Icon from "../components/Icon";
 import { login } from "../lib/api";
 
 interface LoginProps {
-  /** Called after the API accepts the challenge-response login. */
+  /** Called after the API accepts the login. */
   onLoggedIn: (token: string, username: string) => void;
 }
 
@@ -124,11 +124,6 @@ export default function Login({ onLoggedIn }: LoginProps) {
               </>
             )}
           </button>
-
-          <p className="help flex items-center gap-1.5">
-            <Icon name="shield" className="w-3.5 h-3.5 shrink-0" />
-            {formatMessage({ id: "login.securityNote" })}
-          </p>
         </form>
 
         <p className="text-center text-xs text-stone-400 mt-6">Node-Media-Server · REST API v1</p>

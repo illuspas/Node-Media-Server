@@ -1,7 +1,7 @@
 // @ts-check
 //
 //  Authentication handlers
-//  Challenge-response login and JWT token management
+//  Username/password login and JWT token management
 //
 
 const jwt = require("jsonwebtoken");
@@ -9,60 +9,93 @@ const crypto = require("crypto");
 const fs = require("fs");
 const Context = require("../../core/context.js");
 const logger = require("../../core/logger.js");
+const { isHashed, hashPassword, verifyPassword } = require("./password_hash.js");
 
-/** @type {number} Challenge validity window in milliseconds */
-const CHALLENGE_TTL = 60000;
+/** @type {number} Consecutive failures before an account+IP pair is locked */
+const MAX_FAILED_ATTEMPTS = 5;
+
+/** @type {number} Lock duration in milliseconds */
+const LOCKOUT_MS = 15 * 60 * 1000;
 
 /** @type {number} Cleanup interval in milliseconds */
-const CLEANUP_INTERVAL = 120000;
+const CLEANUP_INTERVAL = 300000;
 
 class AuthHandler {
   /**
-   * Pending challenges: username → { challenge, expiresAt }
-   * @type {Map<string, {challenge: string, expiresAt: number}>}
+   * Failed login attempts: `${username}|${ip}` → { count, lockedUntil }
+   * @type {Map<string, {count: number, lockedUntil: number}>}
    */
-  static pendingChallenges = new Map();
+  static failedAttempts = new Map();
 
   /**
-   * Compute HMAC-SHA256 of challenge using password as key
-   * @param {string} password - User's plaintext password
-   * @param {string} challenge - Random nonce from server
-   * @returns {string} Hex-encoded HMAC digest
+   * Whether login attempts from this IP for this username are locked out
+   * @param {string} username - Account name
+   * @param {string} ip - Client IP
+   * @returns {boolean} True while locked out
    */
-  static computeHmac(password, challenge) {
-    return crypto.createHmac("sha256", password).update(challenge).digest("hex");
+  static isLocked(username, ip) {
+    const entry = AuthHandler.failedAttempts.get(`${username}|${ip}`);
+    return Boolean(entry?.lockedUntil && Date.now() < entry.lockedUntil);
   }
 
   /**
-   * Remove expired challenges from memory
+   * Record a failed attempt; lock the pair after MAX_FAILED_ATTEMPTS
+   * @param {string} username - Account name
+   * @param {string} ip - Client IP
+   * @returns {void}
    */
-  static cleanupChallenges() {
+  static recordFailure(username, ip) {
+    const key = `${username}|${ip}`;
+    const entry = AuthHandler.failedAttempts.get(key) ?? { count: 0, lockedUntil: 0 };
+    entry.count += 1;
+    if (entry.count >= MAX_FAILED_ATTEMPTS) {
+      entry.lockedUntil = Date.now() + LOCKOUT_MS;
+      entry.count = 0;
+      logger.warn(`API: Login for user ${username} from ${ip} locked for 15 minutes after repeated failures`);
+    }
+    AuthHandler.failedAttempts.set(key, entry);
+  }
+
+  /**
+   * Clear failure state after a successful login
+   * @param {string} username - Account name
+   * @param {string} ip - Client IP
+   * @returns {void}
+   */
+  static clearFailures(username, ip) {
+    AuthHandler.failedAttempts.delete(`${username}|${ip}`);
+  }
+
+  /**
+   * Purge expired lockout entries from memory
+   * @returns {void}
+   */
+  static cleanupFailures() {
     const now = Date.now();
-    for (const [key, entry] of AuthHandler.pendingChallenges) {
-      if (now > entry.expiresAt) {
-        AuthHandler.pendingChallenges.delete(key);
+    for (const [key, entry] of AuthHandler.failedAttempts) {
+      if (entry.lockedUntil && now > entry.lockedUntil) {
+        AuthHandler.failedAttempts.delete(key);
       }
     }
   }
-
   /**
-   * Two-step challenge-response login.
-   * Step 1 - body: { username } => { success, data: { challenge } }
-   * Step 2 - body: { username, challenge, response } => { success, data: { token } }
-   * response = HMAC-SHA256(password, challenge)
+   * Single-step username/password login.
+   * body: { username, password } => { success, data: { token } }
+   * Passwords are stored as scrypt hashes; legacy plaintext entries are
+   * migrated transparently on successful login.
    * @param {import('express').Request} req - Express request
    * @param {import('express').Response} res - Express response
    * @returns {import('express').Response<any, Record<string, any>>}
    */
   static login(req, res) {
     try {
-      const { username, challenge, response } = req.body;
+      const { username, password } = req.body;
 
-      if (!username) {
+      if (!username || !password) {
         return res.status(400).json({
           success: false,
           data: {},
-          message: "Username is required"
+          message: "Username and password are required"
         });
       }
 
@@ -75,8 +108,18 @@ class AuthHandler {
         });
       }
 
+      const ip = req.ip || req.socket?.remoteAddress || "unknown";
+      if (AuthHandler.isLocked(username, ip)) {
+        return res.status(429).json({
+          success: false,
+          data: {},
+          message: "Too many failed login attempts, please try again later"
+        });
+      }
+
       const user = jwtConfig.users.find(u => u.username === username);
       if (!user) {
+        AuthHandler.recordFailure(username, ip);
         return res.status(401).json({
           success: false,
           data: {},
@@ -84,63 +127,30 @@ class AuthHandler {
         });
       }
 
-      // Step 1: no challenge provided -> issue one
-      if (!challenge && !response) {
-        const nonce = crypto.randomBytes(32).toString("hex");
-        AuthHandler.pendingChallenges.set(username, {
-          challenge: nonce,
-          expiresAt: Date.now() + CHALLENGE_TTL
-        });
-
-        return res.json({
-          success: true,
-          data: { challenge: nonce },
-          message: "Challenge issued"
-        });
-      }
-
-      // Step 2: verify challenge-response
-      if (!challenge || !response) {
-        return res.status(400).json({
-          success: false,
-          data: {},
-          message: "Challenge and response are required"
-        });
-      }
-
-      const pending = AuthHandler.pendingChallenges.get(username);
-
-      if (!pending || pending.challenge !== challenge) {
-        return res.status(401).json({
-          success: false,
-          data: {},
-          message: "Invalid or expired challenge"
-        });
-      }
-
-      if (Date.now() > pending.expiresAt) {
-        AuthHandler.pendingChallenges.delete(username);
-        return res.status(401).json({
-          success: false,
-          data: {},
-          message: "Challenge expired"
-        });
-      }
-
-      // Consume the challenge (one-time use)
-      AuthHandler.pendingChallenges.delete(username);
-
-      const expected = AuthHandler.computeHmac(user.password, challenge);
-      if (!crypto.timingSafeEqual(
-        Buffer.from(expected, "hex"),
-        Buffer.from(response, "hex")
-      )) {
+      if (!isHashed(user.password)) {
+        // Legacy plaintext entry: compare directly, then upgrade to a hash
+        const expected = Buffer.from(String(user.password));
+        const given = Buffer.from(String(password));
+        const match = expected.length === given.length && crypto.timingSafeEqual(expected, given);
+        if (!match) {
+          AuthHandler.recordFailure(username, ip);
+          return res.status(401).json({
+            success: false,
+            data: {},
+            message: "Invalid username or password"
+          });
+        }
+        AuthHandler.migratePassword(user);
+      } else if (!verifyPassword(password, user.password)) {
+        AuthHandler.recordFailure(username, ip);
         return res.status(401).json({
           success: false,
           data: {},
           message: "Invalid username or password"
         });
       }
+
+      AuthHandler.clearFailures(username, ip);
 
       // Issue JWT
       const jwtSecret = jwtConfig.secret;
@@ -183,6 +193,24 @@ class AuthHandler {
   }
 
   /**
+   * Upgrade a user's plaintext password to a scrypt hash and persist it
+   * when Context.configFile is set (CLI mode).
+   * @param {{username: string, password: string}} user - Config user entry
+   */
+  static migratePassword(user) {
+    const plain = String(user.password);
+    user.password = hashPassword(plain);
+    logger.info(`API: Password storage for user ${user.username} upgraded to scrypt hash`);
+    if (Context.configFile) {
+      try {
+        fs.writeFileSync(Context.configFile, JSON.stringify(Context.config, null, 4));
+      } catch (error) {
+        logger.error(`Persist config failed: ${error.message}`);
+      }
+    }
+  }
+
+  /**
    * Change the password of the JWT-authenticated user.
    * POST /api/v1/password — body: { oldPassword, newPassword }
    * Updates the in-memory config and persists it back to the config file
@@ -221,13 +249,13 @@ class AuthHandler {
         });
       }
 
-      // timing-safe compare against the configured password.
       // 400 (not 401): the JWT is valid; a wrong old password is a body
       // validation error, and 401 would trigger the client's global
       // session-expiry handling and kick the user to the login page.
-      const expected = Buffer.from(String(user.password));
-      const given = Buffer.from(String(oldPassword));
-      if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) {
+      const oldMatches = isHashed(user.password)
+        ? verifyPassword(oldPassword, user.password)
+        : String(oldPassword) === String(user.password);
+      if (!oldMatches) {
         return res.status(400).json({
           success: false,
           data: {},
@@ -242,7 +270,7 @@ class AuthHandler {
         });
       }
 
-      user.password = newPassword;
+      user.password = hashPassword(newPassword);
 
       if (Context.configFile) {
         try {
@@ -276,7 +304,7 @@ class AuthHandler {
   }
 }
 
-// Periodically purge expired challenges
-setInterval(() => AuthHandler.cleanupChallenges(), CLEANUP_INTERVAL).unref();
+// Periodically purge expired lockouts
+setInterval(() => AuthHandler.cleanupFailures(), CLEANUP_INTERVAL).unref();
 
 module.exports = AuthHandler;
