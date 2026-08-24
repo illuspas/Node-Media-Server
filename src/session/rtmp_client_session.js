@@ -35,6 +35,8 @@ class RtmpClientSession extends BaseSession {
     this.url = config.url;
     this.mode = config.mode || "pull";
     this.streamPath = config.streamPath;
+    this.streamApp = config.streamPath.split("/")[1] || "live";
+    this.streamName = config.streamPath.split("/")[2] || "stream";
     this.reconnectEnabled = config.reconnect !== false;
     this.reconnectInterval = config.reconnectInterval || DEFAULT_RECONNECT_INTERVAL;
     this.maxReconnectAttempts = config.maxReconnectAttempts || 0;

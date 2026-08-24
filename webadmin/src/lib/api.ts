@@ -376,6 +376,10 @@ export function fetchHistory(query: {
   ip?: string;
   protocol?: string;
   search?: string;
+  /** Inclusive start bound on startTime, as ms since epoch. */
+  start?: number;
+  /** Inclusive end bound on startTime, as ms since epoch. */
+  end?: number;
   page?: number;
   pageSize?: number;
 } = {}): Promise<HistoryPage> {
@@ -384,6 +388,8 @@ export function fetchHistory(query: {
   if (query.ip) qs.set("ip", query.ip);
   if (query.protocol) qs.set("protocol", query.protocol);
   if (query.search) qs.set("search", query.search);
+  if (query.start !== undefined) qs.set("start", String(query.start));
+  if (query.end !== undefined) qs.set("end", String(query.end));
   qs.set("page", String(query.page ?? 1));
   qs.set("pageSize", String(query.pageSize ?? 20));
   return apiFetch<HistoryPage>(`/history?${qs.toString()}`);

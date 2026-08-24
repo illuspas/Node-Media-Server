@@ -11,8 +11,43 @@ const PAGE_SIZE = 20;
 const POLL_MS = 30000;
 const SEARCH_DEBOUNCE_MS = 300;
 
-/* publisher session protocols that can appear in the history store */
-const PROTOCOLS = ["rtmp", "rtsp", "flv"];
+/* date-range presets, resolved against "now" on every load (incl. polling) */
+type RangeValue = "today" | "7d" | "30d" | "custom";
+
+/** Local-time YYYY-MM-DD for a Date / ms timestamp. */
+function toDateInput(ts: number | Date): string {
+  const d = ts instanceof Date ? ts : new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** The [startDay, endDay] pair a preset currently maps to, for the date boxes. */
+function presetDates(value: Exclude<RangeValue, "custom">): { start: string; end: string } {
+  const now = new Date();
+  if (value === "today") {
+    const today = toDateInput(now);
+    return { start: today, end: today };
+  }
+  const days = Number(value.slice(0, -1));
+  return { start: toDateInput(now.getTime() - days * 24 * 3600 * 1000), end: toDateInput(now) };
+}
+
+/** Inclusive [start, end] ms window in local time for a preset. */
+function rangeWindow(value: RangeValue, customStart: string, customEnd: string): { start?: number; end?: number } {
+  if (value === "custom") {
+    const start = customStart ? new Date(`${customStart}T00:00:00`).getTime() : undefined;
+    const end = customEnd ? new Date(`${customEnd}T23:59:59.999`).getTime() : undefined;
+    return {
+      start: Number.isFinite(start) ? start : undefined,
+      end: Number.isFinite(end) ? end : undefined,
+    };
+  }
+  const { start: startDay, end: endDay } = presetDates(value);
+  return {
+    start: new Date(`${startDay}T00:00:00`).getTime(),
+    end: new Date(`${endDay}T23:59:59.999`).getTime(),
+  };
+}
 
 export default function History() {
   const { formatMessage } = useIntl();
@@ -21,7 +56,10 @@ export default function History() {
   });
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
-  const [fProto, setFProto] = useState("");
+  const [fRange, setFRange] = useState<RangeValue>("30d");
+  /* the date boxes always show the active window; presets rewrite them */
+  const [customStart, setCustomStart] = useState(() => presetDates("30d").start);
+  const [customEnd, setCustomEnd] = useState(() => presetDates("30d").end);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +71,7 @@ export default function History() {
     try {
       const body = await fetchHistory({
         search: search || undefined,
-        protocol: fProto || undefined,
+        ...rangeWindow(fRange, customStart, customEnd),
         page: targetPage,
         pageSize: PAGE_SIZE,
       });
@@ -50,7 +88,7 @@ export default function History() {
     } finally {
       setLoading(false);
     }
-  }, [search, fProto]);
+  }, [search, fRange, customStart, customEnd]);
 
   /* debounce the search box into a server-side query */
   useEffect(() => {
@@ -188,31 +226,64 @@ export default function History() {
 
       {/* filters */}
       <div className="card p-4 flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0 md:min-w-72">
           <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
           <input
-            className="input"
+            className="input h-10 text-sm"
             style={{ paddingLeft: "2.25rem" }}
             placeholder={formatMessage({ id: "history.searchPlaceholder" })}
             value={q}
             onChange={e => setQ(e.target.value)}
           />
         </div>
-        <select
-          className="select md:w-40"
-          value={fProto}
-          onChange={e => {
-            setFProto(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">{formatMessage({ id: "streams.allProtocols" })}</option>
-          {PROTOCOLS.map(p => (
-            <option key={p} value={p}>
-              {p.toUpperCase()}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg border border-stone-200 bg-stone-50 p-0.5 h-10">
+            {(["today", "7d", "30d", "custom"] as const).map(v => (
+              <button
+                key={v}
+                className={`h-full px-3 text-sm rounded-[0.45rem] transition-colors ${
+                  fRange === v
+                    ? "bg-white border border-stone-200 text-stone-900 shadow-sm font-medium"
+                    : "text-stone-500 hover:text-stone-800"
+                }`}
+                onClick={() => {
+                  setFRange(v);
+                  if (v !== "custom") {
+                    const { start, end } = presetDates(v);
+                    setCustomStart(start);
+                    setCustomEnd(end);
+                  }
+                  setPage(1);
+                }}
+              >
+                {formatMessage({ id: `history.range.${v}` })}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              className="input h-10 text-sm"
+              value={customStart}
+              onChange={e => {
+                setCustomStart(e.target.value);
+                setFRange("custom");
+                setPage(1);
+              }}
+            />
+            <span className="text-stone-400">–</span>
+            <input
+              type="date"
+              className="input h-10 text-sm"
+              value={customEnd}
+              onChange={e => {
+                setCustomEnd(e.target.value);
+                setFRange("custom");
+                setPage(1);
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* table */}
@@ -303,9 +374,9 @@ export default function History() {
                 <tr>
                   <td colSpan={9}>
                     <div className="flex flex-col items-center justify-center py-14 text-stone-400">
-                      <Icon name={search || fProto ? "search" : "clock"} className="w-8 h-8 mb-2" />
+                      <Icon name={search || fRange !== "30d" ? "search" : "clock"} className="w-8 h-8 mb-2" />
                       <span className="text-sm">
-                        {formatMessage({ id: search || fProto ? "history.emptyFiltered" : "history.empty" })}
+                        {formatMessage({ id: search || fRange !== "30d" ? "history.emptyFiltered" : "history.empty" })}
                       </span>
                     </div>
                   </td>
