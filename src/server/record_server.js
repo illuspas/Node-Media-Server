@@ -13,11 +13,22 @@ const NodeRecordSession = require("../session/record_session.js");
 
 class NodeRecordServer {
   constructor() {
+    /** @type {Map<string, NodeRecordSession>} streamPath -> active record session */
+    this._activeRecords = new Map();
     this._onPostPublish = (session) => {
+      const active = this._activeRecords.get(session.streamPath);
+      if (active) {
+        // the same client resumed within the publish grace window: keep appending
+        // to the same file instead of starting a new record
+        active.publisherId = session.id;
+        logger.info(`Record session ${active.id} ${active.streamPath} resumed by publisher ${session.id}`);
+        return;
+      }
       const filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
       const sess = new NodeRecordSession(session, filePath);
       sess.run();
       Context.sessions.set(sess.id, sess);
+      this._activeRecords.set(session.streamPath, sess);
     };
   }
 
@@ -43,11 +54,10 @@ class NodeRecordServer {
    */
   stop() {
     Context.eventEmitter.off("postPublish", this._onPostPublish);
-    for (const session of Context.sessions.values()) {
-      if (session instanceof NodeRecordSession) {
-        session.stop();
-      }
+    for (const session of this._activeRecords.values()) {
+      session.stop();
     }
+    this._activeRecords.clear();
     logger.info("Record server stopped");
   }
 
@@ -77,6 +87,7 @@ class NodeRecordServer {
       });
     });
     Context.eventEmitter.on("doneRecord", (session) => {
+      this._activeRecords.delete(session.streamPath);
       const records = store.collection("records");
       const doc = records.get(session.id);
       if (!doc || doc.status === "done") {
