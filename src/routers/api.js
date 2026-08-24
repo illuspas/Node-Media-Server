@@ -17,6 +17,7 @@ const StatsHandler = require("../api/handlers/stats.js");
 const RelayHandler = require("../api/handlers/relay.js");
 const RecordsHandler = require("../api/handlers/records.js");
 const HistoryHandler = require("../api/handlers/history.js");
+const ConfigHandler = require("../api/handlers/config.js");
 
 class ApiRouter {
   constructor() {
@@ -64,6 +65,10 @@ class ApiRouter {
     // Session history (publish/play), capped by store.maxHistory
     this.router.get("/history", HistoryHandler.listHistory);
     this.router.delete("/history", HistoryHandler.deleteHistory);
+
+    // Server configuration (config.json), persisted when running from the CLI
+    this.router.get("/config", ConfigHandler.getConfig);
+    this.router.put("/config", ConfigHandler.updateConfig);
   }
 }
 

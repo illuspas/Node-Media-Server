@@ -447,6 +447,34 @@ export function deleteHistory(streamPath?: string): Promise<void> {
   return apiFetch(`/history${qs}`, { method: "DELETE" }).then(() => undefined);
 }
 
+/* ---------------- config ---------------- */
+
+/** Editable server configuration (GET /api/v1/config). */
+export interface ApiConfig {
+  bind?: string;
+  notify?: { url?: string };
+  store?: { path?: string; maxHistory?: number };
+  record?: { path?: string };
+  auth?: { play?: boolean; publish?: boolean; secret?: string };
+  rtmp?: { port?: number };
+  rtmps?: { port?: number; key?: string; cert?: string };
+  http?: { port?: number };
+  https?: { port?: number; key?: string; cert?: string };
+}
+
+/** Read the current configuration (see docs/api.md GET /api/v1/config). */
+export function fetchConfig(): Promise<ApiConfig> {
+  return apiFetch<ApiConfig>("/config");
+}
+
+/**
+ * Update configuration fields and persist them to config.json.
+ * Port / path changes only take effect after a server restart.
+ */
+export function updateConfig(patch: ApiConfig): Promise<void> {
+  return apiFetch("/config", { method: "PUT", body: JSON.stringify(patch) }).then(() => undefined);
+}
+
 /* ---------------- stats ---------------- */
 
 export interface ApiStats {

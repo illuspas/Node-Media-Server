@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
+import { fetchConfig, updateConfig } from "../lib/api";
+import type { ApiConfig } from "../lib/api";
 import { toast } from "../lib/toast";
 
 const TABS = [
@@ -8,19 +10,48 @@ const TABS = [
   { id: "rtmp", labelId: "settings.tab.rtmp", icon: "server" },
   { id: "http", labelId: "settings.tab.http", icon: "globe" },
   { id: "auth", labelId: "settings.tab.auth", icon: "lock" },
-  { id: "storage", labelId: "settings.tab.storage", icon: "hard-drive" },
-  { id: "notify", labelId: "settings.tab.notify", icon: "bell" }
+  { id: "storage", labelId: "settings.tab.storage", icon: "hard-drive" }
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
+interface FieldProps {
+  id: string;
+  labelId: string;
+  value: string | number;
+  onChange: (value: string) => void;
+  mono?: boolean;
+  type?: string;
+  helpId?: string;
+  placeholderId?: string;
+}
+
+function Field({ id, labelId, value, onChange, mono, type = "text", helpId, placeholderId }: FieldProps) {
+  const { formatMessage } = useIntl();
+  return (
+    <div>
+      <label className="label" htmlFor={id}>{formatMessage({ id: labelId })}</label>
+      <input
+        id={id}
+        className={`input${mono ? " font-mono" : ""}`}
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholderId ? formatMessage({ id: placeholderId }) : undefined}
+      />
+      {helpId && <p className="help">{formatMessage({ id: helpId })}</p>}
+    </div>
+  );
+}
+
 interface SwitchRowProps {
   title: string;
   desc: string;
-  defaultChecked?: boolean;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
 }
 
-function SwitchRow({ title, desc, defaultChecked = false }: SwitchRowProps) {
+function SwitchRow({ title, desc, checked, onChange }: SwitchRowProps) {
   return (
     <div className="flex items-center justify-between rounded-lg border border-stone-200 p-4">
       <div>
@@ -28,7 +59,11 @@ function SwitchRow({ title, desc, defaultChecked = false }: SwitchRowProps) {
         <p className="text-xs text-stone-500 mt-0.5">{desc}</p>
       </div>
       <label className="switch">
-        <input type="checkbox" defaultChecked={defaultChecked} />
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={e => onChange(e.target.checked)}
+        />
         <span className="track" />
         <span className="thumb" />
       </label>
@@ -36,15 +71,12 @@ function SwitchRow({ title, desc, defaultChecked = false }: SwitchRowProps) {
   );
 }
 
-function FormActions() {
-  const { formatMessage } = useIntl();
+function FormActions({ saving, t }: { saving: boolean; t: (id: string) => string }) {
   return (
-    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
-      <button type="button" className="btn btn-ghost">
-        {formatMessage({ id: "settings.restoreDefaults" })}
-      </button>
-      <button type="submit" className="btn btn-primary" onClick={() => toast(formatMessage({ id: "settings.toastSaved" }))}>
-        {formatMessage({ id: "settings.save" })}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t border-stone-100">
+      <p className="text-xs text-stone-500 sm:mr-auto">{t("settings.restartNote")}</p>
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving ? t("settings.saving") : t("settings.save")}
       </button>
     </div>
   );
@@ -53,6 +85,10 @@ function FormActions() {
 export default function Settings() {
   const { formatMessage } = useIntl();
   const [tab, setTab] = useState<TabId>("general");
+  const [config, setConfig] = useState<ApiConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const t = (id: string) => formatMessage({ id });
   const sw = (key: string) => ({
@@ -60,9 +96,74 @@ export default function Settings() {
     desc: t(`settings.sw.${key}.desc`)
   });
 
-  function onSettingsSubmit(e: React.FormEvent) {
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setConfig(await fetchConfig());
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : formatMessage({ id: "settings.errLoad" }));
+    } finally {
+      setLoading(false);
+    }
+  }, [formatMessage]);
+
+  useEffect(() => {
+    // Fetch-on-mount is a legitimate external-system sync.
+    // oxlint-disable-next-line react/set-state-in-effect
+    void load();
+  }, [load]);
+
+  /** Patch a nested config value, e.g. set("rtmp", "port", 1936). */
+  function set<K extends keyof ApiConfig>(section: K, key: string, value: unknown) {
+    setConfig(c => (c ? { ...c, [section]: { ...(c[section] as object), [key]: value } } : c));
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    toast(t("settings.toastSaved"));
+    if (!config) return;
+    setSaving(true);
+    try {
+      // Numbers are edited as strings; convert known numeric fields back.
+      const patch: ApiConfig = {
+        ...config,
+        store: {
+          ...config.store,
+          maxHistory: Number(config.store?.maxHistory ?? 0)
+        },
+        rtmp: { ...config.rtmp, port: Number(config.rtmp?.port ?? 0) },
+        rtmps: { ...config.rtmps, port: Number(config.rtmps?.port ?? 0) },
+        http: { ...config.http, port: Number(config.http?.port ?? 0) },
+        https: { ...config.https, port: Number(config.https?.port ?? 0) }
+      };
+      await updateConfig(patch);
+      toast(t("settings.toastSaved"));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("settings.errSave"), "warning");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="p-4 md:p-6 max-w-[1100px] mx-auto">
+        <p className="text-sm text-stone-500">{t("settings.loading")}</p>
+      </main>
+    );
+  }
+
+  if (error || !config) {
+    return (
+      <main className="p-4 md:p-6 max-w-[1100px] mx-auto space-y-4">
+        <div className="card p-4 border-red-200 bg-red-50 text-sm text-red-700">
+          {formatMessage({ id: "settings.errBanner" }, { error: error ?? "" })}
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={() => void load()}>
+          {t("settings.retry")}
+        </button>
+      </main>
+    );
   }
 
   return (
@@ -97,38 +198,29 @@ export default function Settings() {
                 <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.general")}</h2>
                 <p className="text-sm text-stone-500 mt-0.5">{t("settings.general.subtitle")}</p>
               </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
+              <form className="card p-5 space-y-5" onSubmit={handleSave}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="label" htmlFor="g-name">{t("settings.field.instanceName")}</label>
-                    <input id="g-name" className="input" defaultValue="NMS Console" />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="g-tz">{t("settings.field.timezone")}</label>
-                    <select id="g-tz" className="select" defaultValue="Asia/Shanghai (UTC+8)">
-                      <option>Asia/Shanghai (UTC+8)</option>
-                      <option>UTC</option>
-                      <option>America/New_York</option>
-                      <option>Europe/London</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="g-keep">{t("settings.field.keepDays")}</label>
-                    <input id="g-keep" className="input" type="number" defaultValue={30} />
-                    <p className="help">{t("settings.field.keepDaysHelp")}</p>
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="g-log">{t("settings.field.logLevel")}</label>
-                    <select id="g-log" className="select" defaultValue="info">
-                      <option>info</option>
-                      <option>debug</option>
-                      <option>warn</option>
-                      <option>error</option>
-                    </select>
-                  </div>
+                  <Field
+                    id="g-bind"
+                    labelId="settings.field.bind"
+                    value={config.bind ?? ""}
+                    onChange={v => setConfig(c => (c ? { ...c, bind: v } : c))}
+                    mono
+                    helpId="settings.field.bindHelp"
+                  />
                 </div>
-                <SwitchRow {...sw("autoUpdate")} defaultChecked />
-                <FormActions />
+                <div>
+                  <Field
+                    id="g-notify"
+                    labelId="settings.field.webhook"
+                    value={config.notify?.url ?? ""}
+                    onChange={v => set("notify", "url", v)}
+                    mono
+                    helpId="settings.webhookHelp"
+                    placeholderId="settings.webhookPlaceholder"
+                  />
+                </div>
+                <FormActions saving={saving} t={t} />
               </form>
             </section>
           )}
@@ -139,21 +231,41 @@ export default function Settings() {
                 <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.rtmp")}</h2>
                 <p className="text-sm text-stone-500 mt-0.5">{t("settings.rtmp.subtitle")}</p>
               </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
+              <form className="card p-5 space-y-5" onSubmit={handleSave}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="label" htmlFor="rt-port">{t("settings.field.port")}</label>
-                    <input id="rt-port" className="input font-mono" defaultValue={1935} />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="rt-chunk">{t("settings.field.chunkSize")}</label>
-                    <input id="rt-chunk" className="input font-mono" defaultValue={60000} />
-                  </div>
+                  <Field
+                    id="rt-port"
+                    labelId="settings.field.rtmpPort"
+                    value={config.rtmp?.port ?? ""}
+                    onChange={v => set("rtmp", "port", v)}
+                    mono
+                    type="number"
+                  />
+                  <Field
+                    id="rts-port"
+                    labelId="settings.field.rtmpsPort"
+                    value={config.rtmps?.port ?? ""}
+                    onChange={v => set("rtmps", "port", v)}
+                    mono
+                    type="number"
+                  />
+                  <Field
+                    id="rts-key"
+                    labelId="settings.field.tlsKey"
+                    value={config.rtmps?.key ?? ""}
+                    onChange={v => set("rtmps", "key", v)}
+                    mono
+                    helpId="settings.field.tlsHelp"
+                  />
+                  <Field
+                    id="rts-cert"
+                    labelId="settings.field.tlsCert"
+                    value={config.rtmps?.cert ?? ""}
+                    onChange={v => set("rtmps", "cert", v)}
+                    mono
+                  />
                 </div>
-                <SwitchRow {...sw("gop")} defaultChecked />
-                <SwitchRow {...sw("hls")} defaultChecked />
-                <SwitchRow {...sw("flv")} defaultChecked />
-                <FormActions />
+                <FormActions saving={saving} t={t} />
               </form>
             </section>
           )}
@@ -164,28 +276,41 @@ export default function Settings() {
                 <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.http")}</h2>
                 <p className="text-sm text-stone-500 mt-0.5">{t("settings.http.subtitle")}</p>
               </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
+              <form className="card p-5 space-y-5" onSubmit={handleSave}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="label" htmlFor="h-port">{t("settings.field.port")}</label>
-                    <input id="h-port" className="input font-mono" defaultValue={8000} />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="h-root">{t("settings.field.mediaRoot")}</label>
-                    <input id="h-root" className="input font-mono" defaultValue="/media" />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="h-hls">{t("settings.field.hlsDur")}</label>
-                    <input id="h-hls" className="input font-mono" defaultValue={6} />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="h-frag">{t("settings.field.fragDur")}</label>
-                    <input id="h-frag" className="input font-mono" defaultValue={4} />
-                  </div>
+                  <Field
+                    id="h-port"
+                    labelId="settings.field.httpPort"
+                    value={config.http?.port ?? ""}
+                    onChange={v => set("http", "port", v)}
+                    mono
+                    type="number"
+                  />
+                  <Field
+                    id="hs-port"
+                    labelId="settings.field.httpsPort"
+                    value={config.https?.port ?? ""}
+                    onChange={v => set("https", "port", v)}
+                    mono
+                    type="number"
+                  />
+                  <Field
+                    id="hs-key"
+                    labelId="settings.field.tlsKey"
+                    value={config.https?.key ?? ""}
+                    onChange={v => set("https", "key", v)}
+                    mono
+                    helpId="settings.field.tlsHelp"
+                  />
+                  <Field
+                    id="hs-cert"
+                    labelId="settings.field.tlsCert"
+                    value={config.https?.cert ?? ""}
+                    onChange={v => set("https", "cert", v)}
+                    mono
+                  />
                 </div>
-                <SwitchRow {...sw("cors")} defaultChecked />
-                <SwitchRow {...sw("api")} defaultChecked />
-                <FormActions />
+                <FormActions saving={saving} t={t} />
               </form>
             </section>
           )}
@@ -196,25 +321,28 @@ export default function Settings() {
                 <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.auth")}</h2>
                 <p className="text-sm text-stone-500 mt-0.5">{t("settings.auth.subtitle")}</p>
               </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
-                <SwitchRow {...sw("publishAuth")} defaultChecked />
+              <form className="card p-5 space-y-5" onSubmit={handleSave}>
+                <SwitchRow
+                  {...sw("publishAuth")}
+                  checked={!!config.auth?.publish}
+                  onChange={v => set("auth", "publish", v)}
+                />
+                <SwitchRow
+                  {...sw("playAuth")}
+                  checked={!!config.auth?.play}
+                  onChange={v => set("auth", "play", v)}
+                />
                 <div>
-                  <label className="label" htmlFor="a-secret">{t("settings.field.secret")}</label>
-                  <input id="a-secret" className="input font-mono" type="password" defaultValue="nms-secret-2024" />
-                  <p className="help">{t("settings.field.secretHelp")}</p>
+                  <Field
+                    id="a-secret"
+                    labelId="settings.field.secret"
+                    value={config.auth?.secret ?? ""}
+                    onChange={v => set("auth", "secret", v)}
+                    mono
+                    helpId="settings.field.secretHelp"
+                  />
                 </div>
-                <SwitchRow {...sw("playAuth")} />
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="label" htmlFor="a-exp">{t("settings.field.expiry")}</label>
-                    <input id="a-exp" className="input font-mono" defaultValue={300} />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="a-ip">{t("settings.field.ipLimit")}</label>
-                    <input id="a-ip" className="input font-mono" defaultValue={8} />
-                  </div>
-                </div>
-                <FormActions />
+                <FormActions saving={saving} t={t} />
               </form>
             </section>
           )}
@@ -225,58 +353,33 @@ export default function Settings() {
                 <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.storage")}</h2>
                 <p className="text-sm text-stone-500 mt-0.5">{t("settings.storage.subtitle")}</p>
               </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
+              <form className="card p-5 space-y-5" onSubmit={handleSave}>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="label" htmlFor="s-dir">{t("settings.field.recDir")}</label>
-                    <input id="s-dir" className="input font-mono" defaultValue="/media/records" />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="s-fmt">{t("settings.field.recFmt")}</label>
-                    <select id="s-fmt" className="select" defaultValue="MP4">
-                      <option>MP4</option>
-                      <option>FLV</option>
-                      <option>HLS-TS</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="s-keep">{t("settings.field.recKeep")}</label>
-                    <input id="s-keep" className="input font-mono" defaultValue={15} />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="s-seg">{t("settings.field.recSeg")}</label>
-                    <input id="s-seg" className="input font-mono" defaultValue={30} />
-                  </div>
+                  <Field
+                    id="s-store"
+                    labelId="settings.field.storePath"
+                    value={config.store?.path ?? ""}
+                    onChange={v => set("store", "path", v)}
+                    mono
+                  />
+                  <Field
+                    id="s-max"
+                    labelId="settings.field.maxHistory"
+                    value={config.store?.maxHistory ?? ""}
+                    onChange={v => set("store", "maxHistory", v)}
+                    mono
+                    type="number"
+                    helpId="settings.field.maxHistoryHelp"
+                  />
+                  <Field
+                    id="s-rec"
+                    labelId="settings.field.recDir"
+                    value={config.record?.path ?? ""}
+                    onChange={v => set("record", "path", v)}
+                    mono
+                  />
                 </div>
-                <SwitchRow {...sw("autoRec")} />
-                <SwitchRow {...sw("diskClean")} defaultChecked />
-                <FormActions />
-              </form>
-            </section>
-          )}
-
-          {tab === "notify" && (
-            <section>
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold tracking-tight">{t("settings.tab.notify")}</h2>
-                <p className="text-sm text-stone-500 mt-0.5">{t("settings.notify.subtitle")}</p>
-              </div>
-              <form className="card p-5 space-y-5" onSubmit={onSettingsSubmit}>
-                <div>
-                  <label className="label" htmlFor="n-hook">{t("settings.field.webhook")}</label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input id="n-hook" className="input font-mono text-xs flex-1" defaultValue="https://hooks.example.com/nms/alert" />
-                    <button type="button" className="btn btn-secondary shrink-0" onClick={() => toast(t("settings.toastWebhookOk"))}>
-                      <Icon name="send" className="w-3.5 h-3.5" />
-                      {t("settings.testConnection")}
-                    </button>
-                  </div>
-                  <p className="help">{t("settings.webhookHelp")}</p>
-                </div>
-                <SwitchRow {...sw("notifyPublish")} defaultChecked />
-                <SwitchRow {...sw("notifyRecord")} defaultChecked />
-                <SwitchRow {...sw("notifyError")} defaultChecked />
-                <FormActions />
+                <FormActions saving={saving} t={t} />
               </form>
             </section>
           )}
