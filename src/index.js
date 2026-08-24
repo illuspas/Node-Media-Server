@@ -49,6 +49,8 @@ class NodeMediaServer {
 
     // Expose relay manager to context for API access
     Context.relayServer = this.relayServer;
+
+    this._stopping = false;
   }
 
   /**
@@ -76,11 +78,21 @@ class NodeMediaServer {
   }
 
   /**
-   * Flush the store and stop all relay tasks. Call before exit for a clean shutdown.
+   * Stop all servers and flush the store. Call before exit for a clean shutdown.
+   * Idempotent: repeated calls (e.g. duplicated signals) return immediately.
    * @returns {Promise<void>}
    */
   async stop() {
+    if (this._stopping) {
+      return;
+    }
+    this._stopping = true;
     this.relayServer.stop();
+    this.recordServer.stop();
+    this.rtmpServer.stop();
+    this.httpServer.stop();
+    this.notifyServer.stop();
+    this.historyServer.stop();
     if (this.store.opened) {
       await this.store.close();
     }

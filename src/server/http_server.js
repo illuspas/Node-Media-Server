@@ -95,6 +95,27 @@ class NodeHttpServer {
   };
 
   /**
+   * Stop HTTP/HTTPS listeners, close WebSocket servers and their clients.
+   * @returns {void}
+   */
+  stop = () => {
+    for (const ws of this.wsServer?.clients ?? []) {
+      ws.close();
+    }
+    for (const ws of this.wssServer?.clients ?? []) {
+      ws.close();
+    }
+    this.wsServer?.close();
+    this.wssServer?.close();
+    this.httpServer?.close(() => {
+      logger.info("HTTP server stopped");
+    });
+    this.httpsServer?.close(() => {
+      logger.info("HTTPS server stopped");
+    });
+  };
+
+  /**
    * @param {express.Request | http.IncomingMessage} req
    * @param {express.Response | WebSocket} res
    */

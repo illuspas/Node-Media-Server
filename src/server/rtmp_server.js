@@ -15,6 +15,8 @@ const RtmpSession = require("../session/rtmp_session.js");
 class NodeRtmpServer {
 
   constructor() {
+    /** @type {Set<net.Socket>} */
+    this._sockets = new Set();
     if (Context.config.rtmp?.port) {
       this.tcpServer = net.createServer(this.handleRequest);
     }
@@ -37,9 +39,29 @@ class NodeRtmpServer {
   };
 
   /**
+   * Stop listeners and destroy all live RTMP/RTMPS connections.
+   * @returns {void}
+   */
+  stop = () => {
+    this.tcpServer?.close(() => {
+      logger.log("Rtmp Server stopped");
+    });
+    this.tlsServer?.close(() => {
+      logger.log("Rtmps Server stopped");
+    });
+    for (const socket of this._sockets) {
+      socket.destroy();
+    }
+  };
+
+  /**
    * @param {net.Socket} socket 
    */
   handleRequest = (socket) => {
+    this._sockets.add(socket);
+    socket.on("close", () => {
+      this._sockets.delete(socket);
+    });
     const session = new RtmpSession(socket);
     session.run();
     Context.sessions.set(session.id, session);

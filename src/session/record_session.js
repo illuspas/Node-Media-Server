@@ -35,6 +35,7 @@ class NodeRecordSession extends BaseSession {
     /**@type {BroadcastServer} */
     this.broadcast = Context.broadcasts.get(this.streamPath) ?? new BroadcastServer(this.streamPath);
     Context.broadcasts.set(this.streamPath, this.broadcast);
+    this._stopped = false;
   }
 
   /**
@@ -57,12 +58,25 @@ class NodeRecordSession extends BaseSession {
       }
       // each record session closes exactly once, on its own publish cycle
       Context.eventEmitter.off("donePublish", onDonePublish);
-      this.fileStream.close();
-      this.broadcast.donePlay(this);
-      logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
-      Context.eventEmitter.emit("doneRecord", this);
+      this.stop();
     };
     Context.eventEmitter.on("donePublish", onDonePublish);
+  }
+
+  /**
+   * Close the file stream and finalize the record exactly once.
+   * @returns {void}
+   */
+  stop() {
+    if (this._stopped) {
+      return;
+    }
+    this._stopped = true;
+    this.endTime = Date.now();
+    this.fileStream.close();
+    this.broadcast.donePlay(this);
+    logger.info(`Record session ${this.id} ${this.streamPath} done record ${this.filePath}`);
+    Context.eventEmitter.emit("doneRecord", this);
   }
 
   /**

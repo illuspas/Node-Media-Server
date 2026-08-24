@@ -9,43 +9,33 @@ const BaseSession = require("../session/base_session");
 
 class NodeNotifyServer {
   constructor() {
+    /** @type {Array<[string, (session: BaseSession) => void]>} */
+    this._listeners = [];
   }
 
   run() {
     if (!Context.config.notify?.url) {
       return;
     }
-    Context.eventEmitter.on("prePlay", (session) => {
-      this.notify("prePlay", session);
-    });
+    const actions = ["prePlay", "postPlay", "donePlay", "prePublish", "postPublish", "donePublish", "postRecord", "doneRecord"];
+    for (const action of actions) {
+      const listener = (session) => {
+        this.notify(action, session);
+      };
+      this._listeners.push([action, listener]);
+      Context.eventEmitter.on(action, listener);
+    }
+  }
 
-    Context.eventEmitter.on("postPlay", (session) => {
-      this.notify("postPlay", session);
-    });
-
-    Context.eventEmitter.on("donePlay", (session) => {
-      this.notify("donePlay", session);
-    });
-
-    Context.eventEmitter.on("prePublish", (session) => {
-      this.notify("postPublish", session);
-    });
-
-    Context.eventEmitter.on("postPublish", (session) => {
-      this.notify("postPublish", session);
-    });
-
-    Context.eventEmitter.on("donePublish", (session) => {
-      this.notify("donePublish", session);
-    });
-
-    Context.eventEmitter.on("postRecord", (session) => {
-      this.notify("postRecord", session);
-    });
-
-    Context.eventEmitter.on("doneRecord", (session) => {
-      this.notify("doneRecord", session);
-    });
+  /**
+   * Remove all registered event listeners.
+   * @returns {void}
+   */
+  stop() {
+    for (const [action, listener] of this._listeners) {
+      Context.eventEmitter.off(action, listener);
+    }
+    this._listeners = [];
   }
 
   /**

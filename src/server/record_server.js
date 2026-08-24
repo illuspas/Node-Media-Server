@@ -13,6 +13,11 @@ const NodeRecordSession = require("../session/record_session.js");
 
 class NodeRecordServer {
   constructor() {
+    this._onPostPublish = (session) => {
+      const filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
+      const sess = new NodeRecordSession(session, filePath);
+      sess.run();
+    };
   }
 
   run() {
@@ -25,14 +30,24 @@ class NodeRecordServer {
         return;
       }
       logger.info(`Record server start on the path ${Context.config.record.path}`);
-      Context.eventEmitter.on("postPublish", (session) => {
-        let filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
-        let sess = new NodeRecordSession(session, filePath);
-        sess.run();
-      });
+      Context.eventEmitter.on("postPublish", this._onPostPublish);
       this._trackRecords();
       this._recoverStaleRecords();
     }
+  }
+
+  /**
+   * Stop accepting new recordings and finalize all active record sessions.
+   * @returns {void}
+   */
+  stop() {
+    Context.eventEmitter.off("postPublish", this._onPostPublish);
+    for (const session of Context.sessions.values()) {
+      if (session instanceof NodeRecordSession) {
+        session.stop();
+      }
+    }
+    logger.info("Record server stopped");
   }
 
   /**
