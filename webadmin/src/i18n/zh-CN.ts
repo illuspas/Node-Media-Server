@@ -212,6 +212,8 @@ const zhCN: Record<MessageKey, string> = {
   "records.emptyFiltered": "没有符合筛选条件的录像",
   "records.searchPlaceholder": "搜索流名称或路径",
   "records.copyPath": "复制文件路径",
+  "records.download": "下载",
+  "records.toastDownloadFailed": "下载失败",
   "records.toastCopied": "已复制：{text}",
   "records.deleteFile": "删除（含磁盘文件）",
   "records.confirmDeleteFile": "删除录像 {name}？磁盘上的文件也会一并删除。",

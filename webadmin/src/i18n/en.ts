@@ -210,6 +210,8 @@ const en = {
   "records.emptyFiltered": "No recordings match the filters",
   "records.searchPlaceholder": "Search stream name or path",
   "records.copyPath": "Copy file path",
+  "records.download": "Download",
+  "records.toastDownloadFailed": "Download failed",
   "records.toastCopied": "Copied: {text}",
   "records.deleteFile": "Delete (with file)",
   "records.confirmDeleteFile": "Delete recording {name}? The file on disk will also be removed.",

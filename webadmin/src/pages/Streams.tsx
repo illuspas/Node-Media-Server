@@ -256,11 +256,11 @@ export default function Streams() {
       </div>
 
       {/* filters */}
-      <div className="card p-4 flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="card p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="relative">
           <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
           <input
-            className="input"
+            className="input w-full"
             style={{ paddingLeft: "2.25rem" }}
             placeholder={formatMessage({ id: "streams.searchPlaceholder" })}
             value={q}
@@ -271,7 +271,7 @@ export default function Streams() {
           />
         </div>
         <select
-          className="select md:w-40"
+          className="select w-full"
           value={fApp}
           onChange={e => {
             setFApp(e.target.value);
@@ -286,7 +286,7 @@ export default function Streams() {
           ))}
         </select>
         <select
-          className="select md:w-40"
+          className="select w-full"
           value={fProto}
           onChange={e => {
             setFProto(e.target.value);

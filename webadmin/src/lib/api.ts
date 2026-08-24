@@ -354,6 +354,40 @@ export function deleteRecord(id: string, file = false): Promise<void> {
   }).then(() => undefined);
 }
 
+/**
+ * Download the flv file of a finished recording; the browser save dialog
+ * is triggered via a temporary object URL so the JWT header still applies.
+ */
+export async function downloadRecord(id: string, fileName: string): Promise<void> {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/records/${encodeURIComponent(id)}/download`, { headers });
+  } catch {
+    throw new ApiError(t("api.err.offline"), 0);
+  }
+  if (res.status === 401) {
+    clearSession();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    }
+    throw new ApiError(t("api.err.unauthorized"), 401);
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(body?.error || body?.message || t("api.err.requestFailed", { status: res.status }), res.status);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ---------------- history ---------------- */
 
 export interface ApiHistoryEntry {

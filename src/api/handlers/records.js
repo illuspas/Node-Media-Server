@@ -195,6 +195,49 @@ class RecordsHandler {
       res.status(500).json({ success: false, error: error.message });
     }
   };
+
+  /**
+   * Download the flv file of a finished recording.
+   * GET /api/v1/records/:id/download
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  static downloadRecord = (req, res) => {
+    try {
+      const store = Context.store;
+      if (!store?.opened) {
+        res.status(503).json({ success: false, error: "Store is not available" });
+        return;
+      }
+      const records = store.collection("records");
+      const doc = records.get(req.params.id);
+      if (!doc) {
+        res.status(404).json({ success: false, error: `Record not found: ${req.params.id}` });
+        return;
+      }
+      if (doc.status === "recording") {
+        res.status(409).json({ success: false, error: "Recording in progress; stop the stream first" });
+        return;
+      }
+      const recordRoot = path.resolve(Context.config.record?.path ?? "");
+      const target = path.resolve(doc.filePath ?? "");
+      if (!recordRoot || !target.startsWith(recordRoot + path.sep)) {
+        res.status(400).json({ success: false, error: "Refusing to download a file outside the record path" });
+        return;
+      }
+      fs.access(target, fs.constants.R_OK, (error) => {
+        if (error) {
+          res.status(404).json({ success: false, error: "Recording file not found on disk" });
+          return;
+        }
+        res.download(target);
+        logger.info(`API: Download record ${req.params.id} (${target})`);
+      });
+    } catch (error) {
+      logger.error(`API: Download record failed: ${error.message}`);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  };
 }
 
 module.exports = RecordsHandler;

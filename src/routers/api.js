@@ -58,6 +58,7 @@ class ApiRouter {
     // Recording metadata (persisted by the record server)
     this.router.get("/records", RecordsHandler.listRecords);
     this.router.get("/records/:id", RecordsHandler.getRecord);
+    this.router.get("/records/:id/download", RecordsHandler.downloadRecord);
     this.router.delete("/records/:id", RecordsHandler.deleteRecord);
 
     // Session history (publish/play), capped by store.maxHistory

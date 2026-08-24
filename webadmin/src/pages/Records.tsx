@@ -8,6 +8,7 @@ import {
   ApiError,
   deleteRecord,
   deleteSession,
+  downloadRecord,
   fetchRecords,
 } from "../lib/api";
 import type { ApiRecord, RecordsPage } from "../lib/api";
@@ -124,6 +125,18 @@ export default function Records() {
       }
     } catch (err) {
       toast(err instanceof ApiError ? err.message : t("records.toastDeleteFailed"), "danger");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /** Download the recording file. */
+  const downloadFile = async (rec: ApiRecord) => {
+    setBusyId(rec.id);
+    try {
+      await downloadRecord(rec.id, fileBaseName(rec.filePath));
+    } catch (err) {
+      toast(err instanceof ApiError ? err.message : t("records.toastDownloadFailed"), "danger");
     } finally {
       setBusyId(null);
     }
@@ -351,13 +364,9 @@ export default function Records() {
                       <div className="flex items-center gap-0.5">
                         <button
                           className="btn btn-ghost btn-sm btn-icon"
-                          title={formatMessage({ id: "records.copyPath" })}
-                          onClick={() => {
-                            navigator.clipboard?.writeText(f.filePath).then(
-                              () => toast(formatMessage({ id: "records.toastCopied" }, { text: f.filePath })),
-                              () => toast(f.filePath)
-                            );
-                          }}
+                          title={formatMessage({ id: "records.download" })}
+                          disabled={busyId === f.id}
+                          onClick={() => downloadFile(f)}
                         >
                           <Icon name="download" className="w-3.5 h-3.5" />
                         </button>
