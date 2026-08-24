@@ -75,7 +75,12 @@ function friendlyMessage(message: string): string {
     "Challenge expired": "api.err.challengeExpired",
     "Username is required": "api.err.usernameRequired",
     "Challenge and response are required": "api.err.challengeResponse",
-    "JWT configuration not found": "api.err.noJwt"
+    "JWT configuration not found": "api.err.noJwt",
+    "oldPassword and newPassword are required": "api.err.pwdRequired",
+    "New password must be at least 6 characters": "api.err.pwdTooShort",
+    "Old password is incorrect": "api.err.pwdOldIncorrect",
+    "New password must be different from the old one": "api.err.pwdSame",
+    "Current user not found": "api.err.pwdUserNotFound"
   };
   const id = map[message];
   return id ? t(id) : message;
@@ -121,6 +126,28 @@ export async function login(username: string, password: string): Promise<{ token
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(t("api.err.loginInterrupted"), 0);
+  }
+}
+
+/**
+ * Change the password of the logged-in user (see docs/api.md POST /api/v1/password).
+ * After success the caller should clear the session and return to the login page.
+ * @param oldPassword - the current password
+ * @param newPassword - the new password (≥ 6 chars, different from the old one)
+ */
+export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
+  try {
+    await apiFetch("/password", {
+      method: "POST",
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+  } catch (error) {
+    // Surface validation errors (wrong old password etc.) localized; leave the
+    // 401 session-expiry path untouched so it keeps its global handling.
+    if (error instanceof ApiError && error.status !== 401) {
+      throw new ApiError(friendlyMessage(error.message), error.status);
+    }
+    throw error;
   }
 }
 

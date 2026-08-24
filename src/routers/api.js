@@ -30,6 +30,7 @@ class ApiRouter {
   setupRoutes() {
     // Authentication endpoints
     this.router.post("/login", AuthHandler.login);
+    this.router.post("/password", AuthHandler.changePassword);
 
     // Health check endpoint
     this.router.get("/health", HealthHandler.check);

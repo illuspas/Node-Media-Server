@@ -55,6 +55,9 @@ if (configChanged) {
 
 const NodeMediaServer = require("..");
 
+// Let API handlers persist config changes (e.g. password updates) back to disk
+require("../src/core/context.js").configFile = configPath;
+
 if (config.rtmps?.key && !fs.existsSync(config.rtmps.key)) {
   config.rtmps.key = path.join(__dirname, config.rtmps.key);
 

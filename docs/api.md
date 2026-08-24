@@ -99,11 +99,35 @@ Requests with a missing or invalid token receive:
 }
 ```
 
+### Change Password
+
+```bash
+POST /api/v1/password
+Authorization: Bearer your_jwt_token
+Content-Type: application/json
+
+{
+  "oldPassword": "your_current_password",
+  "newPassword": "your_new_password"
+}
+```
+
+Validates the old password against the configured user, then updates `auth.jwt.users` in the running config and persists it back to the config file (when started via the CLI). Requirements: `newPassword` ≥ 6 characters and different from the old one. A wrong `oldPassword` returns **400** (a validation error, not an auth failure — the JWT itself is valid). After a successful change, log in again with the new password — already-issued tokens stay valid until they expire.
+
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "Password changed successfully, please log in again"
+}
+```
+
 ## Endpoints
 
 | Method   | Path                      | Description                                   | Auth |
 | -------- | ------------------------- | --------------------------------------------- | ---- |
 | POST     | /api/v1/login             | Two-step challenge-response login             | No   |
+| POST     | /api/v1/password          | Change the current user's password            | Yes  |
 | GET      | /api/v1/health            | Server health check                           | No   |
 | GET      | /api/v1/info              | Server version and configuration information  | Yes  |
 | GET      | /api/v1/streams           | List all active streams                       | Yes  |

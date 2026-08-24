@@ -18,6 +18,13 @@ const EventEmitter = require("node:events");
 const Context = {
   config: {},
 
+  /**
+   * Optional path of the config file the running instance was loaded from
+   * (set by the CLI entry). When present, password changes are persisted to it.
+   * @type {string|null}
+   */
+  configFile: null,
+
   sessions: new Map(),
 
   broadcasts: new Map(),

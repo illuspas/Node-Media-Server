@@ -37,9 +37,10 @@ function titleIdFor(pathname: string): string {
 interface ShellProps {
   username: string | null;
   onLogout: () => void;
+  onPasswordChanged: () => void;
 }
 
-function Shell({ username, onLogout }: ShellProps) {
+function Shell({ username, onLogout, onPasswordChanged }: ShellProps) {
   const location = useLocation();
   const { formatMessage } = useIntl();
   // Sidebar stays open only while the route it was opened on is still current.
@@ -61,6 +62,7 @@ function Shell({ username, onLogout }: ShellProps) {
           username={username}
           onMenuClick={() => setOpenLocationKey(sidebarOpen ? null : location.key)}
           onLogout={onLogout}
+          onPasswordChanged={onPasswordChanged}
         />
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -112,6 +114,10 @@ export default function App() {
           clearSession();
           setAuth({ token: null, username: null });
           toast(t("app.toast.loggedOut"));
+        }}
+        onPasswordChanged={() => {
+          clearSession();
+          setAuth({ token: null, username: null });
         }}
       />
     </HashRouter>
