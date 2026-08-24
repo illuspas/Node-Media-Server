@@ -67,6 +67,8 @@ class RtspSession extends BaseSession {
     // State
     this.isRunning = false;
     this.isClosing = false;
+    /** @type {ReturnType<typeof setTimeout>|null} Pending reconnect timer (guards against double-scheduling) */
+    this.reconnectTimer = null;
 
     // Setup callbacks
     this.rtspClient.onRtpDataCallback = this.onRtpData;
@@ -143,6 +145,10 @@ class RtspSession extends BaseSession {
 
     // 7. Start heartbeat
     this.rtspClient.startHeartbeat();
+
+    // Connected successfully — reset reconnect backoff
+    this.reconnectAttempts = 0;
+    this.currentReconnectInterval = this.reconnectInterval;
 
     logger.info(`RTSP session ${this.id} playing ${this.streamPath} (${this.sdp.media.map((m) => m.codec).join(", ")})`);
   };
@@ -257,6 +263,11 @@ class RtspSession extends BaseSession {
       return;
     }
 
+    // A reconnect is already scheduled (close and error callbacks may both fire)
+    if (this.reconnectTimer !== null) {
+      return;
+    }
+
     if (!this.reconnectEnabled) {
       logger.info(`RTSP session ${this.id} reconnect disabled, stopping`);
       this.cleanup();
@@ -272,9 +283,26 @@ class RtspSession extends BaseSession {
     this.reconnectAttempts++;
     logger.info(`RTSP session ${this.id} reconnect attempt ${this.reconnectAttempts} in ${this.currentReconnectInterval}ms`);
 
-    setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       if (this.isClosing) {
         return;
+      }
+
+      // Tear down the previous client first: leaving its socket open would let
+      // two RTP streams feed the same depayloader (constant seq gaps) and leak
+      // sessions on the remote server. Null its callbacks so the teardown does
+      // not trigger handleReconnect again.
+      const oldClient = this.rtspClient;
+      if (oldClient) {
+        oldClient.onCloseCallback = () => {};
+        oldClient.onErrorCallback = () => {};
+        oldClient.disconnect();
+      }
+
+      // Release the publish slot so registerBroadcast can re-publish this session
+      if (this.broadcast && this.broadcast.publisher === this) {
+        this.broadcast.donePublish(this);
       }
 
       // Reset RTSP client state
@@ -332,8 +360,18 @@ class RtspSession extends BaseSession {
   cleanup = () => {
     this.isRunning = false;
 
-    // Disconnect RTSP client
-    this.rtspClient.disconnect();
+    // Cancel any pending reconnect
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    // Disconnect RTSP client without letting it retrigger handleReconnect
+    if (this.rtspClient) {
+      this.rtspClient.onCloseCallback = () => {};
+      this.rtspClient.onErrorCallback = () => {};
+      this.rtspClient.disconnect();
+    }
 
     // Remove from broadcast
     if (this.broadcast) {
