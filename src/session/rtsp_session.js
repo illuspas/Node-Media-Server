@@ -15,12 +15,27 @@ const SdpParser = require("../protocol/sdp.js");
 const RtpParser = require("../protocol/rtp.js");
 const RtcpParser = require("../protocol/rtcp.js");
 const RtpDepayloader = require("../protocol/rtp_depayloader.js");
+const { encodeAmf0Data } = require("../protocol/amf.js");
 
 /** Default reconnect interval (ms) */
 const DEFAULT_RECONNECT_INTERVAL = 2000;
 
 /** Max reconnect interval (ms) */
 const MAX_RECONNECT_INTERVAL = 30000;
+
+/** Video frames sampled before estimating the frame rate */
+const FRAMES_TO_ESTIMATE_FPS = 16;
+
+/** Wait this long (ms) after publish before emitting metadata even without SPS info */
+const METADATA_FALLBACK_MS = 3000;
+
+/** videocodecid for Enhanced RTMP FourCC codecs, big-endian UI32 per spec */
+const FOURCC_HEVC = Buffer.from("hvc1").readUInt32BE(0);
+
+/** FLV codec ids */
+const FLV_CODEC_ID_AAC = 10;
+const FLV_CODEC_ID_PCMA = 7;
+const FLV_CODEC_ID_PCMU = 8;
 
 /**
  * RTSP Client Session — pulls remote RTSP stream and publishes to BroadcastServer.
@@ -69,6 +84,11 @@ class RtspSession extends BaseSession {
     this.isClosing = false;
     /** @type {ReturnType<typeof setTimeout>|null} Pending reconnect timer (guards against double-scheduling) */
     this.reconnectTimer = null;
+
+    // Metadata assembly
+    this.metaDataSent = false;
+    /** @type {number[]} Recent video frame timestamps (ms) for fps estimation */
+    this.videoFrameTimes = [];
 
     // Setup callbacks
     this.rtspClient.onRtpDataCallback = this.onRtpData;
@@ -191,6 +211,125 @@ class RtspSession extends BaseSession {
     }
 
     logger.info(`RTSP session ${this.id} registered as publisher for ${this.streamPath}`);
+
+    // Fallback: emit whatever metadata we have even if SPS parsing never succeeds
+    setTimeout(() => {
+      if (!this.isClosing && !this.metaDataSent) {
+        this.emitMetaData();
+      }
+    }, METADATA_FALLBACK_MS).unref();
+  };
+
+  // ─────────────────────────────────────────
+  // Metadata Assembly
+  // ─────────────────────────────────────────
+
+  /**
+   * Find the video depayloader track, if any.
+   * @returns {import("../protocol/rtp_depayloader.js").TrackDepayloader|null}
+   */
+  getVideoTrack = () => {
+    for (const track of this.depayloader.tracks.values()) {
+      if ("videoInfo" in track) {
+        return track;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Build the onMetaData object from SDP + SPS info.
+   * @returns {object}
+   */
+  buildMetaData = () => {
+    /** @type {object} */
+    const metaData = { encoder: "NodeMediaServer (RTSP relay)" };
+
+    const videoTrack = this.getVideoTrack();
+    if (videoTrack) {
+      const videoCodec = this.sdp?.media.find((m) => m.type === "video")?.codec?.toUpperCase();
+      metaData.videocodecid = (videoCodec === "H265" || videoCodec === "HEVC") ? FOURCC_HEVC : 7;
+      const info = videoTrack.videoInfo;
+      if (info) {
+        metaData.width = info.width;
+        metaData.height = info.height;
+      }
+      // Frame rate estimated from sampled frame timestamps
+      if (this.videoFrameTimes.length >= 2) {
+        const span = this.videoFrameTimes[this.videoFrameTimes.length - 1] - this.videoFrameTimes[0];
+        if (span > 0) {
+          const fps = (this.videoFrameTimes.length - 1) * 1000 / span;
+          if (fps > 0 && fps < 240) {
+            metaData.framerate = Math.round(fps * 100) / 100;
+          }
+        }
+      }
+    }
+
+    const audioMedia = this.sdp?.media.find((m) => m.type === "audio");
+    if (audioMedia) {
+      const codec = audioMedia.codec.toUpperCase();
+      if (codec === "MPEG4-GENERIC" || codec === "AAC") {
+        metaData.audiocodecid = FLV_CODEC_ID_AAC;
+      } else if (codec === "PCMU") {
+        metaData.audiocodecid = FLV_CODEC_ID_PCMU;
+      } else {
+        metaData.audiocodecid = FLV_CODEC_ID_PCMA;
+      }
+      metaData.audiosamplerate = audioMedia.clockRate || 8000;
+      metaData.audiosamplesize = 16;
+      metaData.stereo = (audioMedia.channels || 1) > 1;
+    }
+
+    return metaData;
+  };
+
+  /**
+   * Broadcast the onMetaData packet (flags=5). BroadcastServer caches it and
+   * sends it to every new subscriber, and extracts the publisher stream info.
+   * The tag body starts with "onMetaData" (not "@setDataFrame") so that FLV
+   * parsers such as FFmpeg's read the metadata.
+   */
+  emitMetaData = () => {
+    if (this.metaDataSent || !this.broadcast || this.isClosing) {
+      return;
+    }
+    this.metaDataSent = true;
+
+    const metaData = this.buildMetaData();
+    const data = encodeAmf0Data({
+      cmd: "onMetaData",
+      dataObj: metaData
+    });
+
+    const pkt = new AVPacket();
+    pkt.flags = 5;
+    pkt.codec_type = 18; // script/data
+    pkt.pts = 0;
+    pkt.dts = 0;
+    pkt.data = data;
+    pkt.size = data.length;
+
+    this.broadcast.broadcastMessage(pkt);
+    logger.debug(`RTSP session ${this.id} onMetaData ${JSON.stringify(metaData)}`);
+  };
+
+  /**
+   * Emit metadata once SPS dimensions and enough frames for fps are available.
+   */
+  tryEmitMetaData = () => {
+    if (this.metaDataSent) {
+      return;
+    }
+    const videoTrack = this.getVideoTrack();
+    if (!videoTrack) {
+      // Audio-only stream: no SPS to wait for
+      this.emitMetaData();
+      return;
+    }
+    if (videoTrack.videoInfo && this.videoFrameTimes.length >= FRAMES_TO_ESTIMATE_FPS) {
+      this.emitMetaData();
+    }
   };
 
   // ─────────────────────────────────────────
@@ -226,6 +365,14 @@ class RtspSession extends BaseSession {
     const avPackets = this.depayloader.feed(rtpPacket);
     for (const avPacket of avPackets) {
       this.broadcast.broadcastMessage(avPacket);
+      if (avPacket.flags === 3 || avPacket.flags === 4) {
+        // Sample video frame timestamps for fps estimation
+        this.videoFrameTimes.push(avPacket.pts);
+        if (this.videoFrameTimes.length > FRAMES_TO_ESTIMATE_FPS) {
+          this.videoFrameTimes.shift();
+        }
+        this.tryEmitMetaData();
+      }
     }
   };
 
@@ -311,6 +458,10 @@ class RtspSession extends BaseSession {
       this.rtspClient.onCloseCallback = this.onConnectionClose;
       this.rtspClient.onErrorCallback = this.onConnectionError;
       this.depayloader = new RtpDepayloader();
+
+      // Re-send metadata after reconnect (subscribers may be waiting through the gap)
+      this.metaDataSent = false;
+      this.videoFrameTimes = [];
 
       // Re-setup tracks from SDP
       if (this.sdp) {

@@ -40,9 +40,27 @@ const AUDIO_CODEC_IDS: Record<number, string> = {
 
 function codecName(codec: number | string | undefined, idMap: Record<number, string>, fourccMap?: Record<string, string>): string {
   if (codec === undefined || codec === null || codec === 0 || codec === "") return "—";
-  if (typeof codec === "number") return idMap[codec] || `Codec ${codec}`;
+  if (typeof codec === "number") {
+    if (idMap[codec]) return idMap[codec];
+    // Enhanced RTMP stores videocodecid as a big-endian UI32 FourCC (e.g. 0x68766331 = "hvc1")
+    const fourcc = fourccToString(codec);
+    if (fourccMap && fourcc && fourccMap[fourcc]) return fourccMap[fourcc];
+    return `Codec ${codec}`;
+  }
   if (fourccMap && fourccMap[codec]) return fourccMap[codec];
   return codec.toUpperCase();
+}
+
+/** Decode a UI32 into its 4-char FourCC string, or null if not printable ASCII. */
+function fourccToString(value: number): string | null {
+  if (value < 0x20202020 || value > 0x7e7e7e7e) return null;
+  const s = String.fromCharCode(
+    (value >>> 24) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 8) & 0xff,
+    value & 0xff
+  );
+  return /^[\x20-\x7e]{4}$/.test(s) ? s : null;
 }
 
 /** Average bitrate in Mbps: cumulative inBytes over publish duration. */

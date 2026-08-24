@@ -8,6 +8,14 @@
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
 
+/**
+ * @param {string} ip
+ * @returns {string}
+ */
+function displayIp(ip) {
+  return ip || "127.0.0.1";
+}
+
 class StreamsHandler {
   /**
    * Get all active streams
@@ -27,7 +35,7 @@ class StreamsHandler {
           status: broadcast.getPublishStatus(),
           publisher: broadcast.publisher ? {
             id: broadcast.publisher.id,
-            ip: broadcast.publisher.ip,
+            ip: displayIp(broadcast.publisher.ip),
             protocol: broadcast.publisher.protocol,
             createTime: broadcast.publisher.createTime,
             videoCodec: broadcast.publisher.videoCodec,
@@ -88,7 +96,7 @@ class StreamsHandler {
         status: broadcast.getPublishStatus(),
         publisher: broadcast.publisher ? {
           id: broadcast.publisher.id,
-          ip: broadcast.publisher.ip,
+          ip: displayIp(broadcast.publisher.ip),
           protocol: broadcast.publisher.protocol,
           createTime: broadcast.publisher.createTime,
           videoCodec: broadcast.publisher.videoCodec,

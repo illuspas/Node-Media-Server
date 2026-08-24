@@ -7,6 +7,7 @@
 
 const logger = require("../core/logger.js");
 const AVPacket = require("../core/avpacket.js");
+const { parseH264Sps, parseH265Sps } = require("./sps_info.js");
 
 // ─────────────────────────────────────────
 // H.264 NAL Unit Types (RFC 6184)
@@ -223,6 +224,12 @@ class H264Depayloader extends TrackDepayloader {
 
     // Track if we have emitted the video header
     this.headerEmitted = false;
+
+    // Video info parsed from SPS
+    /** @type {{width: number, height: number}|null} */
+    this.videoInfo = null;
+    /** @type {Buffer|null} Last SPS already parsed (skip identical re-sends) */
+    this.parsedSps = null;
 
     // Parse SPS/PPS from sprop-parameter-sets if available
     this._initFromFmtp();
@@ -473,6 +480,15 @@ class H264Depayloader extends TrackDepayloader {
         this.headerEmitted = false; // Re-emit header on config change
         logger.debug(`H264: AVC config record built (SPS ${this.sps.length}B + PPS ${this.pps.length}B)`);
       }
+      // Cameras resend SPS before every IDR; only parse when it actually changed
+      if (!this.parsedSps || !this.parsedSps.equals(this.sps)) {
+        this.parsedSps = Buffer.from(this.sps);
+        const info = parseH264Sps(this.sps);
+        if (info) {
+          this.videoInfo = info;
+          logger.debug(`H264: SPS ${info.width}x${info.height}`);
+        }
+      }
     }
   };
 
@@ -634,6 +650,10 @@ class H265Depayloader extends TrackDepayloader {
     this.pps = null;
     this.hevcConfigRecord = null;
     this.headerEmitted = false;
+    /** @type {{width: number, height: number}|null} Video info parsed from SPS */
+    this.videoInfo = null;
+    /** @type {Buffer|null} Last SPS already parsed (skip identical re-sends) */
+    this.parsedSps = null;
 
     // FU reassembly state
     this.fuStarted = false;
@@ -939,6 +959,15 @@ class H265Depayloader extends TrackDepayloader {
         this.hevcConfigRecord = newRecord;
         this.headerEmitted = false; // Re-emit header on config change
         logger.debug(`H265: HEVC config record built (VPS ${this.vps.length}B + SPS ${this.sps.length}B + PPS ${this.pps.length}B)`);
+      }
+      // Cameras resend SPS before every IDR; only parse when it actually changed
+      if (!this.parsedSps || !this.parsedSps.equals(this.sps)) {
+        this.parsedSps = Buffer.from(this.sps);
+        const info = parseH265Sps(this.sps);
+        if (info) {
+          this.videoInfo = info;
+          logger.debug(`H265: SPS ${info.width}x${info.height}`);
+        }
       }
     }
   };

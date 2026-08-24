@@ -294,7 +294,10 @@ class BroadcastServer {
   broadcastMessage = (packet) => {
     if (packet.flags == 5) {
       let metadata = decodeAmf0Data(packet.data);
-      if (this.publisher && metadata.cmd === "@setDataFrame" && metadata.dataObj !== null) {
+      // RTMP publishers send "@setDataFrame onMetaData {...}"; our RTSP pull
+      // sessions and FLV script tags start directly with "onMetaData {...}".
+      if (this.publisher && metadata.dataObj !== null &&
+          (metadata.cmd === "@setDataFrame" || metadata.cmd === "onMetaData")) {
         this.publisher.audioCodec = metadata.dataObj.audiocodecid;
         this.publisher.audioChannels = metadata.dataObj.stereo ? 2 : 1;
         this.publisher.audioSamplerate = metadata.dataObj.audiosamplerate;
