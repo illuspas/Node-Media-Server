@@ -89,7 +89,7 @@ class RtmpClient extends Rtmp {
    * @param {string} rtmpUrl
    * @returns {RtmpUrl}
    */
-  static parseUrl = (rtmpUrl) => {
+  static parseUrl(rtmpUrl) {
     const url = new URL(rtmpUrl);
     if (url.protocol !== "rtmp:") {
       throw new Error(`Unsupported RTMP URL scheme: ${url.protocol}`);
@@ -115,14 +115,14 @@ class RtmpClient extends Rtmp {
       streamName: decodeURIComponent(pathParts.slice(1).join("/")),
       query
     };
-  };
+  }
 
   /**
    * Connect to an RTMP server and complete the simple handshake.
    * @param {string} rtmpUrl
    * @returns {Promise<void>}
    */
-  connect = (rtmpUrl) => {
+  connect(rtmpUrl) {
     return new Promise((resolve, reject) => {
       if (this.socket || this.connected) {
         reject(new Error("RTMP client is already connected"));
@@ -167,12 +167,12 @@ class RtmpClient extends Rtmp {
 
       this.onHandshakeCallback = resolve;
     });
-  };
+  }
 
   /**
    * Reset parser and handshake state before a new connection.
    */
-  resetProtocolState = () => {
+  resetProtocolState() {
     this.handshakeBuffer = Buffer.alloc(0);
     this.clientHandshake = Buffer.alloc(0);
     this.handshakeState = RTMP_HANDSHAKE_C0C1;
@@ -190,19 +190,19 @@ class RtmpClient extends Rtmp {
     this.ackSize = 0;
     this.lastActivityTime = Date.now();
     this.pendingCommands.clear();
-  };
+  }
 
   /**
    * Send C0 and C1.
    */
-  sendClientHandshake = () => {
+  sendClientHandshake() {
     const c1 = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     c1.writeUInt32BE(Math.floor(Date.now() / 1000), 0);
     crypto.randomBytes(RTMP_HANDSHAKE_SIZE - 8).copy(c1, 8);
     this.clientHandshake = c1;
     this.write(Buffer.concat([Buffer.from([RTMP_VERSION]), c1]));
     this.handshakeState = RTMP_HANDSHAKE_S0S1;
-  };
+  }
 
   /**
    * Handle data while consuming the handshake, then pass remaining bytes to
@@ -266,7 +266,7 @@ class RtmpClient extends Rtmp {
    * @param {number} [sid]
    * @returns {Promise<any>}
    */
-  sendCommand = (cmd, options, sid = 0) => {
+  sendCommand(cmd, options, sid = 0) {
     return new Promise((resolve, reject) => {
       const transId = this.nextTransId++;
       this.pendingCommands.set(transId, { cmd, resolve, reject });
@@ -276,13 +276,13 @@ class RtmpClient extends Rtmp {
         ...options
       });
     });
-  };
+  }
 
   /**
    * Send NetConnection.connect.
    * @returns {Promise<any>}
    */
-  sendConnect = () => {
+  sendConnect() {
     if (!this.urlInfo) {
       return Promise.reject(new Error("RTMP URL is not initialized"));
     }
@@ -299,27 +299,27 @@ class RtmpClient extends Rtmp {
       },
       args: []
     });
-  };
+  }
 
   /**
    * Send createStream and return the allocated stream id.
    * @returns {Promise<number>}
    */
-  sendCreateStream = async () => {
+  async sendCreateStream() {
     const response = await this.sendCommand("createStream", { cmdObj: null });
     if (typeof response?.info !== "number") {
       throw new Error("RTMP createStream response did not contain a stream id");
     }
     this.streamId = response.info;
     return this.streamId;
-  };
+  }
 
   /**
    * Send play for the configured stream.
    * @param {string} streamName
    * @returns {Promise<any>}
    */
-  sendPlay = (streamName) => {
+  sendPlay(streamName) {
     return this.sendCommand("play", {
       cmdObj: null,
       streamName,
@@ -327,7 +327,7 @@ class RtmpClient extends Rtmp {
       duration: -1,
       reset: true
     }, this.streamId);
-  };
+  }
 
   /**
    * Send publish for the configured stream.
@@ -335,41 +335,41 @@ class RtmpClient extends Rtmp {
    * @param {string} [type]
    * @returns {Promise<any>}
    */
-  sendPublish = (streamName, type = "live") => {
+  sendPublish(streamName, type = "live") {
     return this.sendCommand("publish", {
       cmdObj: null,
       streamName,
       type
     }, this.streamId);
-  };
+  }
 
   /**
    * Send metadata using the standard RTMP data frame.
    * @param {object} metaData
    * @returns {void}
    */
-  sendMetaData = (metaData) => {
+  sendMetaData(metaData) {
     this.sendDataMessage({
       cmd: "@setDataFrame",
       method: "onMetaData",
       dataObj: metaData
     }, this.streamId);
-  };
+  }
 
   /**
    * Send an AV packet to the remote server.
    * @param {import("../core/avpacket.js")} avpacket
    * @returns {void}
    */
-  sendPacket = (avpacket) => {
+  sendPacket(avpacket) {
     this.onOutputCallback(Rtmp.createMessage(avpacket));
-  };
+  }
 
   /**
    * Handle incoming server commands and resolve pending requests.
    * @returns {void}
    */
-  invokeHandler = () => {
+  invokeHandler() {
     const offset = this.parserPacket.header.type === 17 ? 1 : 0;
     const payload = this.parserPacket.payload.subarray(offset, this.parserPacket.header.length);
     const message = AMF.decodeAmf0Cmd(payload);
@@ -413,13 +413,13 @@ class RtmpClient extends Rtmp {
     if (message.cmd === "close" || message.cmd === "deleteStream") {
       this.onCloseCallback(false);
     }
-  };
+  }
 
   /**
    * Handle RTMP control messages and acknowledge the receive window.
    * @returns {void}
    */
-  controlHandler = () => {
+  controlHandler() {
     const payload = this.parserPacket.payload;
     switch (this.parserPacket.header.type) {
     case 1:
@@ -435,7 +435,7 @@ class RtmpClient extends Rtmp {
       this.sendACK(this.receivedBytes);
       this.lastAckBytes = this.receivedBytes;
     }
-  };
+  }
 
   /**
    * Handle user control messages: answer server pings with a pong.
@@ -443,7 +443,7 @@ class RtmpClient extends Rtmp {
    * and the FMS convention (7=ping request, 8=pong).
    * @returns {void}
    */
-  eventHandler = () => {
+  eventHandler() {
     const payload = this.parserPacket.payload;
     if (payload.length < 6) {
       return;
@@ -459,14 +459,14 @@ class RtmpClient extends Rtmp {
       payload.copy(pong, 14, 2, 6);
       this.onOutputCallback(pong);
     }
-  };
+  }
 
   /**
    * Start the RTMP ping heartbeat.
    * @param {number} [interval]
    * @returns {void}
    */
-  startHeartbeat = (interval = 30000) => {
+  startHeartbeat(interval = 30000) {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
       if (!this.connected || this.handshakeState !== RTMP_HANDSHAKE_DONE) {
@@ -481,75 +481,75 @@ class RtmpClient extends Rtmp {
       packet.writeUInt32BE(this.pingSequence++, 14);
       this.onOutputCallback(packet);
     }, interval);
-  };
+  }
 
   /**
    * Stop the RTMP ping heartbeat.
    */
-  stopHeartbeat = () => {
+  stopHeartbeat() {
     if (this.heartbeatTimer !== null) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
-  };
+  }
 
   /**
    * Return whether no data has been received within the timeout window.
    * @param {number} [timeoutMs]
    * @returns {boolean}
    */
-  isTimedOut = (timeoutMs = 60000) => {
+  isTimedOut(timeoutMs = 60000) {
     return this.connected && Date.now() - this.lastActivityTime > timeoutMs;
-  };
+  }
 
   /**
    * Reject and clear every pending command.
    * @param {Error} error
    */
-  rejectAllPending = (error) => {
+  rejectAllPending(error) {
     for (const pending of this.pendingCommands.values()) {
       pending.reject(error);
     }
     this.pendingCommands.clear();
-  };
+  }
 
   /**
    * Write data to the connected socket.
    * @param {Buffer} buffer
    */
-  write = (buffer) => {
+  write(buffer) {
     if (!this.socket || this.socket.destroyed) {
       throw new Error("RTMP client socket is not writable");
     }
     this.socket.write(buffer);
-  };
+  }
 
   /**
    * Reject the connection Promise once.
    * @param {Error} error
    */
-  rejectHandshake = (error) => {
+  rejectHandshake(error) {
     if (this.handshakeReject !== null) {
       const reject = this.handshakeReject;
       this.handshakeReject = null;
       reject(error);
     }
-  };
+  }
 
   /**
    * Fail the handshake and close the socket.
    * @param {Error} error
    */
-  failHandshake = (error) => {
+  failHandshake(error) {
     this.rejectHandshake(error);
     this.onErrorCallback(error);
     this.socket?.destroy();
-  };
+  }
 
   /**
    * Disconnect and clear all protocol state.
    */
-  disconnect = () => {
+  disconnect() {
     this.stopHeartbeat();
     this.rejectAllPending(new Error("Disconnecting"));
     this.rejectHandshake(new Error("Disconnecting"));
@@ -560,7 +560,7 @@ class RtmpClient extends Rtmp {
       this.socket = null;
     }
     this.resetProtocolState();
-  };
+  }
 }
 
 module.exports = RtmpClient;

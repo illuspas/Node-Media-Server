@@ -73,7 +73,7 @@ class RtpDepayloader {
    * @param {number} clockRate - Clock rate in Hz
    * @param {{[key: string]: string}} [fmtp] - Format parameters from SDP
    */
-  addTrack = (payloadType, codec, clockRate, fmtp) => {
+  addTrack(payloadType, codec, clockRate, fmtp) {
     const upper = codec.toUpperCase();
     let depayloader;
 
@@ -103,7 +103,7 @@ class RtpDepayloader {
 
     this.tracks.set(payloadType, depayloader);
     logger.debug(`RtpDepayloader: added track pt=${payloadType} codec=${upper}`);
-  };
+  }
 
   /**
    * Feed an RTP packet. May return 0 or more AVPackets.
@@ -112,7 +112,7 @@ class RtpDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket - Parsed RTP packet
    * @returns {AVPacket[]} Zero or more complete AVPackets
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     const track = this.tracks.get(rtpPacket.payloadType);
     if (!track) {
       logger.trace(`RtpDepayloader: no track for pt=${rtpPacket.payloadType}`);
@@ -125,7 +125,7 @@ class RtpDepayloader {
       pkt.dts = ms;
     }
     return packets;
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -158,7 +158,7 @@ class TrackDepayloader {
    * @param {number} seq - Current sequence number
    * @returns {boolean} True if there is a gap
    */
-  checkSeqGap = (seq) => {
+  checkSeqGap(seq) {
     if (this.lastSeq >= 0) {
       const diff = (seq - this.lastSeq) & 0xFFFF;
       if (diff > 1 && diff < 30000) {
@@ -167,7 +167,7 @@ class TrackDepayloader {
     }
     this.lastSeq = seq;
     return false;
-  };
+  }
 
   /**
    * Convert an RTP timestamp to FLV/RTMP milliseconds (timebase 1/1000),
@@ -177,7 +177,7 @@ class TrackDepayloader {
    * @param {number} rtpTimestamp
    * @returns {number} Milliseconds since the track's first frame
    */
-  toMilliseconds = (rtpTimestamp) => {
+  toMilliseconds(rtpTimestamp) {
     if (this.firstRtpTimestamp < 0) {
       this.firstRtpTimestamp = rtpTimestamp;
       this.lastRtpTimestamp = rtpTimestamp;
@@ -189,7 +189,7 @@ class TrackDepayloader {
       this.lastRtpTimestamp = rtpTimestamp;
     }
     return Math.round(this.elapsedTicks * 1000 / this.clockRate);
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -235,7 +235,7 @@ class H264Depayloader extends TrackDepayloader {
     this._initFromFmtp();
   }
 
-  _initFromFmtp = () => {
+  _initFromFmtp() {
     const sprop = this.fmtp["sprop-parameter-sets"];
     if (sprop) {
       const nalus = sprop.split(",").map((s) => Buffer.from(s.trim(), "base64"));
@@ -246,13 +246,13 @@ class H264Depayloader extends TrackDepayloader {
         logger.debug(`H264: SPS (${this.sps.length}B) PPS (${this.pps.length}B) from fmtp`);
       }
     }
-  };
+  }
 
   /**
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     const payload = rtpPacket.payload;
@@ -293,7 +293,7 @@ class H264Depayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 
   /**
    * Handle single NAL unit packet
@@ -301,7 +301,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  _handleSingleNal = (payload, rtpPacket) => {
+  _handleSingleNal(payload, rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     const nalType = payload[0] & 0x1F;
@@ -330,7 +330,7 @@ class H264Depayloader extends TrackDepayloader {
     packets.push(this._createVideoNalPacket(data, isKeyframe, rtpPacket.timestamp));
 
     return packets;
-  };
+  }
 
   /**
    * Handle STAP-A aggregation packet
@@ -338,7 +338,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  _handleStapA = (payload, rtpPacket) => {
+  _handleStapA(payload, rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     let offset = 1; // Skip STAP-A NAL type byte
@@ -384,7 +384,7 @@ class H264Depayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 
   /**
    * Handle FU-A fragmentation unit
@@ -392,7 +392,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]|null} Null if frame incomplete, array when frame complete
    */
-  _handleFuA = (payload, rtpPacket) => {
+  _handleFuA(payload, rtpPacket) {
     if (payload.length < 3) {
       return null;
     }
@@ -466,13 +466,13 @@ class H264Depayloader extends TrackDepayloader {
       this.fuBuffers.push(Buffer.from(fuPayload));
     }
     return null;
-  };
+  }
 
   /**
    * Try to build AVCDecoderConfigurationRecord from SPS+PPS.
    * Only rebuilds if SPS or PPS content actually changed.
    */
-  _tryBuildConfig = () => {
+  _tryBuildConfig() {
     if (this.sps && this.pps) {
       const newRecord = this._buildAvcConfigRecord(this.sps, this.pps);
       if (!this.avcConfigRecord || !this.avcConfigRecord.equals(newRecord)) {
@@ -490,7 +490,7 @@ class H264Depayloader extends TrackDepayloader {
         }
       }
     }
-  };
+  }
 
   /**
    * Build AVCDecoderConfigurationRecord (FLV AVC sequence header body)
@@ -498,7 +498,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {Buffer} pps
    * @returns {Buffer}
    */
-  _buildAvcConfigRecord = (sps, pps) => {
+  _buildAvcConfigRecord(sps, pps) {
     const spsBody = sps.subarray(4); // Skip NAL header (start code or raw)
     const ppsBody = pps.subarray(4);
 
@@ -523,7 +523,7 @@ class H264Depayloader extends TrackDepayloader {
     ppsNoHdr.copy(buf, offset);
 
     return buf;
-  };
+  }
 
   /**
    * Build FLV video tag body for a single NAL unit
@@ -532,7 +532,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {number} compositionTime
    * @returns {Buffer}
    */
-  _buildVideoNaluPayload = (nalu, isKeyframe, compositionTime) => {
+  _buildVideoNaluPayload(nalu, isKeyframe, compositionTime) {
     // FLV video tag body:
     // [0]: frameType(4) | codecId(4)
     // [1]: AVCPacketType (0=seq header, 1=NALU)
@@ -552,7 +552,7 @@ class H264Depayloader extends TrackDepayloader {
     nalu.copy(buf, 9);
 
     return buf;
-  };
+  }
 
   /**
    * Build FLV video tag body for multiple NAL units
@@ -561,7 +561,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {number} compositionTime
    * @returns {Buffer}
    */
-  _buildVideoMultiNaluPayload = (nalus, isKeyframe, compositionTime) => {
+  _buildVideoMultiNaluPayload(nalus, isKeyframe, compositionTime) {
     let totalNaluSize = 0;
     for (const nalu of nalus) {
       totalNaluSize += 4 + nalu.length;
@@ -583,7 +583,7 @@ class H264Depayloader extends TrackDepayloader {
     }
 
     return buf;
-  };
+  }
 
   /**
    * Create AVPacket for video header (AVCDecoderConfigurationRecord)
@@ -591,7 +591,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {number} timestamp
    * @returns {AVPacket}
    */
-  _createVideoHeaderPacket = (configRecord, timestamp) => {
+  _createVideoHeaderPacket(configRecord, timestamp) {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = FLV_CODEC_ID_H264;
@@ -610,7 +610,7 @@ class H264Depayloader extends TrackDepayloader {
     pkt.size = pkt.data.length;
 
     return pkt;
-  };
+  }
 
   /**
    * Create AVPacket for video NALU
@@ -619,7 +619,7 @@ class H264Depayloader extends TrackDepayloader {
    * @param {number} timestamp
    * @returns {AVPacket}
    */
-  _createVideoNalPacket = (flvBody, isKeyframe, timestamp) => {
+  _createVideoNalPacket(flvBody, isKeyframe, timestamp) {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = FLV_CODEC_ID_H264;
@@ -629,7 +629,7 @@ class H264Depayloader extends TrackDepayloader {
     pkt.data = flvBody;
     pkt.size = flvBody.length;
     return pkt;
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -664,7 +664,7 @@ class H265Depayloader extends TrackDepayloader {
     this._initFromFmtp();
   }
 
-  _initFromFmtp = () => {
+  _initFromFmtp() {
     // H.265 params may come as sprop-vps, sprop-sps, sprop-pps
     if (this.fmtp["sprop-sps"]) {
       this.sps = Buffer.from(this.fmtp["sprop-sps"], "base64");
@@ -676,7 +676,7 @@ class H265Depayloader extends TrackDepayloader {
       this.vps = Buffer.from(this.fmtp["sprop-vps"], "base64");
     }
     this._tryBuildConfig();
-  };
+  }
 
   /**
    * Get H.265 NAL unit type from 2-byte payload header.
@@ -693,24 +693,24 @@ class H265Depayloader extends TrackDepayloader {
    * @param {number} nalType
    * @returns {boolean}
    */
-  static isKeyframe = (nalType) => {
+  static isKeyframe(nalType) {
     return nalType >= H265_NAL_TYPE_IDR_W_RADL && nalType <= H265_NAL_TYPE_IDR_N_LP;
-  };
+  }
 
   /**
    * Check if H.265 NAL type is VCL (actual video data)
    * @param {number} nalType
    * @returns {boolean}
    */
-  static isVcl = (nalType) => {
+  static isVcl(nalType) {
     return nalType <= 31;
-  };
+  }
 
   /**
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     const payload = rtpPacket.payload;
@@ -741,9 +741,9 @@ class H265Depayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 
-  _handleSingleNal = (payload, rtpPacket) => {
+  _handleSingleNal(payload, rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     const nalType = H265Depayloader.getH265NalType(payload);
@@ -776,9 +776,9 @@ class H265Depayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 
-  _handleAp = (payload, rtpPacket) => {
+  _handleAp(payload, rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     let offset = 2; // Skip payload header
@@ -820,9 +820,9 @@ class H265Depayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 
-  _handleFu = (payload, rtpPacket) => {
+  _handleFu(payload, rtpPacket) {
     if (payload.length < 3) {
       return null;
     }
@@ -885,7 +885,7 @@ class H265Depayloader extends TrackDepayloader {
       this.fuBuffers.push(Buffer.from(fuPayload));
     }
     return null;
-  };
+  }
 
   /**
    * Build Enhanced FLV video tag body for H.265 NAL unit (CodedFrames)
@@ -938,7 +938,7 @@ class H265Depayloader extends TrackDepayloader {
    * @param {Buffer} nalu
    * @returns {Buffer}
    */
-  _stripStartCode = (nalu) => {
+  _stripStartCode(nalu) {
     if (nalu.length > 4 && nalu[0] === 0 && nalu[1] === 0 && nalu[2] === 0 && nalu[3] === 1) {
       return nalu.subarray(4);
     }
@@ -946,13 +946,13 @@ class H265Depayloader extends TrackDepayloader {
       return nalu.subarray(3);
     }
     return nalu;
-  };
+  }
 
   /**
    * Try to build HEVCDecoderConfigurationRecord from VPS+SPS+PPS.
    * Only rebuilds if any of them actually changed.
    */
-  _tryBuildConfig = () => {
+  _tryBuildConfig() {
     if (this.vps && this.sps && this.pps) {
       const newRecord = this._buildHevcConfigRecord(this.vps, this.sps, this.pps);
       if (!this.hevcConfigRecord || !this.hevcConfigRecord.equals(newRecord)) {
@@ -970,7 +970,7 @@ class H265Depayloader extends TrackDepayloader {
         }
       }
     }
-  };
+  }
 
   /**
    * Build HEVCDecoderConfigurationRecord (ISO 14496-15, 8.3.3.1.2)
@@ -979,7 +979,7 @@ class H265Depayloader extends TrackDepayloader {
    * @param {Buffer} pps - Raw PPS NAL unit
    * @returns {Buffer}
    */
-  _buildHevcConfigRecord = (vps, sps, pps) => {
+  _buildHevcConfigRecord(vps, sps, pps) {
     /** @type {Buffer[]} */
     const naluBuffers = [vps, sps, pps];
     const nalTypes = [H265_NAL_TYPE_VPS, H265_NAL_TYPE_SPS, H265_NAL_TYPE_PPS];
@@ -1018,7 +1018,7 @@ class H265Depayloader extends TrackDepayloader {
     }
 
     return buf.subarray(0, offset);
-  };
+  }
 
   /**
    * Parse general profile_tier_level from an SPS NAL unit (ISO 23008-2, 7.3.2.2).
@@ -1028,7 +1028,7 @@ class H265Depayloader extends TrackDepayloader {
    *          constraintFlags is the 6-byte general_constraint_indicator_flags (48 bits,
    *          returned as bytes because it exceeds JavaScript's 32-bit bitwise range).
    */
-  _parseSpsProfileTierLevel = (sps) => {
+  _parseSpsProfileTierLevel(sps) {
     // Remove emulation prevention bytes (0x000003) for RBSP access
     const rbsp = Buffer.alloc(sps.length);
     let rbspLen = 0;
@@ -1067,7 +1067,7 @@ class H265Depayloader extends TrackDepayloader {
     const levelIdc = readBitsAt(pos, 8);
 
     return { profileSpace, tierFlag, profileIdc, profileCompatFlags, constraintFlags, levelIdc };
-  };
+  }
 
   /**
    * Create AVPacket for the Enhanced FLV HEVC sequence start tag.
@@ -1076,7 +1076,7 @@ class H265Depayloader extends TrackDepayloader {
    * @param {number} timestamp
    * @returns {AVPacket}
    */
-  _createVideoHeaderPacket = (configRecord, timestamp) => {
+  _createVideoHeaderPacket(configRecord, timestamp) {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = 0x31637668; // fourcc "hvc1" as uint32
@@ -1092,9 +1092,9 @@ class H265Depayloader extends TrackDepayloader {
     pkt.size = pkt.data.length;
 
     return pkt;
-  };
+  }
 
-  _createVideoNalPacket = (flvBody, isKeyframe, timestamp) => {
+  _createVideoNalPacket(flvBody, isKeyframe, timestamp) {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = 0x31637668; // fourcc "hvc1" as uint32
@@ -1104,7 +1104,7 @@ class H265Depayloader extends TrackDepayloader {
     pkt.data = flvBody;
     pkt.size = flvBody.length;
     return pkt;
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1136,7 +1136,7 @@ class AacDepayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     /** @type {AVPacket[]} */
     const packets = [];
     const payload = rtpPacket.payload;
@@ -1197,7 +1197,7 @@ class AacDepayloader extends TrackDepayloader {
     }
 
     return packets;
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1219,7 +1219,7 @@ class PcmaDepayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     const payload = rtpPacket.payload;
     if (payload.length === 0) {
       return [];
@@ -1242,7 +1242,7 @@ class PcmaDepayloader extends TrackDepayloader {
     pkt.size = flvBody.length;
 
     return [pkt];
-  };
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1254,7 +1254,7 @@ class PassthroughDepayloader extends TrackDepayloader {
    * @param {import("./rtp.js").RtpPacket} rtpPacket
    * @returns {AVPacket[]}
    */
-  feed = (rtpPacket) => {
+  feed(rtpPacket) {
     const pkt = new AVPacket();
     pkt.codec_type = 0;
     pkt.flags = 0;
@@ -1263,7 +1263,7 @@ class PassthroughDepayloader extends TrackDepayloader {
     pkt.data = Buffer.from(rtpPacket.payload);
     pkt.size = rtpPacket.payload.length;
     return [pkt];
-  };
+  }
 }
 
 // ─────────────────────────────────────────

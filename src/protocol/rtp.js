@@ -24,7 +24,7 @@ class RtpParser {
    * @param {Buffer} buffer - Raw RTP packet data (from TCP interleaved or UDP)
    * @returns {RtpPacket|null} Parsed RTP packet, or null on invalid data
    */
-  static parse = (buffer) => {
+  static parse(buffer) {
     if (!buffer || buffer.length < RTP_MIN_HEADER_SIZE) {
       logger.trace(`RTP: packet too short (${buffer ? buffer.length : 0} bytes)`);
       return null;
@@ -121,7 +121,7 @@ class RtpParser {
 
     logger.trace(`RTP: pt=${payloadType} seq=${sequenceNumber} ts=${timestamp} marker=${marker} size=${payload.length}`);
     return packet;
-  };
+  }
 
   // ─────────────────────────────────────────
   // RTP Sequence Analysis Utilities
@@ -134,7 +134,7 @@ class RtpParser {
    * @param {number} b - Second sequence number (0-65535)
    * @returns {number} Signed difference (b - a with wraparound)
    */
-  static seqDiff = (a, b) => {
+  static seqDiff(a, b) {
     const diff = b - a;
     if (diff > 32768) {
       return diff - 65536;
@@ -143,7 +143,7 @@ class RtpParser {
       return diff + 65536;
     }
     return diff;
-  };
+  }
 
   /**
    * Check if sequence number b is newer than a (with wraparound).
@@ -151,9 +151,9 @@ class RtpParser {
    * @param {number} b - Current sequence number
    * @returns {boolean}
    */
-  static isNewer = (a, b) => {
+  static isNewer(a, b) {
     return RtpParser.seqDiff(a, b) > 0;
-  };
+  }
 
   /**
    * Increment a 16-bit sequence number with wraparound.
@@ -161,9 +161,9 @@ class RtpParser {
    * @param {number} [increment] - Amount to add
    * @returns {number} Result sequence number (0-65535)
    */
-  static seqInc = (seq, increment = 1) => {
+  static seqInc(seq, increment = 1) {
     return (seq + increment) & 0xFFFF;
-  };
+  }
 
   /**
    * Calculate extended timestamp difference accounting for 32-bit wraparound.
@@ -171,7 +171,7 @@ class RtpParser {
    * @param {number} b - Second timestamp
    * @returns {number} Signed difference (b - a with wraparound)
    */
-  static timestampDiff = (a, b) => {
+  static timestampDiff(a, b) {
     const diff = b - a;
     if (diff > 2147483648) {
       return diff - 4294967296;
@@ -180,7 +180,7 @@ class RtpParser {
       return diff + 4294967296;
     }
     return diff;
-  };
+  }
 }
 
 module.exports = RtpParser;

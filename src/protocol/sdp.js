@@ -18,7 +18,7 @@ class SdpParser {
    * @param {string|Buffer} sdp - Raw SDP content (from DESCRIBE response body)
    * @returns {SdpSession|null} Parsed SDP session object, or null on failure
    */
-  static parse = (sdp) => {
+  static parse(sdp) {
     const text = Buffer.isBuffer(sdp) ? sdp.toString("utf8") : sdp;
     if (!text || text.trim().length === 0) {
       logger.warn("SDP: empty input");
@@ -79,7 +79,7 @@ class SdpParser {
 
     logger.debug(`SDP parsed: ${session.media.length} media track(s)`);
     return session;
-  };
+  }
 
   // ─────────────────────────────────────────
   // Session-Level Parsing
@@ -91,7 +91,7 @@ class SdpParser {
    * @param {string} value - Line value after "x="
    * @param {SdpSession} session - Session object to populate
    */
-  static parseSessionLevelLine = (type, value, session) => {
+  static parseSessionLevelLine(type, value, session) {
     switch (type) {
     case "v":
       session.version = parseInt(value) || 0;
@@ -129,7 +129,7 @@ class SdpParser {
     default:
       break;
     }
-  };
+  }
 
   // ─────────────────────────────────────────
   // Media-Level Parsing
@@ -140,7 +140,7 @@ class SdpParser {
    * @param {string} value - The value part of m= line
    * @returns {SdpMedia|null}
    */
-  static parseMediaLine = (value) => {
+  static parseMediaLine(value) {
     const parts = value.split(/\s+/);
     if (parts.length < 4) {
       logger.warn(`SDP: invalid m= line: ${value}`);
@@ -174,7 +174,7 @@ class SdpParser {
       direction: "sendrecv"
     };
     return media;
-  };
+  }
 
   /**
    * Parse a media-level SDP line
@@ -182,7 +182,7 @@ class SdpParser {
    * @param {string} value - Line value after "x="
    * @param {SdpMedia} media - Media object to populate
    */
-  static parseMediaLevelLine = (type, value, media) => {
+  static parseMediaLevelLine(type, value, media) {
     switch (type) {
     case "c":
       media.connection = SdpParser.parseConnection(value);
@@ -196,7 +196,7 @@ class SdpParser {
     default:
       break;
     }
-  };
+  }
 
   // ─────────────────────────────────────────
   // Attribute Parsing
@@ -207,7 +207,7 @@ class SdpParser {
    * @param {string} value - The value part of a= line
    * @param {{[key: string]: string}} attributes - Attributes map to populate
    */
-  static parseAttribute = (value, attributes) => {
+  static parseAttribute(value, attributes) {
     const colonIdx = value.indexOf(":");
     if (colonIdx > 0) {
       const key = value.substring(0, colonIdx);
@@ -217,14 +217,14 @@ class SdpParser {
       // Flag attribute (e.g. recvonly, sendonly)
       attributes[value] = "";
     }
-  };
+  }
 
   /**
    * Parse media-specific a= line
    * @param {string} value - The value part of a= line
    * @param {SdpMedia} media - Media object to populate
    */
-  static parseMediaAttribute = (value, media) => {
+  static parseMediaAttribute(value, media) {
     const colonIdx = value.indexOf(":");
 
     if (colonIdx < 0) {
@@ -267,19 +267,19 @@ class SdpParser {
       media.attributes[key] = val;
       break;
     }
-  };
+  }
 
   /**
    * Extract trackID from control URL and set on media object.
    * @param {string} controlUrl - Control URL or path
    * @param {SdpMedia} media - Media object to update
    */
-  static extractTrackId = (controlUrl, media) => {
+  static extractTrackId(controlUrl, media) {
     const trackMatch = controlUrl.match(/trackID=(\d+)/i);
     if (trackMatch) {
       media.trackId = `trackID=${trackMatch[1]}`;
     }
-  };
+  }
 
   /**
    * Parse a=rtpmap value: `<pt> <codec>/<clockRate>[/<encodingParams>]`
@@ -287,7 +287,7 @@ class SdpParser {
    * @param {string} value - rtpmap attribute value
    * @param {SdpMedia} media - Media object to populate
    */
-  static parseRtpmap = (value, media) => {
+  static parseRtpmap(value, media) {
     const spaceIdx = value.indexOf(" ");
     if (spaceIdx < 0) {
       logger.warn(`SDP: invalid rtpmap: ${value}`);
@@ -311,7 +311,7 @@ class SdpParser {
 
     // Also store as attribute for reference
     media.attributes[`rtpmap:${pt}`] = codecStr;
-  };
+  }
 
   /**
    * Parse a=fmtp value: `<pt> <key>=<value>;<key>=<value>;...`
@@ -319,7 +319,7 @@ class SdpParser {
    * @param {string} value - fmtp attribute value
    * @param {SdpMedia} media - Media object to populate
    */
-  static parseFmtp = (value, media) => {
+  static parseFmtp(value, media) {
     const spaceIdx = value.indexOf(" ");
     if (spaceIdx < 0) {
       logger.warn(`SDP: invalid fmtp: ${value}`);
@@ -335,14 +335,14 @@ class SdpParser {
 
     // Store raw as attribute
     media.attributes[`fmtp:${pt}`] = paramsStr;
-  };
+  }
 
   /**
    * Parse fmtp parameters string into key-value map
    * @param {string} paramsStr - Semicolon-separated key=value pairs
    * @returns {{[key: string]: string}}
    */
-  static parseFmtpParams = (paramsStr) => {
+  static parseFmtpParams(paramsStr) {
     /** @type {{[key: string]: string}} */
     const params = {};
     const pairs = paramsStr.split(";");
@@ -363,7 +363,7 @@ class SdpParser {
       }
     }
     return params;
-  };
+  }
 
   // ─────────────────────────────────────────
   // Connection & Bandwidth Parsing
@@ -374,7 +374,7 @@ class SdpParser {
    * @param {string} value - Connection line value
    * @returns {SdpConnection}
    */
-  static parseConnection = (value) => {
+  static parseConnection(value) {
     const parts = value.split(/\s+/);
     /** @type {SdpConnection} */
     const conn = { address: "", ttl: 0, addressType: "IP4" };
@@ -386,14 +386,14 @@ class SdpParser {
       conn.ttl = parseInt(addrParts[1]) || 0;
     }
     return conn;
-  };
+  }
 
   /**
    * Parse b= line: `b=<type>:<value>`
    * @param {string} value - Bandwidth line value
    * @returns {SdpBandwidth}
    */
-  static parseBandwidth = (value) => {
+  static parseBandwidth(value) {
     const colonIdx = value.indexOf(":");
     if (colonIdx > 0) {
       return {
@@ -402,20 +402,20 @@ class SdpParser {
       };
     }
     return { type: value, value: 0 };
-  };
+  }
 
   /**
    * Parse t= line: `t=<start> <stop>`
    * @param {string} value - Timing line value
    * @returns {SdpTiming}
    */
-  static parseTiming = (value) => {
+  static parseTiming(value) {
     const parts = value.split(/\s+/);
     return {
       start: parseInt(parts[0]) || 0,
       stop: parseInt(parts[1]) || 0
     };
-  };
+  }
 
   // ─────────────────────────────────────────
   // Post-Processing
@@ -426,7 +426,7 @@ class SdpParser {
    * Sets default channels for audio, normalizes codec names.
    * @param {SdpMedia} media - Media object to resolve
    */
-  static resolveMediaCodec = (media) => {
+  static resolveMediaCodec(media) {
     // Default audio channels to 1 if not specified
     if (media.type === "audio" && media.channels === 0) {
       // PCMA/PCMU typically mono at 8000Hz
@@ -441,14 +441,14 @@ class SdpParser {
     if (media.codec) {
       media.codec = SdpParser.normalizeCodecName(media.codec);
     }
-  };
+  }
 
   /**
    * Normalize codec name from SDP to a standard identifier
    * @param {string} codec - Raw codec name from rtpmap
    * @returns {string} Normalized codec name
    */
-  static normalizeCodecName = (codec) => {
+  static normalizeCodecName(codec) {
     const upper = codec.toUpperCase();
     switch (upper) {
     case "H264":
@@ -481,7 +481,7 @@ class SdpParser {
     default:
       return upper;
     }
-  };
+  }
 
   // ─────────────────────────────────────────
   // Utility Methods
@@ -492,18 +492,18 @@ class SdpParser {
    * @param {SdpSession} session - Parsed SDP session
    * @returns {SdpMedia[]}
    */
-  static getVideoTracks = (session) => {
+  static getVideoTracks(session) {
     return session ? session.media.filter((m) => m.type === "video") : [];
-  };
+  }
 
   /**
    * Get audio media tracks from parsed SDP
    * @param {SdpSession} session - Parsed SDP session
    * @returns {SdpMedia[]}
    */
-  static getAudioTracks = (session) => {
+  static getAudioTracks(session) {
     return session ? session.media.filter((m) => m.type === "audio") : [];
-  };
+  }
 
   /**
    * Check if SDP contains H.264 video
@@ -550,12 +550,12 @@ class SdpParser {
    * @param {SdpMedia} videoTrack - Video media track with H264 codec
    * @returns {string} profile-level-id hex string (e.g. "420029")
    */
-  static extractProfileLevelId = (videoTrack) => {
+  static extractProfileLevelId(videoTrack) {
     if (!videoTrack || videoTrack.codec !== "H264") {
       return "";
     }
     return videoTrack.fmtp["profile-level-id"] || "";
-  };
+  }
 }
 
 module.exports = SdpParser;

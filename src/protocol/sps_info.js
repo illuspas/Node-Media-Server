@@ -24,7 +24,7 @@ class BitReader {
    * @param {number} n - Bit count (max 32)
    * @returns {number}
    */
-  readBits = (n) => {
+  readBits(n) {
     let value = 0;
     for (let i = 0; i < n; i++) {
       const byteIdx = this.bitPos >> 3;
@@ -37,36 +37,36 @@ class BitReader {
       this.bitPos++;
     }
     return value;
-  };
+  }
 
   /**
    * Read one flag bit.
    * @returns {number} 0 or 1
    */
-  readFlag = () => {
+  readFlag() {
     return this.readBits(1);
-  };
+  }
 
   /**
    * Read unsigned exp-golomb code.
    * @returns {number}
    */
-  readUE = () => {
+  readUE() {
     let leadingZeroBits = 0;
     while (this.readFlag() === 0 && leadingZeroBits < 32) {
       leadingZeroBits++;
     }
     return (1 << leadingZeroBits) - 1 + this.readBits(leadingZeroBits);
-  };
+  }
 
   /**
    * Read signed exp-golomb code.
    * @returns {number}
    */
-  readSE = () => {
+  readSE() {
     const codeNum = this.readUE();
     return codeNum % 2 === 0 ? -(codeNum / 2) : (codeNum + 1) / 2;
-  };
+  }
 }
 
 /**

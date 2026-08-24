@@ -300,7 +300,7 @@ class Rtmp {
    * @param {Buffer} buffer
    * @returns {string | null}
    */
-  parserData = (buffer) => {
+  parserData(buffer) {
     let bytes = buffer.length;
     let p = 0;
     let n = 0;
@@ -347,13 +347,13 @@ class Rtmp {
       }
     }
     return null;
-  };
+  }
 
   /**
    * @param {AVPacket} avpacket
    * @returns {Buffer}
    */
-  static createMessage = (avpacket) => {
+  static createMessage(avpacket) {
     let rtmpPacket = new RtmpPacket();
     rtmpPacket.header.fmt = MESSAGE_FORMAT_0;
     switch (avpacket.codec_type) {
@@ -373,9 +373,9 @@ class Rtmp {
     rtmpPacket.clock = avpacket.dts;
     rtmpPacket.payload = avpacket.data;
     return Rtmp.chunksCreate(rtmpPacket);
-  };
+  }
 
-  static chunkBasicHeaderCreate = (fmt, cid) => {
+  static chunkBasicHeaderCreate(fmt, cid) {
     let out;
     if (cid >= 64 + 255) {
       out = Buffer.alloc(3);
@@ -391,9 +391,9 @@ class Rtmp {
       out[0] = (fmt << 6) | cid;
     }
     return out;
-  };
+  }
 
-  static chunkMessageHeaderCreate = (header) => {
+  static chunkMessageHeaderCreate(header) {
     let out = Buffer.alloc(rtmpHeaderSize[header.fmt % 4]);
     if (header.fmt <= RTMP_CHUNK_TYPE_2) {
       out.writeUIntBE(header.timestamp >= 0xffffff ? 0xffffff : header.timestamp, 0, 3);
@@ -408,14 +408,14 @@ class Rtmp {
       out.writeUInt32LE(header.stream_id, 7);
     }
     return out;
-  };
+  }
 
   /**
    * 
    * @param {RtmpPacket} packet 
    * @returns {Buffer}
    */
-  static chunksCreate = (packet) => {
+  static chunksCreate(packet) {
     let header = packet.header;
     let payload = packet.payload;
     let payloadSize = header.length;
@@ -469,7 +469,7 @@ class Rtmp {
       }
     }
     return chunks;
-  };
+  }
 
   /**
    * 
@@ -478,7 +478,7 @@ class Rtmp {
    * @param {number} bytes 
    * @returns {string | null}
    */
-  chunkRead = (data, p, bytes) => {
+  chunkRead(data, p, bytes) {
     let size = 0;
     let offset = 0;
     let extended_timestamp = 0;
@@ -564,10 +564,10 @@ class Rtmp {
       }
     }
     return null;
-  };
+  }
 
 
-  packetParse = () => {
+  packetParse() {
     let fmt = this.parserBuffer[0] >> 6;
     let cid = 0;
     if (this.parserBasicBytes === 2) {
@@ -582,9 +582,9 @@ class Rtmp {
     this.parserPacket.header.fmt = fmt;
     this.parserPacket.header.cid = cid;
     this.chunkMessageHeaderRead();
-  };
+  }
 
-  chunkMessageHeaderRead = () => {
+  chunkMessageHeaderRead() {
     let offset = this.parserBasicBytes;
 
     // timestamp / delta
@@ -605,16 +605,16 @@ class Rtmp {
       offset += 4;
     }
     return offset;
-  };
+  }
 
-  packetAlloc = () => {
+  packetAlloc() {
     if (this.parserPacket.capacity < this.parserPacket.header.length) {
       this.parserPacket.payload = Buffer.alloc(this.parserPacket.header.length + 1024);
       this.parserPacket.capacity = this.parserPacket.header.length + 1024;
     }
-  };
+  }
 
-  packetHandler = () => {
+  packetHandler() {
     switch (this.parserPacket.header.type) {
     case RTMP_TYPE_SET_CHUNK_SIZE:
     case RTMP_TYPE_ABORT:
@@ -633,9 +633,9 @@ class Rtmp {
     case RTMP_TYPE_DATA: // AMF0
       return this.dataHandler();
     }
-  };
+  }
 
-  controlHandler = () => {
+  controlHandler() {
     let payload = this.parserPacket.payload;
     switch (this.parserPacket.header.type) {
     case RTMP_TYPE_SET_CHUNK_SIZE:
@@ -653,11 +653,11 @@ class Rtmp {
     case RTMP_TYPE_SET_PEER_BANDWIDTH:
       break;
     }
-  };
+  }
 
-  eventHandler = () => {
+  eventHandler() {
 
-  };
+  }
 
   invokeHandler() {
     let offset = this.parserPacket.header.type === RTMP_TYPE_FLEX_MESSAGE ? 1 : 0;
@@ -686,12 +686,12 @@ class Rtmp {
     }
   }
 
-  dataHandler = () => {
+  dataHandler() {
     let parcket = Flv.parserTag(this.parserPacket.header.type, this.parserPacket.clock, this.parserPacket.header.length, this.parserPacket.payload);
     this.onPacketCallback(parcket);
-  };
+  }
 
-  onConnect = (invokeMessage) => {
+  onConnect(invokeMessage) {
     const url = new URL(invokeMessage.cmdObj.tcUrl);
     this.connectCmdObj = invokeMessage.cmdObj;
     this.streamApp = invokeMessage.cmdObj.app;
@@ -703,13 +703,13 @@ class Rtmp {
     this.setPeerBandwidth(5000000, 2);
     this.setChunkSize(this.outChunkSize);
     this.respondConnect(invokeMessage.transId);
-  };
+  }
 
-  onCreateStream = (invokeMessage) => {
+  onCreateStream(invokeMessage) {
     this.respondCreateStream(invokeMessage.transId);
-  };
+  }
 
-  onPublish = (invokeMessage) => {
+  onPublish(invokeMessage) {
     this.streamName = invokeMessage.streamName.split("?")[0];
     this.streamQuery = querystring.parse(invokeMessage.streamName.split("?")[1]);
     this.streamId = this.parserPacket.header.stream_id;
@@ -721,9 +721,9 @@ class Rtmp {
       query:this.streamQuery
     });
     this.onPushCallback();
-  };
+  }
 
-  onPlay = (invokeMessage) => {
+  onPlay(invokeMessage) {
     this.streamName = invokeMessage.streamName.split("?")[0];
     this.streamQuery = querystring.parse(invokeMessage.streamName.split("?")[1]);
     this.streamId = this.parserPacket.header.stream_id;
@@ -735,45 +735,45 @@ class Rtmp {
       query:this.streamQuery
     });
     this.onPlayCallback();
-  };
+  }
 
-  onDeleteStream = (invokeMessage) => {
+  onDeleteStream(invokeMessage) {
 
-  };
+  }
 
-  sendACK = (size) => {
+  sendACK(size) {
     let rtmpBuffer = Buffer.from("02000000000004030000000000000000", "hex");
     rtmpBuffer.writeUInt32BE(size, 12);
     this.onOutputCallback(rtmpBuffer);
-  };
+  }
 
-  sendWindowACK = (size) => {
+  sendWindowACK(size) {
     let rtmpBuffer = Buffer.from("02000000000004050000000000000000", "hex");
     rtmpBuffer.writeUInt32BE(size, 12);
     this.onOutputCallback(rtmpBuffer);
-  };
+  }
 
-  setPeerBandwidth = (size, type) => {
+  setPeerBandwidth(size, type) {
     let rtmpBuffer = Buffer.from("0200000000000506000000000000000000", "hex");
     rtmpBuffer.writeUInt32BE(size, 12);
     rtmpBuffer[16] = type;
     this.onOutputCallback(rtmpBuffer);
-  };
+  }
 
-  setChunkSize = (size) => {
+  setChunkSize(size) {
     let rtmpBuffer = Buffer.from("02000000000004010000000000000000", "hex");
     rtmpBuffer.writeUInt32BE(size, 12);
     this.onOutputCallback(rtmpBuffer);
-  };
+  }
 
-  sendStreamStatus = (st, id) => {
+  sendStreamStatus(st, id) {
     let rtmpBuffer = Buffer.from("020000000000060400000000000000000000", "hex");
     rtmpBuffer.writeUInt16BE(st, 12);
     rtmpBuffer.writeUInt32BE(id, 14);
     this.onOutputCallback(rtmpBuffer);
-  };
+  }
 
-  sendInvokeMessage = (sid, opt) => {
+  sendInvokeMessage(sid, opt) {
     let packet = new RtmpPacket();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_INVOKE;
@@ -783,7 +783,7 @@ class Rtmp {
     packet.header.length = packet.payload.length;
     let chunks = Rtmp.chunksCreate(packet);
     this.onOutputCallback(chunks);
-  };
+  }
 
   sendDataMessage(opt, sid) {
     let packet = new RtmpPacket();

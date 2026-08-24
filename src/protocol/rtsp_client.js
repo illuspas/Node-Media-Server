@@ -168,7 +168,7 @@ class RtspClient {
    * @param {string} rtspUrl - Full RTSP URL (rtsp:// or rtsp://user:pass@host:port/path)
    * @returns {Promise<void>}
    */
-  connect = (rtspUrl) => {
+  connect(rtspUrl) {
     return new Promise((resolve, reject) => {
       try {
         const url = new URL(rtspUrl);
@@ -233,12 +233,12 @@ class RtspClient {
         reject(err);
       }
     });
-  };
+  }
 
   /**
    * Disconnect from RTSP server and clean up
    */
-  disconnect = () => {
+  disconnect() {
     this.stopHeartbeat();
     this.rejectAllPending(new Error("Disconnecting"));
     if (this.socket) {
@@ -248,7 +248,7 @@ class RtspClient {
     this.connected = false;
     this.recvBuffer = Buffer.alloc(0);
     this.parseState = RTSP_PARSE_IDLE;
-  };
+  }
 
   // ─────────────────────────────────────────
   // RTSP Methods
@@ -259,16 +259,16 @@ class RtspClient {
    * @param {string} [uri] - RTSP URI (defaults to baseUri)
    * @returns {Promise<RtspResponse>}
    */
-  options = (uri) => {
+  options(uri) {
     return this.sendRequest(RTSP_METHOD_OPTIONS, uri || this.baseUri);
-  };
+  }
 
   /**
    * Send DESCRIBE request to get SDP
    * @param {string} [uri] - RTSP URI (defaults to baseUri)
    * @returns {Promise<RtspResponse>}
    */
-  describe = (uri) => {
+  describe(uri) {
     const targetUri = uri || this.baseUri;
     return this.sendRequest(
       RTSP_METHOD_DESCRIBE,
@@ -277,7 +277,7 @@ class RtspClient {
       null,
       true // retry on 401
     );
-  };
+  }
 
   /**
    * Send SETUP request to configure transport
@@ -285,10 +285,10 @@ class RtspClient {
    * @param {string} transport - Transport header value (e.g. "RTP/AVP/TCP;unicast;interleaved=0-1")
    * @returns {Promise<RtspResponse>}
    */
-  setup = (trackUri, transport) => {
+  setup(trackUri, transport) {
     const headers = { "Transport": transport };
     return this.sendRequest(RTSP_METHOD_SETUP, trackUri, headers, null, true);
-  };
+  }
 
   /**
    * Send PLAY request
@@ -296,40 +296,40 @@ class RtspClient {
    * @param {string} [range] - Range header (e.g. "npt=0.000-")
    * @returns {Promise<RtspResponse>}
    */
-  play = (uri, range) => {
+  play(uri, range) {
     const headers = {};
     if (range) {
       headers["Range"] = range;
     }
     return this.sendRequest(RTSP_METHOD_PLAY, uri || this.baseUri, headers);
-  };
+  }
 
   /**
    * Send PAUSE request
    * @param {string} [uri] - RTSP URI (defaults to baseUri)
    * @returns {Promise<RtspResponse>}
    */
-  pause = (uri) => {
+  pause(uri) {
     return this.sendRequest(RTSP_METHOD_PAUSE, uri || this.baseUri);
-  };
+  }
 
   /**
    * Send TEARDOWN request
    * @param {string} [uri] - RTSP URI (defaults to baseUri)
    * @returns {Promise<RtspResponse>}
    */
-  teardown = (uri) => {
+  teardown(uri) {
     return this.sendRequest(RTSP_METHOD_TEARDOWN, uri || this.baseUri);
-  };
+  }
 
   /**
    * Send GET_PARAMETER request (keep-alive / probe)
    * @param {string} [uri] - RTSP URI (defaults to baseUri)
    * @returns {Promise<RtspResponse>}
    */
-  getParameter = (uri) => {
+  getParameter(uri) {
     return this.sendRequest(RTSP_METHOD_GET_PARAMETER, uri || this.baseUri);
-  };
+  }
 
   // ─────────────────────────────────────────
   // Request Building
@@ -345,7 +345,7 @@ class RtspClient {
    * @param {boolean} [retryOn401] - Whether to retry with auth on 401
    * @returns {Promise<RtspResponse>}
    */
-  sendRequest = (method, uri, extraHeaders, body, retryOn401 = false) => {
+  sendRequest(method, uri, extraHeaders, body, retryOn401 = false) {
     return new Promise((resolve, reject) => {
       if (!this.connected || !this.socket) {
         reject(new Error("Not connected"));
@@ -406,7 +406,7 @@ class RtspClient {
       this.socket.write(requestBuf);
       this.lastActivityTime = Date.now();
     });
-  };
+  }
 
   /**
    * Build a raw RTSP request string
@@ -415,7 +415,7 @@ class RtspClient {
    * @param {{[key: string]: string}} headers - Headers map
    * @returns {string} Complete RTSP request string with \r\n terminators
    */
-  buildRequestString = (method, uri, headers) => {
+  buildRequestString(method, uri, headers) {
     let lines = [];
     lines.push(`${method} ${uri} RTSP/1.0`);
     for (const [key, value] of Object.entries(headers)) {
@@ -424,7 +424,7 @@ class RtspClient {
     lines.push("");
     lines.push("");
     return lines.join("\r\n");
-  };
+  }
 
   // ─────────────────────────────────────────
   // Response Parsing
@@ -467,7 +467,7 @@ class RtspClient {
    * Parse idle state — determine if next data is RTSP response or interleaved RTP
    * @returns {boolean} Whether to continue parsing
    */
-  parseIdle = () => {
+  parseIdle() {
     if (this.recvBuffer.length === 0) {
       return false;
     }
@@ -496,13 +496,13 @@ class RtspClient {
     this.responseStatusCode = 0;
     this.responseReasonPhrase = "";
     return true;
-  };
+  }
 
   /**
    * Parse RTSP response headers
    * @returns {boolean} Whether to continue parsing
    */
-  parseResponseHeaders = () => {
+  parseResponseHeaders() {
     // Find the header/body boundary (\r\n\r\n)
     const headerEnd = this.findHeaderEnd(this.recvBuffer);
     if (headerEnd === -1) {
@@ -559,13 +559,13 @@ class RtspClient {
       this.parseState = RTSP_PARSE_IDLE;
       return true;
     }
-  };
+  }
 
   /**
    * Parse RTSP response body based on Content-Length
    * @returns {boolean} Whether to continue parsing
    */
-  parseResponseBody = () => {
+  parseResponseBody() {
     const needed = this.responseContentLength - this.responseBody.length;
     if (needed <= 0) {
       this.dispatchResponse();
@@ -587,13 +587,13 @@ class RtspClient {
     }
 
     return false; // Need more data
-  };
+  }
 
   /**
    * Parse TCP interleaved RTP data
    * @returns {boolean} Whether to continue parsing
    */
-  parseInterleaved = () => {
+  parseInterleaved() {
     const needed = this.interleavedLength - this.interleavedData.length;
     if (needed <= 0) {
       this.onRtpDataCallback(this.interleavedChannel, this.interleavedData);
@@ -615,26 +615,26 @@ class RtspClient {
     }
 
     return false; // Need more data
-  };
+  }
 
   /**
    * Find the end of RTSP headers (\r\n\r\n sequence) in buffer
    * @param {Buffer} buf - Buffer to search
    * @returns {number} Index of the start of \r\n\r\n, or -1 if not found
    */
-  findHeaderEnd = (buf) => {
+  findHeaderEnd(buf) {
     for (let i = 0; i < buf.length - 3; i++) {
       if (buf[i] === 0x0d && buf[i + 1] === 0x0a && buf[i + 2] === 0x0d && buf[i + 3] === 0x0a) {
         return i;
       }
     }
     return -1;
-  };
+  }
 
   /**
    * Dispatch a fully parsed RTSP response to the matching pending request
    */
-  dispatchResponse = () => {
+  dispatchResponse() {
     const cSeqStr = this.responseHeaders["CSeq"];
     if (!cSeqStr) {
       logger.warn("RTSP response missing CSeq header");
@@ -674,7 +674,7 @@ class RtspClient {
     }
 
     pending.resolve(response);
-  };
+  }
 
   // ─────────────────────────────────────────
   // Authentication
@@ -685,7 +685,7 @@ class RtspClient {
    * @param {string} wwwAuth - WWW-Authenticate header value
    * @param {RtspPendingRequest} pending - The original pending request to retry
    */
-  handleAuthChallenge = (wwwAuth, pending) => {
+  handleAuthChallenge(wwwAuth, pending) {
     this.authParams = this.parseWwwAuthenticate(wwwAuth);
 
     if (!this.authParams) {
@@ -740,14 +740,14 @@ class RtspClient {
     };
 
     retryRequest();
-  };
+  }
 
   /**
    * Parse WWW-Authenticate header into auth params
    * @param {string} header - WWW-Authenticate header value
    * @returns {RtspAuthParams|null}
    */
-  parseWwwAuthenticate = (header) => {
+  parseWwwAuthenticate(header) {
     const lower = header.trim().toLowerCase();
 
     if (lower.startsWith("basic")) {
@@ -799,7 +799,7 @@ class RtspClient {
 
     logger.warn(`RTSP unsupported auth scheme: ${header}`);
     return null;
-  };
+  }
 
   /**
    * Build Authorization header value based on current auth params
@@ -807,7 +807,7 @@ class RtspClient {
    * @param {string} uri - Request URI
    * @returns {string|null} Authorization header value, or null if no auth
    */
-  buildAuthorizationHeader = (method, uri) => {
+  buildAuthorizationHeader(method, uri) {
     if (!this.authParams || !this.username) {
       return null;
     }
@@ -821,16 +821,16 @@ class RtspClient {
     }
 
     return null;
-  };
+  }
 
   /**
    * Build Basic auth header value
    * @returns {string}
    */
-  buildBasicAuth = () => {
+  buildBasicAuth() {
     const credentials = Buffer.from(`${this.username}:${this.password}`).toString("base64");
     return `Basic ${credentials}`;
-  };
+  }
 
   /**
    * Build Digest auth header value (RFC 2617)
@@ -838,7 +838,7 @@ class RtspClient {
    * @param {string} uri - Request URI
    * @returns {string}
    */
-  buildDigestAuth = (method, uri) => {
+  buildDigestAuth(method, uri) {
     const params = this.authParams;
     const algorithm = (params.algorithm || "MD5").toUpperCase();
     const hashAlg = algorithm === "MD5-SESS" ? "md5" : "md5";
@@ -887,7 +887,7 @@ class RtspClient {
       }
       return header;
     }
-  };
+  }
 
   // ─────────────────────────────────────────
   // Transport Header Helpers
@@ -899,16 +899,16 @@ class RtspClient {
    * @param {number} rtcpChannel - RTCP channel number
    * @returns {string} Transport header value
    */
-  static buildTCPInterleavedTransport = (rtpChannel, rtcpChannel) => {
+  static buildTCPInterleavedTransport(rtpChannel, rtcpChannel) {
     return `RTP/AVP/TCP;unicast;interleaved=${rtpChannel}-${rtcpChannel}`;
-  };
+  }
 
   /**
    * Parse Transport response header to extract server-assigned values
    * @param {string} transportHeader - Transport header from SETUP response
    * @returns {{[key: string]: string}} Parsed transport parameters
    */
-  static parseTransportHeader = (transportHeader) => {
+  static parseTransportHeader(transportHeader) {
     /** @type {{[key: string]: string}} */
     const params = {};
     if (!transportHeader) {
@@ -927,18 +927,18 @@ class RtspClient {
       }
     }
     return params;
-  };
+  }
 
   /**
    * Allocate next available interleaved channel pair
    * @returns {{rtpChannel: number, rtcpChannel: number}}
    */
-  allocateChannel = () => {
+  allocateChannel() {
     const rtpChannel = this.nextChannel;
     const rtcpChannel = this.nextChannel + 1;
     this.nextChannel += 2;
     return { rtpChannel, rtcpChannel };
-  };
+  }
 
   // ─────────────────────────────────────────
   // Heartbeat / Keep-Alive
@@ -947,7 +947,7 @@ class RtspClient {
   /**
    * Start periodic GET_PARAMETER heartbeat to keep session alive
    */
-  startHeartbeat = () => {
+  startHeartbeat() {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
       if (this.connected) {
@@ -957,17 +957,17 @@ class RtspClient {
       }
     }, this.heartbeatInterval);
     logger.debug(`RTSP heartbeat started (interval=${this.heartbeatInterval}ms)`);
-  };
+  }
 
   /**
    * Stop heartbeat timer
    */
-  stopHeartbeat = () => {
+  stopHeartbeat() {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
-  };
+  }
 
   // ─────────────────────────────────────────
   // Timeout Detection
@@ -977,9 +977,9 @@ class RtspClient {
    * Check if RTP timeout has occurred
    * @returns {boolean} True if timeout exceeded
    */
-  isTimedOut = () => {
+  isTimedOut() {
     return (Date.now() - this.lastActivityTime) > this.timeoutMs;
-  };
+  }
 
   // ─────────────────────────────────────────
   // Utility
@@ -989,12 +989,12 @@ class RtspClient {
    * Reject all pending requests (used on disconnect)
    * @param {Error} error - Error to reject with
    */
-  rejectAllPending = (error) => {
+  rejectAllPending(error) {
     for (const [cSeq, pending] of this.pendingRequests) {
       pending.reject(error);
     }
     this.pendingRequests.clear();
-  };
+  }
 
   /**
    * Build full track URL from SDP control attribute
@@ -1002,7 +1002,7 @@ class RtspClient {
    * @param {string} control - Control attribute from SDP (trackID=1 or full URL)
    * @returns {string} Full track URL
    */
-  static buildTrackUrl = (baseUrl, control) => {
+  static buildTrackUrl(baseUrl, control) {
     if (!control || control === "*") {
       return baseUrl;
     }
@@ -1013,14 +1013,14 @@ class RtspClient {
     // Otherwise append to base URL
     const separator = baseUrl.endsWith("/") ? "" : "/";
     return baseUrl + separator + control;
-  };
+  }
 
   /**
    * Parse RTSP URL into components
    * @param {string} rtspUrl - Full RTSP URL
    * @returns {{protocol: string, host: string, port: number, path: string, username: string, password: string}}
    */
-  static parseUrl = (rtspUrl) => {
+  static parseUrl(rtspUrl) {
     const url = new URL(rtspUrl);
     return {
       protocol: url.protocol,
@@ -1030,7 +1030,7 @@ class RtspClient {
       username: decodeURIComponent(url.username || ""),
       password: decodeURIComponent(url.password || "")
     };
-  };
+  }
 }
 
 module.exports = RtspClient;

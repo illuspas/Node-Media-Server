@@ -104,7 +104,7 @@ class Flv {
    * @param {Buffer} buffer
    * @returns {string | null} error
    */
-  parserData = (buffer) => {
+  parserData(buffer) {
     let s = buffer.length;
     let n = 0;
     let p = 0;
@@ -173,26 +173,26 @@ class Flv {
       }
     }
     return null;
-  };
+  }
 
   /**
    * @param {number} size
    */
-  parserTagAlloc = (size) => {
+  parserTagAlloc(size) {
     if (this.parserTagCapacity < size) {
       this.parserTagCapacity = size * 2;
       const newBuffer = Buffer.alloc(this.parserTagCapacity);
       this.parserTagData.copy(newBuffer);
       this.parserTagData = newBuffer;
     }
-  };
+  }
 
   /**
    * @param {boolean} hasAudio
    * @param {boolean} hasVideo
    * @returns {Buffer} 
    */
-  static createHeader = (hasAudio, hasVideo) => {
+  static createHeader(hasAudio, hasVideo) {
     const buffer = Buffer.from([0x46, 0x4c, 0x56, 0x01, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00]);
     if (hasAudio) {
       buffer[4] |= 4;
@@ -202,13 +202,13 @@ class Flv {
       buffer[4] |= 1;
     }
     return buffer;
-  };
+  }
 
   /**
    * @param {AVPacket} avpacket
    * @returns {Buffer}
    */
-  static createMessage = (avpacket) => {
+  static createMessage(avpacket) {
     const buffer = Buffer.alloc(11 + avpacket.size + 4);
     buffer[0] = avpacket.codec_type;
     buffer.writeUintBE(avpacket.size, 1, 3);
@@ -219,7 +219,7 @@ class Flv {
     avpacket.data.copy(buffer, 11, 0, avpacket.size);
     buffer.writeUint32BE(11 + avpacket.size, 11 + avpacket.size);
     return buffer;
-  };
+  }
 
   /**
    * @param {number} type
@@ -228,7 +228,7 @@ class Flv {
    * @param {Buffer} data
    * @returns {AVPacket}
    */
-  static parserTag = (type, time, size, data) => {
+  static parserTag(type, time, size, data) {
     let packet = new AVPacket();
     packet.codec_type = type;
     packet.pts = time;
@@ -306,7 +306,7 @@ class Flv {
       packet.flags = 5;
     }
     return packet;
-  };
+  }
 }
 
 module.exports = Flv;

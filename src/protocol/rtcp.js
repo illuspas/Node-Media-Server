@@ -40,7 +40,7 @@ class RtcpParser {
    * @param {Buffer} buffer - Raw RTCP data (from TCP interleaved or UDP)
    * @returns {RtcpPacket[]} Array of parsed RTCP packets
    */
-  static parseCompound = (buffer) => {
+  static parseCompound(buffer) {
     /** @type {RtcpPacket[]} */
     const packets = [];
 
@@ -109,7 +109,7 @@ class RtcpParser {
     }
 
     return packets;
-  };
+  }
 
   /**
    * Parse a single RTP/RTCP packet — determines if buffer is RTP or RTCP.
@@ -117,14 +117,14 @@ class RtcpParser {
    * @param {Buffer} buffer - Raw packet data
    * @returns {boolean} True if buffer appears to be RTCP
    */
-  static isRtcp = (buffer) => {
+  static isRtcp(buffer) {
     if (!buffer || buffer.length < 2) {
       return false;
     }
     const version = (buffer[0] >> 6) & 0x03;
     const type = buffer[1];
     return version === RTCP_VERSION && type >= 200 && type <= 204;
-  };
+  }
 
   // ─────────────────────────────────────────
   // Sender Report (SR) — RTCP Type 200
@@ -156,7 +156,7 @@ class RtcpParser {
    * @param {number} reportCount - Number of receiver report blocks
    * @returns {RtcpSenderReport}
    */
-  static parseSenderReport = (data, reportCount) => {
+  static parseSenderReport(data, reportCount) {
     const ssrc = data.readUInt32BE(4);
     const ntpTimestampMsw = data.readUInt32BE(8);
     const ntpTimestampLsw = data.readUInt32BE(12);
@@ -185,7 +185,7 @@ class RtcpParser {
       senderOctetCount: senderOctetCount,
       reports: reports
     };
-  };
+  }
 
   // ─────────────────────────────────────────
   // Receiver Report (RR) — RTCP Type 201
@@ -197,7 +197,7 @@ class RtcpParser {
    * @param {number} reportCount - Number of report blocks
    * @returns {RtcpReceiverReport}
    */
-  static parseReceiverReport = (data, reportCount) => {
+  static parseReceiverReport(data, reportCount) {
     const ssrc = data.readUInt32BE(4);
     const reports = RtcpParser.parseReportBlocks(data, 8, reportCount);
 
@@ -210,7 +210,7 @@ class RtcpParser {
       ssrc: ssrc,
       reports: reports
     };
-  };
+  }
 
   /**
    * Parse receiver report blocks from SR or RR packet.
@@ -220,7 +220,7 @@ class RtcpParser {
    * @param {number} count - Number of report blocks
    * @returns {RtcpReportBlock[]}
    */
-  static parseReportBlocks = (data, offset, count) => {
+  static parseReportBlocks(data, offset, count) {
     /** @type {RtcpReportBlock[]} */
     const blocks = [];
 
@@ -242,7 +242,7 @@ class RtcpParser {
     }
 
     return blocks;
-  };
+  }
 
   // ─────────────────────────────────────────
   // Source Description (SDES) — RTCP Type 202
@@ -254,7 +254,7 @@ class RtcpParser {
    * @param {number} chunkCount - Number of SSRC/CSRC chunks
    * @returns {RtcpSDES}
    */
-  static parseSDES = (data, chunkCount) => {
+  static parseSDES(data, chunkCount) {
     /** @type {RtcpSDESChunk[]} */
     const chunks = [];
     let offset = 4;
@@ -302,7 +302,7 @@ class RtcpParser {
       raw: data,
       chunks: chunks
     };
-  };
+  }
 
   // ─────────────────────────────────────────
   // Bye — RTCP Type 203
@@ -314,7 +314,7 @@ class RtcpParser {
    * @param {number} sourceCount - Number of SSRC/CSRC identifiers
    * @returns {RtcpBye}
    */
-  static parseBye = (data, sourceCount) => {
+  static parseBye(data, sourceCount) {
     /** @type {number[]} */
     const sources = [];
     let offset = 4;
@@ -342,7 +342,7 @@ class RtcpParser {
       sources: sources,
       reason: reason
     };
-  };
+  }
 
   // ─────────────────────────────────────────
   // Application-Defined (APP) — RTCP Type 204
@@ -353,7 +353,7 @@ class RtcpParser {
    * @param {Buffer} data - Raw APP packet data
    * @returns {RtcpApp}
    */
-  static parseApp = (data) => {
+  static parseApp(data) {
     const ssrc = data.readUInt32BE(4);
     const name = data.subarray(8, 12).toString("ascii");
     const identifier = data.readUInt32BE(12);
@@ -369,7 +369,7 @@ class RtcpParser {
       identifier: identifier,
       data: data.subarray(16)
     };
-  };
+  }
 
   // ─────────────────────────────────────────
   // RR Builder (for sending receiver reports)
@@ -381,7 +381,7 @@ class RtcpParser {
    * @param {RtcpReportBlock[]} [reportBlocks] - Optional report blocks
    * @returns {Buffer} RR packet buffer
    */
-  static buildReceiverReport = (senderSsrc, reportBlocks) => {
+  static buildReceiverReport(senderSsrc, reportBlocks) {
     const blockCount = reportBlocks ? reportBlocks.length : 0;
     // Header(4) + SSRC(4) + blocks(24 each)
     const size = 8 + (blockCount * 24);
@@ -414,7 +414,7 @@ class RtcpParser {
     }
 
     return buf;
-  };
+  }
 
   /**
    * Build a simple empty Receiver Report (no report blocks).
@@ -422,9 +422,9 @@ class RtcpParser {
    * @param {number} senderSsrc - Our SSRC
    * @returns {Buffer}
    */
-  static buildEmptyReceiverReport = (senderSsrc) => {
+  static buildEmptyReceiverReport(senderSsrc) {
     return RtcpParser.buildReceiverReport(senderSsrc, []);
-  };
+  }
 
   // ─────────────────────────────────────────
   // Utility
@@ -435,7 +435,7 @@ class RtcpParser {
    * @param {number} type - RTCP packet type number
    * @returns {string}
    */
-  static getTypeName = (type) => {
+  static getTypeName(type) {
     switch (type) {
     case RTCP_TYPE_SR:
       return "SR";
@@ -450,14 +450,14 @@ class RtcpParser {
     default:
       return `UNKNOWN(${type})`;
     }
-  };
+  }
 
   /**
    * Get SDES item type name string
    * @param {number} type - SDES item type
    * @returns {string}
    */
-  static getSdesTypeName = (type) => {
+  static getSdesTypeName(type) {
     switch (type) {
     case SDES_TYPE_CNAME:
       return "CNAME";
@@ -478,7 +478,7 @@ class RtcpParser {
     default:
       return `UNKNOWN(${type})`;
     }
-  };
+  }
 }
 
 module.exports = RtcpParser;
