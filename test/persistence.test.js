@@ -204,13 +204,14 @@ test("history records publishers only; playCount is counted in memory per publis
   assert.equal(entry.playCount, 2);
   assert.equal(entry.duration, 60000);
 
-  // the next publish on the same path starts from zero; relay pulls (ip "") are not recorded
+  // the next publish on the same path starts from zero; relay pulls are recorded too
   const publisher2 = { ...base, id: "s2", isPublisher: true, playCount: 0 };
   broadcast.publisher = publisher2;
   broadcast.postPlay(player({ id: "p3" }));
   Context.eventEmitter.emit("donePublish", { ...base, id: "relay", ip: "" });
   Context.eventEmitter.emit("donePublish", publisher2);
-  assert.equal(history.count(), 2);
+  assert.equal(history.count(), 3);
+  assert.equal(history.get("relay").ip, "");
   assert.equal(history.get("s2").playCount, 1);
 
   // cap applies to publisher entries only
