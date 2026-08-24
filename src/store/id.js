@@ -7,25 +7,13 @@
 
 const crypto = require("node:crypto");
 
-// Ids are random bytes; batching the syscall keeps insert-heavy paths fast.
-const ID_POOL_SIZE = 12 * 1024;
-/** @type {Buffer | null} */
-let pool = null;
-let poolOffset = 0;
-
 /**
  * Generate a 24-char lowercase hex id (96 random bits).
  * Same shape as a BSON ObjectId string, zero dependencies.
  * @returns {string}
  */
 function generateId() {
-  if (pool === null || poolOffset + 12 > pool.length) {
-    pool = crypto.randomBytes(ID_POOL_SIZE);
-    poolOffset = 0;
-  }
-  const id = pool.subarray(poolOffset, poolOffset + 12).toString("hex");
-  poolOffset += 12;
-  return id;
+  return crypto.randomBytes(12).toString("hex");
 }
 
 /**
