@@ -37,6 +37,16 @@ npx node-media-server
 * Session Management (New in v4.2.0)
 * Session Deletion (New in v4.2.0)
 * Advanced Health Monitoring (New in v4.2.0)
+* RTSP/RTMP Relay Tasks with persistence and management API (New in v4.3.0)
+* Web Admin UI with Dashboard, Streams, Records, History, Relay and Settings (New in v4.3.0)
+* Username/Password Login with scrypt hashing and login rate limiting (New in v4.3.0)
+* Configuration Management API with validation (New in v4.3.0)
+* Change Password API (New in v4.3.0)
+* Record File Download (New in v4.3.0)
+* Record Session Resume within publish grace period (New in v4.3.0)
+* History Search by stream path, IP and time range (New in v4.3.0)
+* Network Bandwidth Statistics (New in v4.3.0)
+* Graceful Shutdown (New in v4.3.0)
 
 ## Static file services
 Node-Media-Server can provide static file services for a directory.
