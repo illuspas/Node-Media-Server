@@ -330,7 +330,7 @@ export default function Streams() {
                 <th>{formatMessage({ id: "streams.colViewers" })}</th>
                 <th>{formatMessage({ id: "common.duration" })}</th>
                 <th>{formatMessage({ id: "common.status" })}</th>
-                <th className="text-right">{formatMessage({ id: "common.actions" })}</th>
+                <th>{formatMessage({ id: "common.actions" })}</th>
               </tr>
             </thead>
             <tbody>
