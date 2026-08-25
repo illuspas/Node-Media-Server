@@ -47,7 +47,8 @@ class StreamsHandler {
             audioSamplerate: broadcast.publisher.audioSamplerate,
             inBytes: broadcast.publisher.inBytes,
           } : null,
-          subscribers: broadcast.subscribers?.size || 0
+          subscribers: broadcast.subscribers?.size || 0,
+          recording: Context.recordServer?.isRecording(key) ?? false
         });
       });
 
@@ -109,6 +110,7 @@ class StreamsHandler {
           inBytes: broadcast.publisher.inBytes,
         } : null,
         subscribers: broadcast.subscribers?.size || 0,
+        recording: Context.recordServer?.isRecording(key) ?? false,
       };
 
       res.json({
@@ -124,6 +126,52 @@ class StreamsHandler {
         message: "Internal server error"
       });
     }
+  }
+
+  /**
+   * Manually start recording a publishing stream
+   * POST /api/v1/streams/:app/:name/record
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  static startRecord(req, res) {
+    const streamPath = `/${req.params.app}/${req.params.name}`;
+    const result = Context.recordServer?.startRecord(streamPath);
+    if (!result?.ok) {
+      return res.status(400).json({
+        success: false,
+        data: {},
+        message: result?.error ?? "Record server is not available"
+      });
+    }
+    res.json({
+      success: true,
+      data: { recordId: result.recordId, filePath: result.filePath },
+      message: "Recording started"
+    });
+  }
+
+  /**
+   * Manually stop the active recording of a stream
+   * DELETE /api/v1/streams/:app/:name/record
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  static stopRecord(req, res) {
+    const streamPath = `/${req.params.app}/${req.params.name}`;
+    const result = Context.recordServer?.stopRecord(streamPath);
+    if (!result?.ok) {
+      return res.status(400).json({
+        success: false,
+        data: {},
+        message: result?.error ?? "Record server is not available"
+      });
+    }
+    res.json({
+      success: true,
+      data: {},
+      message: "Recording stopped"
+    });
   }
 }
 

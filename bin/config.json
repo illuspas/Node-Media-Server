@@ -40,5 +40,9 @@
         "port": 8443,
         "key": "./key.pem",
         "cert": "./cert.pem"
+    },
+    "record": {
+        "auto": false,
+        "path": "./record"
     }
 }

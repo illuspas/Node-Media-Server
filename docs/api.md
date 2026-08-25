@@ -109,6 +109,8 @@ Validates the old password against the configured user, then updates `auth.jwt.u
 | GET      | /api/v1/info              | Server version and configuration information  | Yes  |
 | GET      | /api/v1/streams           | List all active streams                       | Yes  |
 | GET      | /api/v1/streams/:app/:name | Get details of a specific stream             | Yes  |
+| POST     | /api/v1/streams/:app/:name/record | Manually start recording a stream   | Yes  |
+| DELETE   | /api/v1/streams/:app/:name/record | Manually stop recording a stream    | Yes  |
 | GET      | /api/v1/sessions          | List all connected sessions                   | Yes  |
 | DELETE   | /api/v1/sessions/:id      | Terminate a specific session                  | Yes  |
 | GET      | /api/v1/stats             | Real-time server performance statistics       | Yes  |
@@ -210,7 +212,8 @@ List all active streams with detailed information including codecs, resolution, 
           "audioSamplerate": 44100,
           "inBytes": 1048576
         },
-        "subscribers": 3
+        "subscribers": 3,
+        "recording": false
       }
     ],
     "total": 1
@@ -226,6 +229,22 @@ GET /api/v1/streams/live/stream
 ```
 
 The response `data` contains the same stream object shown above.
+
+### Manual Recording
+
+```bash
+POST /api/v1/streams/{app}/{name}/record
+```
+
+Manually start recording a publishing stream (the webadmin record button). Fails with 400 if the record path is not configured/writable, the stream has no publisher, or it is already recording. Response `data` is `{ recordId, filePath }`.
+
+With `record.auto: false` in the config, published streams are not recorded automatically and this endpoint is the only way to record — combine it with the DELETE endpoint for full manual control. Toggling `record.auto` takes effect immediately.
+
+```bash
+DELETE /api/v1/streams/{app}/{name}/record
+```
+
+Manually stop the active recording of a stream. The recording metadata is finalized in the records store. Fails with 400 if the stream is not recording.
 
 ### Session Management
 

@@ -8,6 +8,10 @@
   --font-sans: Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
+/* Design-system classes live in the components layer so Tailwind
+   utilities (e.g. text-red-600) can override them. */
+@layer components {
+
 /* ============================================================
    NMS Console · shadcn-flavored design system (light/neutral)
    ============================================================ */
@@ -336,3 +340,4 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
 
 @media (max-width: 900px) { .nb-search { display: none; } }
 @media (max-width: 640px) { .nb-meta { display: none; } .nb-title { display: none; } .nb-sep { display: none; } }
+}

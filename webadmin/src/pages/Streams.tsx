@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
 import { posterUrl } from "../lib/mock";
-import { fetchStreams, deleteSession } from "../lib/api";
+import { fetchStreams, deleteSession, startStreamRecord, stopStreamRecord } from "../lib/api";
 import type { ApiStream, StreamStatus } from "../lib/api";
 import { fmtNum, fmtDur, fmtBytes } from "../lib/format";
 import { toast } from "../lib/toast";
@@ -91,7 +91,7 @@ export default function Streams() {
   const [fProto, setFProto] = useState("");
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<ApiStream | null>(null);
-  const [recFlags, setRecFlags] = useState<Record<string, boolean>>({});
+  const [recBusy, setRecBusy] = useState<string | null>(null);
   const [kicking, setKicking] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -161,10 +161,23 @@ export default function Streams() {
     );
   };
 
-  const toggleRec = (s: ApiStream) => {
-    const rec = !recFlags[s.key];
-    setRecFlags(prev => ({ ...prev, [s.key]: rec }));
-    toast(formatMessage({ id: rec ? "streams.toastRecOn" : "streams.toastRecOff" }, { name: s.name }));
+  const toggleRec = async (s: ApiStream) => {
+    if (recBusy === s.key) return;
+    setRecBusy(s.key);
+    try {
+      if (s.recording) {
+        await stopStreamRecord(s.app, s.name);
+        toast(formatMessage({ id: "streams.toastRecOff" }, { name: s.name }));
+      } else {
+        await startStreamRecord(s.app, s.name);
+        toast(formatMessage({ id: "streams.toastRecOn" }, { name: s.name }));
+      }
+      await load(true);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("streams.errLoad"), "danger");
+    } finally {
+      setRecBusy(null);
+    }
   };
 
   const kick = async (s: ApiStream) => {
@@ -335,7 +348,7 @@ export default function Streams() {
                   const p = s.publisher;
                   const { res, codec, fps } = videoInfo(s);
                   const mbps = avgBitrateMbps(s, tick);
-                  const rec = !!recFlags[s.key];
+                      const rec = s.recording;
                   return (
                     <tr key={s.key}>
                       <td>
@@ -372,8 +385,9 @@ export default function Streams() {
                             <Icon name="play" className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            className={`btn btn-ghost btn-sm btn-icon ${rec ? "text-emerald-600" : ""}`}
+                            className={`btn btn-ghost btn-sm btn-icon ${rec ? "text-red-600 hover:bg-red-50 animate-pulse" : ""}`}
                             title={formatMessage({ id: "streams.record" })}
+                            disabled={recBusy === s.key || (!rec && s.status !== "publishing")}
                             onClick={() => toggleRec(s)}
                           >
                             <Icon name="disc" className="w-3.5 h-3.5" />

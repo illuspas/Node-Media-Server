@@ -15,7 +15,13 @@ class NodeRecordServer {
   constructor() {
     /** @type {Map<string, NodeRecordSession>} streamPath -> active record session */
     this._activeRecords = new Map();
+    this._running = false;
     this._onPostPublish = (session) => {
+      // record.auto=false keeps the record service available (metadata tracking,
+      // manual record API) without auto-recording every published stream
+      if (Context.config.record.auto === false) {
+        return;
+      }
       const active = this._activeRecords.get(session.streamPath);
       if (active) {
         // the same client resumed within the publish grace window: keep appending
@@ -42,6 +48,10 @@ class NodeRecordServer {
         return;
       }
       logger.info(`Record server start on the path ${Context.config.record.path}`);
+      this._running = true;
+      if (Context.config.record.auto === false) {
+        logger.info("Auto record disabled, recording only via the manual record API");
+      }
       Context.eventEmitter.on("postPublish", this._onPostPublish);
       this._trackRecords();
       this._recoverStaleRecords();
@@ -49,10 +59,59 @@ class NodeRecordServer {
   }
 
   /**
+   * Whether the given stream currently has an active record session.
+   * @param {string} streamPath - Stream path like "/live/stream"
+   * @returns {boolean}
+   */
+  isRecording(streamPath) {
+    return this._activeRecords.has(streamPath);
+  }
+
+  /**
+   * Manually start recording a publishing stream (webadmin record button).
+   * @param {string} streamPath - Stream path like "/live/stream"
+   * @returns {{ok: boolean, error?: string, recordId?: string, filePath?: string}}
+   */
+  startRecord(streamPath) {
+    if (!this._running) {
+      return { ok: false, error: "Record path is not configured or not writable" };
+    }
+    if (this._activeRecords.has(streamPath)) {
+      return { ok: false, error: "Stream is already recording" };
+    }
+    const broadcast = Context.broadcasts.get(streamPath);
+    if (!broadcast?.publisher) {
+      return { ok: false, error: "Stream is not publishing" };
+    }
+    const filePath = path.join(Context.config.record.path, streamPath, Date.now() + ".flv");
+    const sess = new NodeRecordSession(broadcast.publisher, filePath);
+    sess.run();
+    Context.sessions.set(sess.id, sess);
+    this._activeRecords.set(streamPath, sess);
+    return { ok: true, recordId: sess.id, filePath };
+  }
+
+  /**
+   * Manually stop the active record session of the given stream.
+   * @param {string} streamPath - Stream path like "/live/stream"
+   * @returns {{ok: boolean, error?: string}}
+   */
+  stopRecord(streamPath) {
+    const sess = this._activeRecords.get(streamPath);
+    if (!sess) {
+      return { ok: false, error: "Stream is not recording" };
+    }
+    sess.stop();
+    this._activeRecords.delete(streamPath);
+    return { ok: true };
+  }
+
+  /**
    * Stop accepting new recordings and finalize all active record sessions.
    * @returns {void}
    */
   stop() {
+    this._running = false;
     Context.eventEmitter.off("postPublish", this._onPostPublish);
     for (const session of this._activeRecords.values()) {
       session.stop();

@@ -193,6 +193,8 @@ export interface ApiStream {
   status: StreamStatus;
   publisher: ApiPublisher | null;
   subscribers: number;
+  /** Whether an active record session exists for this stream. */
+  recording: boolean;
 }
 
 /** List all active streams (see docs/api.md GET /api/v1/streams). */
@@ -203,6 +205,16 @@ export function fetchStreams(): Promise<ApiStream[]> {
 /** Terminate a session by id (see docs/api.md DELETE /api/v1/sessions/{id}). */
 export function deleteSession(id: string): Promise<void> {
   return apiFetch(`/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }).then(() => undefined);
+}
+
+/** Manually start recording a publishing stream (POST /api/v1/streams/{app}/{name}/record). */
+export function startStreamRecord(app: string, name: string): Promise<void> {
+  return apiFetch(`/streams/${encodeURIComponent(app)}/${encodeURIComponent(name)}/record`, { method: "POST" }).then(() => undefined);
+}
+
+/** Manually stop the active recording of a stream (DELETE /api/v1/streams/{app}/{name}/record). */
+export function stopStreamRecord(app: string, name: string): Promise<void> {
+  return apiFetch(`/streams/${encodeURIComponent(app)}/${encodeURIComponent(name)}/record`, { method: "DELETE" }).then(() => undefined);
 }
 
 /* ---------------- relay ---------------- */
@@ -422,7 +434,7 @@ export interface ApiConfig {
   bind?: string;
   notify?: { url?: string };
   store?: { path?: string; maxHistory?: number };
-  record?: { path?: string };
+  record?: { path?: string; auto?: boolean };
   auth?: { play?: boolean; publish?: boolean; secret?: string };
   rtmp?: { port?: number };
   rtmps?: { port?: number; key?: string; cert?: string };

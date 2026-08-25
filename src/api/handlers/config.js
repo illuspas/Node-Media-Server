@@ -18,6 +18,7 @@ const EDITABLE_PATHS = [
   ["store", "path"],
   ["store", "maxHistory"],
   ["record", "path"],
+  ["record", "auto"],
   ["auth", "play"],
   ["auth", "publish"],
   ["auth", "secret"],
@@ -57,6 +58,8 @@ const FIELD_VALIDATORS = {
     typeof v === "string" && v.trim() !== "" ? null : `${p} must be a non-empty path`,
   "record.path": (v, p) =>
     typeof v === "string" && v.trim() !== "" ? null : `${p} must be a non-empty path`,
+  "record.auto": (v, p) =>
+    typeof v === "boolean" ? null : `${p} must be a boolean (false = record manually only)`,
   "store.maxHistory": (v, p) =>
     Number.isInteger(v) && v >= 1 && v <= 100000000 ? null : `${p} must be an integer between 1 and 100000000`,
   "auth.play": v => (typeof v === "boolean" ? null : "auth.play must be a boolean"),

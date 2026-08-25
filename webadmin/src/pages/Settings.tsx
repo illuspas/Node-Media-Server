@@ -378,6 +378,22 @@ export default function Settings() {
                     onChange={v => set("record", "path", v)}
                     mono
                   />
+                  <div>
+                    <label className="label" htmlFor="s-autorec">{t("settings.field.autoRecord")}</label>
+                    <div className="flex items-center gap-3 h-9">
+                      <label className="switch">
+                        <input
+                          id="s-autorec"
+                          type="checkbox"
+                          checked={config.record?.auto !== false}
+                          onChange={e => set("record", "auto", e.target.checked)}
+                        />
+                        <span className="track" />
+                        <span className="thumb" />
+                      </label>
+                      <span className="help !mt-0">{t("settings.sw.autoRecord.desc")}</span>
+                    </div>
+                  </div>
                 </div>
                 <FormActions saving={saving} t={t} />
               </form>

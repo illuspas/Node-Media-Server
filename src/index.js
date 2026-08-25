@@ -47,8 +47,9 @@ class NodeMediaServer {
     });
     Context.store = this.store;
 
-    // Expose relay manager to context for API access
+    // Expose relay/record managers to context for API access
     Context.relayServer = this.relayServer;
+    Context.recordServer = this.recordServer;
 
     this._stopping = false;
   }

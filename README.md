@@ -64,8 +64,12 @@ It can provide video-on-demand services.
 
 ```
 "record": {
-    "path": "./html/record"
+    "path": "./html/record",
+    "auto": true
 }
+```
+
+Set `"auto": false` to disable auto-recording of every published stream; streams can then be recorded on demand via the webadmin streams page or `POST /api/v1/streams/{app}/{name}/record`.
 ```
 
 ```
