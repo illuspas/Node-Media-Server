@@ -42,6 +42,7 @@ class ApiRouter {
     // Stream management endpoints
     this.router.get("/streams", StreamsHandler.getStreams);
     this.router.get("/streams/:app/:name", StreamsHandler.getStreamInfo);
+    this.router.get("/streams/:app/:name/record", StreamsHandler.getRecord);
     this.router.post("/streams/:app/:name/record", StreamsHandler.startRecord);
     this.router.delete("/streams/:app/:name/record", StreamsHandler.stopRecord);
 

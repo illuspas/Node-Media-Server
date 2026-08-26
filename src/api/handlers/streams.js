@@ -152,6 +152,35 @@ class StreamsHandler {
   }
 
   /**
+   * Get the recording status of a stream
+   * GET /api/v1/streams/:app/:name/record
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  static getRecord(req, res) {
+    const streamPath = `/${req.params.app}/${req.params.name}`;
+    const recordServer = Context.recordServer;
+    if (!recordServer) {
+      return res.status(400).json({
+        success: false,
+        data: {},
+        message: "Record server is not available"
+      });
+    }
+    const session = recordServer.getActiveRecord(streamPath);
+    res.json({
+      success: true,
+      data: {
+        recording: !!session,
+        recordId: session?.id,
+        filePath: session?.filePath,
+        startTime: session?.createTime
+      },
+      message: session ? "Recording in progress" : "No active recording"
+    });
+  }
+
+  /**
    * Manually stop the active recording of a stream
    * DELETE /api/v1/streams/:app/:name/record
    * @param {express.Request} req

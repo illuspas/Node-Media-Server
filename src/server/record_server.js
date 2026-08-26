@@ -68,6 +68,15 @@ class NodeRecordServer {
   }
 
   /**
+   * Get the active record session of the given stream, if any.
+   * @param {string} streamPath - Stream path like "/live/stream"
+   * @returns {NodeRecordSession|undefined}
+   */
+  getActiveRecord(streamPath) {
+    return this._activeRecords.get(streamPath);
+  }
+
+  /**
    * Manually start recording a publishing stream (webadmin record button).
    * @param {string} streamPath - Stream path like "/live/stream"
    * @returns {{ok: boolean, error?: string, recordId?: string, filePath?: string}}
