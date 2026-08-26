@@ -22,6 +22,9 @@ or run directly
 npx node-media-server
 ```
 
+## WebAdmin
+![](https://raw.githubusercontent.com/illuspas/Node-Media-Server/refs/heads/main/assets/screenshot-0-Dashboard.jpg)
+
 ## Features
 * HTTP/HTTP2-flv Push/Play
 * WS/WSS-flv Push/Play
