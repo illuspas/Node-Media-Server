@@ -223,6 +223,7 @@ table.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size
   .sb-sidebar { transform: none; }
   .sb-overlay { display: none; }
   .sb-close { display: none !important; }
+  .sb-root.collapsed .sb-sidebar { transform: translateX(-100%); }
 }
 
 .sb-brand { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid #f5f5f4; }

@@ -7,6 +7,8 @@ import { fmtDurLong } from "../lib/format";
 
 interface SidebarProps {
   open: boolean;
+  /** Desktop-only: hide the persistent rail. */
+  collapsed: boolean;
   onClose: () => void;
 }
 
@@ -39,7 +41,7 @@ const NAV_GROUPS: { sectionId: string; links: NavLinkItem[] }[] = [
   }
 ];
 
-export default function Sidebar({ open, onClose }: SidebarProps) {
+export default function Sidebar({ open, collapsed, onClose }: SidebarProps) {
   const { formatMessage } = useIntl();
   const [foot, setFoot] = useState<{ connected: boolean; uptime: number } | null>(null);
 
@@ -67,7 +69,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   }, []);
 
   return (
-    <div className={open ? "sb-root open" : "sb-root"}>
+    <div className={`sb-root${open ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
       <div className="sb-overlay" onClick={onClose} />
       <aside className="sb-sidebar">
         <div className="sb-brand">

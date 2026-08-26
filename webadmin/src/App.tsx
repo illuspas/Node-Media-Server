@@ -43,9 +43,11 @@ interface ShellProps {
 function Shell({ username, onLogout, onPasswordChanged }: ShellProps) {
   const location = useLocation();
   const { formatMessage } = useIntl();
-  // Sidebar stays open only while the route it was opened on is still current.
+  // Mobile drawer stays open only while the route it was opened on is still current.
   const [openLocationKey, setOpenLocationKey] = useState<string | null>(null);
   const sidebarOpen = openLocationKey === location.key;
+  // Desktop rail is persistent; the menu button toggles it instead of the drawer.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const title = formatMessage({ id: titleIdFor(location.pathname) });
 
   useEffect(() => {
@@ -55,12 +57,18 @@ function Shell({ username, onLogout, onPasswordChanged }: ShellProps) {
 
   return (
     <>
-      <Sidebar open={sidebarOpen} onClose={() => setOpenLocationKey(null)} />
-      <div className="lg:pl-60 min-h-screen">
+      <Sidebar open={sidebarOpen} collapsed={desktopCollapsed} onClose={() => setOpenLocationKey(null)} />
+      <div className={desktopCollapsed ? "min-h-screen" : "lg:pl-60 min-h-screen"}>
         <Navbar
           title={title}
           username={username}
-          onMenuClick={() => setOpenLocationKey(sidebarOpen ? null : location.key)}
+          onMenuClick={() => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+              setDesktopCollapsed(v => !v);
+            } else {
+              setOpenLocationKey(sidebarOpen ? null : location.key);
+            }
+          }}
           onLogout={onLogout}
           onPasswordChanged={onPasswordChanged}
         />
