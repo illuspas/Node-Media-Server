@@ -109,6 +109,7 @@ Validates the old password against the configured user, then updates `auth.jwt.u
 | GET      | /api/v1/info              | Server version and configuration information  | Yes  |
 | GET      | /api/v1/streams           | List all active streams                       | Yes  |
 | GET      | /api/v1/streams/:app/:name | Get details of a specific stream             | Yes  |
+| GET      | /api/v1/streams/:app/:name/record | Query the recording status of a stream | Yes  |
 | POST     | /api/v1/streams/:app/:name/record | Manually start recording a stream   | Yes  |
 | DELETE   | /api/v1/streams/:app/:name/record | Manually stop recording a stream    | Yes  |
 | GET      | /api/v1/sessions          | List all connected sessions                   | Yes  |
@@ -245,6 +246,12 @@ DELETE /api/v1/streams/{app}/{name}/record
 ```
 
 Manually stop the active recording of a stream. The recording metadata is finalized in the records store. Fails with 400 if the stream is not recording.
+
+```bash
+GET /api/v1/streams/{app}/{name}/record
+```
+
+Query whether the stream currently has an active recording session. Response `data` is `{ recording, recordId, filePath, startTime }` — when not recording, `recording` is `false` and the other fields are omitted. Fails with 400 if the record server is not available. For historical (finalized) recordings use the records endpoints below.
 
 ### Session Management
 
