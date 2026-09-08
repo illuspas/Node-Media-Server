@@ -4,7 +4,7 @@ This document provides guidelines for agentic coding agents operating in this re
 
 ## Repository Purpose
 
-Node-Media-Server is a Node.js implementation of an RTMP media server (v4.x), supporting RTMP publish/play, HTTP-FLV, WebSocket-FLV, RTSP/WHIP, recording, relay, and a REST admin API. Requires Node.js >= 18.
+Node-Media-Server is a Node.js implementation of an RTMP media server (v4.x), supporting RTMP publish/play, HTTP-FLV, WebSocket-FLV, RTSP/WHIP, recording, relay, and a REST admin API. Requires Node.js >= 20.
 
 ### Directory Layout
 - `src/index.js` — library entry point; `bin/app.js` — CLI entry point
