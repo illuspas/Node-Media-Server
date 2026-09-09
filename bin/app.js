@@ -157,8 +157,10 @@ if (config.auth?.jwt?.users) {
 // Generate an auth secret only when left empty; an explicit value, including
 // the legacy default, is respected and left untouched
 if (config.auth && !config.auth.secret) {
-  config.auth.secret = crypto.randomBytes(32).toString("hex");
-  console.log("🔒 Security: Generated new auth secret");
+  config.auth.secret = crypto.randomBytes(16).toString("hex");
+  console.log("🔒 Security: Generated new auth secret for signed play/publish URLs:");
+  console.log(`   Auth Secret: ${config.auth.secret}`);
+  console.log("   It is also stored in the config file, share it with streaming clients.");
   configChanged = true;
 }
 
