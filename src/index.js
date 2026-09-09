@@ -18,6 +18,11 @@ const NodeRelayServer = require("./server/relay_server.js");
 const LightweightStore = require("./store/lightweight_store.js");
 
 class NodeMediaServer {
+  /**
+   * 
+   * @param {Context.NmsConfig } config 
+   * @param {string} configPath 
+   */
   constructor(config, configPath) {
     logger.level = "debug";
     logger.info(`Node-Media-Server v${Package.version}`);
