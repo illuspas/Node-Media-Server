@@ -30,7 +30,7 @@ const EDITABLE_PATHS = [
   ["https", "port"], ["https", "key"], ["https", "cert"]
 ];
 
-/** @typedef {function(any, string): string|null} FieldValidator */
+/** @typedef {(v: any, p: string) => string | null} FieldValidator */
 
 /**
  * Per-field validators. Each returns an error message, or null when valid.
