@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const NodeMediaServer = require("..");
 
 // Load and process config
 const configPath = path.join(__dirname, "./config.json");
@@ -74,11 +75,6 @@ if (config.record?.path) {
   config.record.path = path.resolve(__dirname, config.record.path);
 }
 
-const NodeMediaServer = require("..");
-
-// Let API handlers persist config changes (e.g. password updates) back to disk
-require("../src/core/context.js").configFile = configPath;
-
 if (config.rtmps?.key && !fs.existsSync(config.rtmps.key)) {
   config.rtmps.key = path.join(__dirname, config.rtmps.key);
 
@@ -95,5 +91,5 @@ if (config.https?.cert && !fs.existsSync(config.https.cert)) {
   config.https.cert = path.join(__dirname, config.https.cert);
 }
 
-const nms = new NodeMediaServer(config);
+const nms = new NodeMediaServer(config, configPath);
 nms.run(); 

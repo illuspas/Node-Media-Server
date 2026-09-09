@@ -18,7 +18,7 @@ const NodeRelayServer = require("./server/relay_server.js");
 const LightweightStore = require("./store/lightweight_store.js");
 
 class NodeMediaServer {
-  constructor(config) {
+  constructor(config, configPath) {
     logger.level = "debug";
     logger.info(`Node-Media-Server v${Package.version}`);
     logger.info(`Homepage: ${Package.homepage}`);
@@ -26,6 +26,7 @@ class NodeMediaServer {
     logger.info(`Author: ${Package.author}`);
 
     Context.config = config;
+    Context.configFile = configPath;
     this.httpServer = new NodeHttpServer();
     this.rtmpServer = new NodeRtmpServer();
     this.recordServer = new NodeRecordServer();
