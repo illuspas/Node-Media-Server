@@ -26,9 +26,16 @@ Options:
       --rtmps-port <n>   RTMPS port, overrides rtmps.port
       --http-port <n>    HTTP/WebSocket port, overrides http.port
       --https-port <n>   HTTPS/WSS port, overrides https.port
+      --data-path <path> Runtime data directory, overrides store.path
+      --record-path <p>  Record output directory, overrides record.path
+      --record-auto      Enable auto recording, forces record.auto on
+      --notify-url <url> Event webhook URL, overrides notify.url
+      --auth-play        Enable play authentication, forces auth.play on
+      --auth-publish     Enable publish authentication, forces auth.publish on
   -h, --help             Show this help
 
-Command line values take precedence over config file values.`);
+Command line values take precedence over config file values and are
+never written back to the config file.`);
 }
 
 /**
@@ -56,6 +63,12 @@ try {
       "rtmps-port": { type: "string" },
       "http-port": { type: "string" },
       "https-port": { type: "string" },
+      "data-path": { type: "string" },
+      "record-path": { type: "string" },
+      "record-auto": { type: "boolean" },
+      "notify-url": { type: "string" },
+      "auth-play": { type: "boolean" },
+      "auth-publish": { type: "boolean" },
       help: { type: "boolean", short: "h" }
     },
     strict: true
@@ -71,31 +84,33 @@ if (cli.help) {
   process.exit(0);
 }
 
+// Validate CLI values before loading the config so that invalid arguments
+// can never trigger the first-run password/JWT migration write-back.
+if (cli["rtmp-port"]) {
+  parsePort("--rtmp-port", cli["rtmp-port"]);
+}
+if (cli["rtmps-port"]) {
+  parsePort("--rtmps-port", cli["rtmps-port"]);
+}
+if (cli["http-port"]) {
+  parsePort("--http-port", cli["http-port"]);
+}
+if (cli["https-port"]) {
+  parsePort("--https-port", cli["https-port"]);
+}
+if (cli["notify-url"]) {
+  try {
+    new URL(cli["notify-url"]);
+  } catch {
+    console.error(`Invalid --notify-url: "${cli["notify-url"]}" (expected an absolute URL, e.g. http://127.0.0.1:3000/on_event)`);
+    process.exit(1);
+  }
+}
+
 // Load and process config
 const configPath = path.resolve(cli.config ?? path.join(__dirname, "./config.json"));
 const configDir = path.dirname(configPath);
 let config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-
-// Command line overrides take precedence over config file values
-if (cli.bind) {
-  config.bind = cli.bind;
-}
-if (cli["rtmp-port"]) {
-  config.rtmp = config.rtmp ?? {};
-  config.rtmp.port = parsePort("--rtmp-port", cli["rtmp-port"]);
-}
-if (cli["rtmps-port"]) {
-  config.rtmps = config.rtmps ?? {};
-  config.rtmps.port = parsePort("--rtmps-port", cli["rtmps-port"]);
-}
-if (cli["http-port"]) {
-  config.http = config.http ?? {};
-  config.http.port = parsePort("--http-port", cli["http-port"]);
-}
-if (cli["https-port"]) {
-  config.https = config.https ?? {};
-  config.https.port = parsePort("--https-port", cli["https-port"]);
-}
 
 // Function to generate random 8-character password
 /**
@@ -139,6 +154,14 @@ if (config.auth?.jwt?.users) {
   });
 }
 
+// Generate an auth secret only when left empty; an explicit value, including
+// the legacy default, is respected and left untouched
+if (config.auth && !config.auth.secret) {
+  config.auth.secret = crypto.randomBytes(32).toString("hex");
+  console.log("🔒 Security: Generated new auth secret");
+  configChanged = true;
+}
+
 // Auto-generate JWT secret if not configured
 if (config.auth?.jwt) {
   if (!config.auth.jwt.secret) {
@@ -152,6 +175,58 @@ if (config.auth?.jwt) {
 if (configChanged) {
   fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
   console.log("✅ Config updated");
+}
+
+// Apply command line overrides after the config write-back so that CLI
+// values stay ephemeral and are never persisted to the config file.
+if (cli.bind) {
+  config.bind = cli.bind;
+}
+if (cli["rtmp-port"]) {
+  config.rtmp = config.rtmp ?? {};
+  config.rtmp.port = parsePort("--rtmp-port", cli["rtmp-port"]);
+}
+if (cli["rtmps-port"]) {
+  config.rtmps = config.rtmps ?? {};
+  config.rtmps.port = parsePort("--rtmps-port", cli["rtmps-port"]);
+}
+if (cli["http-port"]) {
+  config.http = config.http ?? {};
+  config.http.port = parsePort("--http-port", cli["http-port"]);
+}
+if (cli["https-port"]) {
+  config.https = config.https ?? {};
+  config.https.port = parsePort("--https-port", cli["https-port"]);
+}
+// CLI path values resolve against the current working directory, unlike
+// config file values which resolve against the config file's directory.
+if (cli["data-path"]) {
+  config.store = config.store ?? {};
+  config.store.path = path.resolve(cli["data-path"]);
+}
+if (cli["record-path"]) {
+  config.record = config.record ?? {};
+  config.record.path = path.resolve(cli["record-path"]);
+}
+if (cli["record-auto"]) {
+  config.record = config.record ?? {};
+  config.record.auto = true;
+}
+if (cli["notify-url"]) {
+  config.notify = config.notify ?? {};
+  config.notify.url = cli["notify-url"];
+}
+if (cli["auth-play"] || cli["auth-publish"]) {
+  config.auth = config.auth ?? {};
+  if (cli["auth-play"]) {
+    config.auth.play = true;
+  }
+  if (cli["auth-publish"]) {
+    config.auth.publish = true;
+  }
+  if (!config.auth.secret) {
+    console.warn("⚠️  auth.play/auth.publish enabled but auth.secret is empty, signed URL authentication will reject requests");
+  }
 }
 
 // Resolve runtime data paths relative to the directory containing the config.

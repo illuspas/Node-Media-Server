@@ -10,7 +10,7 @@
     "auth": {
         "play": false,
         "publish": false,
-        "secret": "nodemedia2017privatekey",
+        "secret": "",
         "jwt": {
             "secret": "",
             "expiresIn": "24h",

@@ -428,7 +428,7 @@ The API system is configured through the `auth.jwt` section of the configuration
 "auth": {
     "play": false,
     "publish": false,
-    "secret": "nodemedia2017privatekey",
+    "secret": "<random-secret-for-signed-play/publish-URLs>",
     "jwt": {
         "secret": "3e64abe6a00088e5039452d1ea1c854af7e4cc6ec30c129547b44f89604a6164",
         "expiresIn": "24h",
