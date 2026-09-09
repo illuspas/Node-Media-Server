@@ -9,6 +9,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 /**
  * Records API Handler — list/inspect/delete recording metadata persisted
@@ -18,7 +20,7 @@ const Context = require("../../core/context.js");
 class RecordsHandler {
   /**
    * Parse pagination and filter params shared by list endpoints.
-   * @param {express.Request} req
+   * @param {Request} req
    * @param {object} defaults
    * @returns {{page: number, pageSize: number, sort: Array<[string, number]>}}
    */
@@ -34,8 +36,8 @@ class RecordsHandler {
    * GET /api/v1/records?streamPath=&status=&start=&end=&page=1&pageSize=20
    * start/end filter on startTime, as ms timestamps or ISO/date strings; a
    * date-only "end" is inclusive (covers that whole day).
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static listRecords = (req, res) => {
     try {
@@ -117,8 +119,8 @@ class RecordsHandler {
   /**
    * Get one recording by id.
    * GET /api/v1/records/:id
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getRecord = (req, res) => {
     try {
@@ -143,8 +145,8 @@ class RecordsHandler {
    * Delete a recording entry; pass ?file=true to also delete the flv file
    * (only allowed inside the configured record path).
    * DELETE /api/v1/records/:id?file=true
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static deleteRecord = (req, res) => {
     try {
@@ -199,8 +201,8 @@ class RecordsHandler {
   /**
    * Download the flv file of a finished recording.
    * GET /api/v1/records/:id/download
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static downloadRecord = (req, res) => {
     try {

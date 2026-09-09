@@ -5,7 +5,6 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-const express = require("express");
 const url = require("url");
 const http = require("http");
 const WebSocket = require("ws");
@@ -15,6 +14,8 @@ const Context = require("../core/context.js");
 const AVPacket = require("../core/avpacket.js");
 const BaseSession = require("./base_session.js");
 const BroadcastServer = require("../server/broadcast_server.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 const SAFE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
@@ -24,8 +25,8 @@ const SAFE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
  */
 class FlvSession extends BaseSession {
   /**
-   * @param {express.Request | http.IncomingMessage} req
-   * @param {express.Response | WebSocket} res
+   * @param {Request | http.IncomingMessage} req
+   * @param {Response | WebSocket} res
    */
   constructor(req, res) {
     super();

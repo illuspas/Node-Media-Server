@@ -7,12 +7,14 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 class StatsHandler {
   /**
    * Get server statistics
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getStats(req, res) {
     try {

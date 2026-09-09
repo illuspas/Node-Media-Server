@@ -9,6 +9,8 @@ const fs = require("fs");
 const net = require("net");
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 // Config paths the API is allowed to read and write. auth.jwt.* (users,
 // secrets, token expiry) is managed by /login and /password and is excluded.
@@ -138,8 +140,8 @@ class ConfigHandler {
   /**
    * Get the current configuration (editable subset only).
    * GET /api/v1/config
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getConfig = (req, res) => {
     const data = {};
@@ -156,8 +158,8 @@ class ConfigHandler {
    * Validate and apply a configuration patch, then persist to the config file.
    * PUT /api/v1/config
    * Body: partial config object, e.g. { rtmp: { port: 1936 } }
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static updateConfig = (req, res) => {
     try {

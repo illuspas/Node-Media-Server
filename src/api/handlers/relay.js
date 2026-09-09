@@ -7,6 +7,8 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 /**
  * Relay API Handler — REST API for RTSP/RTMP relay management.
@@ -17,8 +19,8 @@ class RelayHandler {
    * Add a new RTSP/RTMP relay task.
    * POST /api/v1/relay
    * Body: { url, mode?, streamPath, reconnect?, reconnectInterval?, maxReconnectAttempts? }
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static addPull = (req, res) => {
     try {
@@ -108,8 +110,8 @@ class RelayHandler {
    * Stop a relay task.
    * DELETE /api/v1/relay
    * Body: { streamPath } or { taskKey }
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static removePull = (req, res) => {
     try {
@@ -159,8 +161,8 @@ class RelayHandler {
   /**
    * List all RTSP pull stream tasks.
    * GET /api/v1/relay
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static listTasks = (req, res) => {
     try {
@@ -192,8 +194,8 @@ class RelayHandler {
   /**
    * Get status of a specific pull stream task.
    * GET /api/v1/relay/:streamPath
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getTaskStatus = (req, res) => {
     try {

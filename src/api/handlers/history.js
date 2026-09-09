@@ -7,6 +7,8 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 /**
  * History API Handler — query persisted publish history (the store's
@@ -21,8 +23,8 @@ class HistoryHandler {
    * GET /api/v1/history?streamPath=&ip=&search=&start=&end=&page=1&pageSize=20
    * start/end filter on startTime, as ms timestamps or ISO/date strings; a
    * date-only "end" is inclusive (covers that whole day).
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static listHistory = (req, res) => {
     try {
@@ -106,8 +108,8 @@ class HistoryHandler {
   /**
    * Delete history entries. Without a streamPath the whole history is cleared.
    * DELETE /api/v1/history?streamPath=/live/x
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static deleteHistory = (req, res) => {
     try {

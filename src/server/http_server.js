@@ -21,6 +21,9 @@ const ApiRouter = require("../routers/api.js");
 const { jwtAuth, jwtErrorHandler } = require("../api/middleware/auth.js");
 const { createLoginLimiter } = require("../api/middleware/login_rate_limit.js");
 
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
+
 class NodeHttpServer {
   constructor() {
     const app = http2Express(express);
@@ -120,8 +123,8 @@ class NodeHttpServer {
   }
 
   /**
-   * @param {express.Request | http.IncomingMessage} req
-   * @param {express.Response | WebSocket} res
+   * @param {Request | http.IncomingMessage} req
+   * @param {Response | WebSocket} res
    */
   handleFlv = (req, res) => {
     const session = new FlvSession(req, res);

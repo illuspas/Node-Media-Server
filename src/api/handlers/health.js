@@ -7,12 +7,14 @@
 
 const logger = require("../../core/logger.js");
 const packageInfo = require("../../../package.json");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 class HealthHandler {
   /**
    * Health check endpoint
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static check(req, res) {
     try {

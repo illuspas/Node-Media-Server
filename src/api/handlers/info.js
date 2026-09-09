@@ -8,12 +8,14 @@
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
 const packageInfo = require("../../../package.json");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
       
 class InfoHandler {
   /**
    * Get server information
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getServerInfo(req, res) {
     try {

@@ -7,6 +7,8 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 /**
  * @param {string} ip
@@ -19,8 +21,8 @@ function displayIp(ip) {
 class StreamsHandler {
   /**
    * Get all active streams
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getStreams(req, res) {
     try {
@@ -72,8 +74,8 @@ class StreamsHandler {
 
   /**
    * Get specific stream information
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getStreamInfo(req, res) {
     try {
@@ -131,8 +133,8 @@ class StreamsHandler {
   /**
    * Manually start recording a publishing stream
    * POST /api/v1/streams/:app/:name/record
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static startRecord(req, res) {
     const streamPath = `/${req.params.app}/${req.params.name}`;
@@ -154,8 +156,8 @@ class StreamsHandler {
   /**
    * Get the recording status of a stream
    * GET /api/v1/streams/:app/:name/record
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getRecord(req, res) {
     const streamPath = `/${req.params.app}/${req.params.name}`;
@@ -183,8 +185,8 @@ class StreamsHandler {
   /**
    * Manually stop the active recording of a stream
    * DELETE /api/v1/streams/:app/:name/record
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static stopRecord(req, res) {
     const streamPath = `/${req.params.app}/${req.params.name}`;

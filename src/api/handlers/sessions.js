@@ -7,12 +7,14 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
 
 class SessionsHandler {
   /**
    * Get all active sessions
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static getSessions(req, res) {
     try {
@@ -53,8 +55,8 @@ class SessionsHandler {
 
   /**
    * Delete a session by ID
-   * @param {express.Request} req
-   * @param {express.Response} res
+   * @param {Request} req
+   * @param {Response} res
    */
   static deleteSession(req, res) {
     try {
