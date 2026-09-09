@@ -33,7 +33,12 @@ if (config.auth?.jwt?.users) {
   config.auth.jwt.users = config.auth.jwt.users.map(user => {
     if (user.username === "admin" && (user.password === "admin-default-password-change-me" || user.password === "")) {
       const newPassword = generateRandomPassword(16);
-      console.log(`🔒 Security: Replacing default admin password with: ${newPassword}`);
+      console.log("\n============================================================");
+      console.log("IMPORTANT: A new admin password has been generated.");
+      console.log("Username: admin");
+      console.log(`Password: ${newPassword}`);
+      console.log("Save this password now. It will not be shown again.");
+      console.log("============================================================\n");
       user.password = hashPassword(newPassword);
       configChanged = true;
     } else if (user.password && !isHashed(user.password)) {
