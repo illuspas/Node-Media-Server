@@ -65,6 +65,15 @@ if (configChanged) {
   console.log("✅ Config updated");
 }
 
+// Resolve runtime data paths relative to the directory containing this app.
+// Keep the configured values relative so config.json remains portable.
+if (config.store?.path) {
+  config.store.path = path.resolve(__dirname, config.store.path);
+}
+if (config.record?.path) {
+  config.record.path = path.resolve(__dirname, config.record.path);
+}
+
 const NodeMediaServer = require("..");
 
 // Let API handlers persist config changes (e.g. password updates) back to disk
