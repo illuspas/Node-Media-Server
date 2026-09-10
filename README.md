@@ -22,6 +22,28 @@ or run directly
 npx node-media-server
 ```
 
+## Cli Options
+```
+Options:
+  -c, --config <path>    Path to the config file (default: bin/config.json)
+  -b, --bind <addr>      Bind address, overrides the "bind" config value
+      --rtmp-port <n>    RTMP port, overrides rtmp.port
+      --rtmps-port <n>   RTMPS port, overrides rtmps.port
+      --http-port <n>    HTTP/WebSocket port, overrides http.port
+      --https-port <n>   HTTPS/WSS port, overrides https.port
+      --data-path <path> Runtime data directory, overrides store.path
+      --record-path <p>  Record output directory, overrides record.path
+      --record-auto      Enable auto recording, forces record.auto on
+      --notify-url <url> Event webhook URL, overrides notify.url
+      --auth-play        Enable play authentication, forces auth.play on
+      --auth-publish     Enable publish authentication, forces auth.publish on
+      --no-admin         Disable the webadmin console (/admin), media only
+  -h, --help             Show this help
+
+Command line values take precedence over config file values and are
+never written back to the config file.
+```
+
 ## WebAdmin
 ![](https://raw.githubusercontent.com/illuspas/Node-Media-Server/refs/heads/main/assets/screenshot-0-Dashboard.jpg)
 
