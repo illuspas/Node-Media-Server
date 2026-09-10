@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useIntl } from "react-intl";
 import Icon from "../components/Icon";
-import { posterUrl } from "../lib/mock";
 import { fetchStreams, deleteSession, startStreamRecord, stopStreamRecord } from "../lib/api";
 import type { ApiStream, StreamStatus } from "../lib/api";
 import { fmtNum, fmtDur, fmtBytes } from "../lib/format";
@@ -90,7 +89,6 @@ export default function Streams() {
   const [fApp, setFApp] = useState("");
   const [fProto, setFProto] = useState("");
   const [page, setPage] = useState(1);
-  const [preview, setPreview] = useState<ApiStream | null>(null);
   const [recBusy, setRecBusy] = useState<string | null>(null);
   const [kicking, setKicking] = useState<string | null>(null);
 
@@ -121,14 +119,6 @@ export default function Streams() {
       clearInterval(clock);
     };
   }, [load]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPreview(null);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
 
   const apps = useMemo(() => [...new Set(list.map(s => s.app))].sort(), [list]);
   const protos = useMemo(
@@ -177,6 +167,16 @@ export default function Streams() {
       toast(e instanceof Error ? e.message : t("streams.errLoad"), "danger");
     } finally {
       setRecBusy(null);
+    }
+  };
+
+  const copyUrl = async (s: ApiStream) => {
+    const url = `${window.location.origin}${s.key}.flv`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(formatMessage({ id: "streams.toastCopied" }, { url }));
+    } catch {
+      toast(t("streams.toastCopyFailed"), "danger");
     }
   };
 
@@ -381,8 +381,8 @@ export default function Streams() {
                       </td>
                       <td>
                         <div className="flex items-center gap-0.5">
-                          <button className="btn btn-ghost btn-sm btn-icon" title={formatMessage({ id: "streams.preview" })} onClick={() => setPreview(s)}>
-                            <Icon name="play" className="w-3.5 h-3.5" />
+                          <button className="btn btn-ghost btn-sm btn-icon" title={formatMessage({ id: "streams.copy" })} onClick={() => copyUrl(s)}>
+                            <Icon name="copy" className="w-3.5 h-3.5" />
                           </button>
                           <button
                             className={`btn btn-ghost btn-sm btn-icon ${rec ? "text-red-600 hover:bg-red-50 animate-pulse" : ""}`}
@@ -439,56 +439,6 @@ export default function Streams() {
             <button className="pg" disabled={curPage === pages} onClick={() => setPage(curPage + 1)}>
               <Icon name="chevron-right" className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* preview modal */}
-      <div className={preview ? "modal-overlay open" : "modal-overlay"} onClick={e => e.target === e.currentTarget && setPreview(null)}>
-        <div className="modal-card">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200">
-            <div>
-              <h3 className="font-semibold">{preview?.name ?? formatMessage({ id: "streams.streamPreview" })}</h3>
-              <p className="text-xs text-stone-500 mt-0.5 font-mono">
-                {preview ? `${preview.app}/${preview.name} · ${preview.publisher?.protocol.toUpperCase() ?? "—"}` : "—"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {preview && statusBadge(preview)}
-              <button className="btn btn-ghost btn-icon" title={formatMessage({ id: "common.close" })} onClick={() => setPreview(null)}>
-                <Icon name="x" className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <div className="relative bg-neutral-950">
-            <img
-              className="w-full aspect-video object-cover opacity-70"
-              alt="stream preview"
-              src={preview ? posterUrl(preview.app) : undefined}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="w-16 h-16 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-neutral-900 shadow-2xl hover:scale-105 transition cursor-pointer"
-                onClick={() => toast(formatMessage({ id: "streams.playerLoading" }))}
-              >
-                <Icon name="play" className="w-7 h-7 ml-1" />
-              </div>
-            </div>
-            <div className="absolute bottom-0 inset-x-0 px-4 py-3 bg-linear-to-t from-neutral-950/90 to-transparent flex items-center justify-between text-xs text-white">
-              <div className="flex items-center gap-4">
-                <span className="tabular-nums">
-                  {preview && avgBitrateMbps(preview, tick) ? `${avgBitrateMbps(preview, tick).toFixed(2)} Mbps` : "—"}
-                </span>
-                <span className="tabular-nums">
-                  {preview ? formatMessage({ id: "streams.viewersCount" }, { count: fmtNum(preview.subscribers) }) : "—"}
-                </span>
-              </div>
-              <span className="tabular-nums">{preview ? `${videoInfo(preview).res} · ${videoInfo(preview).codec}` : "—"}</span>
-            </div>
-          </div>
-          <div className="px-5 py-3 bg-stone-50 border-t border-stone-200 text-xs text-stone-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span>{formatMessage({ id: "streams.flvUrl" })}</span>
-            <code className="text-stone-600">{preview ? `${window.location.origin}${preview.key}.flv` : "—"}</code>
           </div>
         </div>
       </div>
