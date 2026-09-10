@@ -192,7 +192,7 @@ class RtspClient {
           host: host,
           port: port,
           // Allow self-signed certs for IPC cameras
-          rejectUnauthorized: false
+          rejectUnauthorized: true
         };
 
         const onConnect = () => {
@@ -813,6 +813,10 @@ class RtspClient {
     }
 
     if (this.authParams.type === "basic") {
+      if (!(this.socket instanceof tls.TLSSocket)) {
+        logger.warn("RTSP Basic auth rejected: refusing to send credentials over an unencrypted connection");
+        return null;
+      }
       return this.buildBasicAuth();
     }
 
