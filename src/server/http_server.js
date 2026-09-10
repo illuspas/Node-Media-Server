@@ -70,6 +70,9 @@ class NodeHttpServer {
 
     if (Context.config.http?.port) {
       this.httpServer = http.createServer(app);
+      // Attach before WebSocket.Server: ws re-emits server errors on its own
+      // instance, and an unhandled 'error' there crashes before our handler runs.
+      this.httpServer.on("error", this.handleListenError("HTTP server", Context.config.http.port));
       this.wsServer = new WebSocket.Server({ server: this.httpServer });
       this.wsServer.on("connection", (ws, req) => {
         this.handleFlv(req, ws);
@@ -82,6 +85,7 @@ class NodeHttpServer {
         allowHTTP1: true
       };
       this.httpsServer = http2.createSecureServer(opt, app);
+      this.httpsServer.on("error", this.handleListenError("HTTPS server", Context.config.https.port));
       this.wssServer = new WebSocket.Server({ server: this.httpsServer });
       this.wssServer.on("connection", (ws, req) => {
         this.handleFlv(req, ws);
@@ -90,8 +94,27 @@ class NodeHttpServer {
 
   }
 
+  /**
+   * Log a friendly message and exit when a listener fails (e.g. port already in use).
+   * @param {string} name - Service name for log messages
+   * @param {number} port - The port that failed to listen
+   * @returns {(err: Error) => void}
+   */
+  handleListenError = (name, port) => {
+    return (err) => {
+      if (err.code === "EADDRINUSE") {
+        logger.error(`${name} failed to start: port ${Context.config.bind}:${port} is already in use.`);
+        logger.error("Another process (possibly a previous instance of this server) is using it. Stop it or change the port in bin/config.json.");
+      } else {
+        logger.error(`${name} failed to start: ${err.message}`);
+      }
+      process.exit(1);
+    };
+  };
+
   run() {
-    this.httpServer?.listen(Context.config.http.port, Context.config.bind, () => {
+    this.httpServer?.listen(Context.config.http.port, Context.config.bind);
+    this.httpServer?.on("listening", () => {
       logger.info(`HTTP server listening on port ${Context.config.bind}:${Context.config.http.port}`);
     });
     this.wsServer?.on("listening", () => {
