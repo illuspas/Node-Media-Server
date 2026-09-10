@@ -6,7 +6,6 @@
 //
 
 const net = require("net");
-const tls = require("tls");
 const crypto = require("crypto");
 const logger = require("../core/logger.js");
 
@@ -71,7 +70,6 @@ class RtspClient {
     /** @type {net.Socket|null} */
     this.socket = null;
     this.connected = false;
-    this.useTLS = false;
 
     // RTSP session state
     /** @type {number} */
@@ -165,17 +163,16 @@ class RtspClient {
 
   /**
    * Connect to RTSP server
-   * @param {string} rtspUrl - Full RTSP URL (rtsp:// or rtsp://user:pass@host:port/path)
+   * @param {string} rtspUrl - Full RTSP URL (rtsp://user:pass@host:port/path)
    * @returns {Promise<void>}
    */
   connect(rtspUrl) {
     return new Promise((resolve, reject) => {
       try {
         const url = new URL(rtspUrl);
-        this.baseUri = rtspUrl;
-        this.useTLS = url.protocol === "rtsps:";
         const host = url.hostname;
         const port = parseInt(url.port) || RTSP_DEFAULT_PORT;
+        this.baseUri = rtspUrl;
         this.username = decodeURIComponent(url.username || "");
         this.password = decodeURIComponent(url.password || "");
 
@@ -187,13 +184,6 @@ class RtspClient {
         this.recvBuffer = Buffer.alloc(0);
         this.pendingRequests.clear();
         this.lastActivityTime = Date.now();
-
-        const connectOptions = {
-          host: host,
-          port: port,
-          // Allow self-signed certs for IPC cameras
-          rejectUnauthorized: false
-        };
 
         const onConnect = () => {
           this.connected = true;
@@ -207,11 +197,7 @@ class RtspClient {
           reject(err);
         };
 
-        if (this.useTLS) {
-          this.socket = tls.connect(connectOptions, onConnect);
-        } else {
-          this.socket = net.createConnection(connectOptions, onConnect);
-        }
+        this.socket = net.createConnection({ host: host, port: port }, onConnect);
 
         this.socket.on("data", this.handleData);
         this.socket.on("close", (hadError) => {
@@ -1007,7 +993,7 @@ class RtspClient {
       return baseUrl;
     }
     // If control is a full URL, use it directly
-    if (control.startsWith("rtsp://") || control.startsWith("rtsps://")) {
+    if (control.startsWith("rtsp://")) {
       return control;
     }
     // Otherwise append to base URL
