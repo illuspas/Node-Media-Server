@@ -109,12 +109,14 @@ Validates the old password against the configured user, then updates `auth.jwt.u
 | GET      | /api/v1/info              | Server version and configuration information  | Yes  |
 | GET      | /api/v1/streams           | List all active streams                       | Yes  |
 | GET      | /api/v1/streams/:app/:name | Get details of a specific stream             | Yes  |
+| GET      | /api/v1/streams/:app/:name/urls | Generate ready-to-use play URLs (signed when auth.play is on) | Yes |
 | GET      | /api/v1/streams/:app/:name/record | Query the recording status of a stream | Yes  |
 | POST     | /api/v1/streams/:app/:name/record | Manually start recording a stream   | Yes  |
 | DELETE   | /api/v1/streams/:app/:name/record | Manually stop recording a stream    | Yes  |
 | GET      | /api/v1/sessions          | List all connected sessions                   | Yes  |
 | DELETE   | /api/v1/sessions/:id      | Terminate a specific session                  | Yes  |
 | GET      | /api/v1/stats             | Real-time server performance statistics       | Yes  |
+| GET      | /api/v1/events            | Stream lifecycle events over SSE              | Yes  |
 | GET      | /api/v1/relay             | List all relay tasks                          | Yes  |
 | GET      | /api/v1/relay/:streamPath | Get status of a specific relay task           | Yes  |
 | POST     | /api/v1/relay             | Add a relay (pull/push) task                  | Yes  |
@@ -189,6 +191,8 @@ GET /api/v1/streams
 
 List all active streams with detailed information including codecs, resolution, framerate, and subscriber count. `status` is the real publish state: `publishing` (live), `reconnecting` (publisher dropped, the stream is held for the grace window awaiting the same client), or `idle` (no publisher, e.g. only waiting players).
 
+Traffic fields: `inBytes` is the publisher's cumulative input; `outBytes` is the total sent to the currently attached subscribers; `inBps`/`outBps` are real-time publish/play rates in **bytes per second** (multiply by 8 for bit/s), averaged over a sliding ~5-second sampling window maintained server-side. A publisher swap rebases the window instead of producing negative rates. These three fields are available on both the list and the single-stream endpoints.
+
 ```json
 {
   "success": true,
@@ -214,6 +218,9 @@ List all active streams with detailed information including codecs, resolution, 
           "inBytes": 1048576
         },
         "subscribers": 3,
+        "outBytes": 3145728,
+        "inBps": 262144,
+        "outBps": 524288,
         "recording": false
       }
     ],
@@ -230,6 +237,40 @@ GET /api/v1/streams/live/stream
 ```
 
 The response `data` contains the same stream object shown above.
+
+### Play URL Generation
+
+```bash
+GET /api/v1/streams/{app}/{name}/urls[?ttl=seconds]
+```
+
+Generates ready-to-use play URLs for a stream across every configured listener: `rtmp`, `rtmps`, `http-flv`, `ws-flv`, `https-flv` and `wss-flv`. It works whether or not the stream is currently live (`status` reports the current publish state, `idle` when the stream does not exist yet), which makes it handy for handing out links before a broadcast starts:
+
+- Only listeners with a port in the configuration are included.
+- The host is taken from the request's `Host` header, so the returned URLs are directly reachable from wherever the API call was made.
+- Protocol default ports (`rtmp` 1935, `http` 80, `https` 443) are omitted from the URLs.
+
+When `auth.play` is enabled with a non-empty `auth.secret`, every URL carries a `sign` query parameter (`<expiryUnixSeconds>-<md5hex>`) that the server's signed-URL verification accepts for RTMP, HTTP-FLV and WebSocket-FLV playback alike. The optional `ttl` query parameter bounds the signature lifetime in seconds (clamped to 60–86400, default 3600) and is ignored when signing is disabled.
+
+```json
+{
+  "success": true,
+  "data": {
+    "app": "live",
+    "name": "cam1",
+    "streamPath": "/live/cam1",
+    "status": "publishing",
+    "signed": true,
+    "expiresAt": "2026-09-10T04:46:57.000Z",
+    "urls": [
+      { "protocol": "rtmp", "url": "rtmp://192.168.1.2/live/cam1?sign=1789015617-04ccea110655266f5941a4673e2d3646" },
+      { "protocol": "http-flv", "url": "http://192.168.1.2:8000/live/cam1.flv?sign=1789015617-04ccea110655266f5941a4673e2d3646" },
+      { "protocol": "ws-flv", "url": "ws://192.168.1.2:8000/live/cam1.flv?sign=1789015617-04ccea110655266f5941a4673e2d3646" }
+    ]
+  },
+  "message": "Play URLs generated successfully"
+}
+```
 
 ### Manual Recording
 
@@ -291,7 +332,7 @@ Real-time server performance metrics including:
 - Memory consumption (RSS, heap total, heap used)
 - Process uptime, Node.js version, platform, and PID
 - Connected client count, split into publishers and players (`publishers` equals the active stream count)
-- Cumulative streaming network traffic in/out bytes, accumulated by every publisher/player session over the process lifetime (record file writes excluded)
+- Cumulative streaming network traffic in/out bytes, accumulated by every publisher/player session over the process lifetime (record file writes excluded), plus real-time `inBps`/`outBps` rates in bytes per second averaged over a sliding ~5-second window
 
 ```json
 {
@@ -307,11 +348,45 @@ Real-time server performance metrics including:
     "cpu": { "user": 1200000, "system": 300000 },
     "memory": { "rss": 104857600, "heapTotal": 52428800, "heapUsed": 31457280 },
     "sessions": { "total": 4, "publishers": 1, "players": 3 },
-    "network": { "inBytes": 1048576000, "outBytes": 3145728000 },
+    "network": { "inBytes": 1048576000, "outBytes": 3145728000, "inBps": 262144, "outBps": 786432 },
     "timestamp": "2026-08-22T00:00:00.000Z"
   },
   "message": "Server statistics retrieved successfully"
 }
+```
+
+### Event Stream (SSE)
+
+```bash
+GET /api/v1/events
+Authorization: Bearer your_jwt_token
+```
+
+Server-Sent Events feed of stream lifecycle events — the same events the webhook notifier (`notify.url`) receives: `prePublish`, `postPublish`, `donePublish`, `prePlay`, `postPlay`, `donePlay`, `postRecord` and `doneRecord`. Each event carries a session summary as JSON in `data`:
+
+```json
+{
+  "id": 42,
+  "ip": "192.168.1.100:51234",
+  "app": "live",
+  "name": "cam1",
+  "streamPath": "/live/cam1",
+  "protocol": "rtmp",
+  "isPublisher": true,
+  "createTime": 1724280000000,
+  "endTime": null,
+  "inBytes": 1048576,
+  "outBytes": 0
+}
+```
+
+The server sends a `retry: 3000` hint on connect and a `: ping` comment every 15 seconds to keep proxies from buffering or closing the idle connection; event listeners are cleaned up when the client disconnects. Play events are only emitted for external clients (sessions with a real peer address), matching the webhook behavior.
+
+```bash
+curl -N -H "Authorization: Bearer your_jwt_token" http://localhost:8000/api/v1/events
+
+event: postPublish
+data: {"id":42,"ip":"192.168.1.100:51234","app":"live","name":"cam1","streamPath":"/live/cam1","protocol":"rtmp","isPublisher":true,"createTime":1724280000000,"endTime":null,"inBytes":0,"outBytes":0}
 ```
 
 ### Relay Management
@@ -474,6 +549,14 @@ curl -X GET http://localhost:8000/api/v1/stats \
 
 # Get active streams
 curl -X GET http://localhost:8000/api/v1/streams \
+  -H "Authorization: Bearer your_jwt_token"
+
+# Generate play URLs for a stream (signed when auth.play is enabled)
+curl -X GET "http://localhost:8000/api/v1/streams/live/stream/urls?ttl=600" \
+  -H "Authorization: Bearer your_jwt_token"
+
+# Follow stream lifecycle events (SSE)
+curl -N http://localhost:8000/api/v1/events \
   -H "Authorization: Bearer your_jwt_token"
 
 # Get all sessions

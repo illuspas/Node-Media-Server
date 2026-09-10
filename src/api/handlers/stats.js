@@ -7,6 +7,7 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+const { rateSampler } = require("../../core/rate_sampler.js");
 /** @typedef {import("express").Request} Request */
 /** @typedef {import("express").Response} Response */
 
@@ -20,6 +21,7 @@ class StatsHandler {
     try {
       const memoryUsage = process.memoryUsage();
       const cpuUsage = process.cpuUsage();
+      const networkRates = rateSampler.getNetworkRates();
 
       const stats = {
         server: {
@@ -38,7 +40,9 @@ class StatsHandler {
         },
         network: {
           inBytes: Context.networkStats.inBytes,
-          outBytes: Context.networkStats.outBytes
+          outBytes: Context.networkStats.outBytes,
+          inBps: networkRates.inBps,
+          outBps: networkRates.outBps
         },
         timestamp: new Date().toISOString()
       };

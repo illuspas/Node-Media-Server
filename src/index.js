@@ -16,6 +16,7 @@ const NodeNotifyServer = require("./server/notify_server.js");
 const NodeHistoryServer = require("./server/history_server.js");
 const NodeRelayServer = require("./server/relay_server.js");
 const LightweightStore = require("./store/lightweight_store.js");
+const { rateSampler } = require("./core/rate_sampler.js");
 
 class NodeMediaServer {
   /**
@@ -57,6 +58,9 @@ class NodeMediaServer {
     Context.relayServer = this.relayServer;
     Context.recordServer = this.recordServer;
 
+    // Sliding-window inBps/outBps for /streams and /stats
+    rateSampler.start();
+
     this._stopping = false;
   }
 
@@ -94,6 +98,7 @@ class NodeMediaServer {
       return;
     }
     this._stopping = true;
+    rateSampler.stop();
     this.relayServer.stop();
     this.recordServer.stop();
     this.rtmpServer.stop();
