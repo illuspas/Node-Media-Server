@@ -41,6 +41,9 @@
         "key": "./key.pem",
         "cert": "./cert.pem"
     },
+    "webadmin": {
+        "enable": true
+    },
     "record": {
         "auto": false,
         "path": "./record"

@@ -32,6 +32,7 @@ Options:
       --notify-url <url> Event webhook URL, overrides notify.url
       --auth-play        Enable play authentication, forces auth.play on
       --auth-publish     Enable publish authentication, forces auth.publish on
+      --no-admin         Disable the webadmin console (/admin), media only
   -h, --help             Show this help
 
 Command line values take precedence over config file values and are
@@ -69,6 +70,7 @@ try {
       "notify-url": { type: "string" },
       "auth-play": { type: "boolean" },
       "auth-publish": { type: "boolean" },
+      "no-admin": { type: "boolean" },
       help: { type: "boolean", short: "h" }
     },
     strict: true
@@ -229,6 +231,10 @@ if (cli["auth-play"] || cli["auth-publish"]) {
   if (!config.auth.secret) {
     console.warn("⚠️  auth.play/auth.publish enabled but auth.secret is empty, signed URL authentication will reject requests");
   }
+}
+if (cli["no-admin"]) {
+  config.webadmin = config.webadmin ?? {};
+  config.webadmin.enable = false;
 }
 
 // Resolve runtime data paths relative to the directory containing the config.

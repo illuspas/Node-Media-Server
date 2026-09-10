@@ -81,6 +81,11 @@ const EventEmitter = require("node:events");
  */
 
 /**
+ * @typedef {object} WebadminConfig - Bundled webadmin console
+ * @property {boolean} [enable] - Serve the bundled console at /admin; default true
+ */
+
+/**
  * @typedef {object} NmsConfig - Full server configuration, loaded once at startup.
  * All sections are optional; servers skip listeners whose port is unset.
  * @property {string} [bind] - Listen address for all listeners
@@ -91,6 +96,7 @@ const EventEmitter = require("node:events");
  * @property {RecordConfig} [record] - FLV recording
  * @property {StoreConfig} [store] - Persistent JSON store
  * @property {StaticConfig} [static] - Static file serving over HTTP
+ * @property {WebadminConfig} [webadmin] - Bundled webadmin console at /admin
  * @property {AuthConfig} [auth] - Stream and admin API authentication
  * @property {{url?: string}} [notify] - Webhook receiver for stream events
  */

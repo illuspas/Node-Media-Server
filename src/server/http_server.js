@@ -34,10 +34,14 @@ class NodeHttpServer {
     }
 
     // Serve the bundled webadmin console (built from webadmin/, shipped in the npm package)
-    const webadminRoot = path.resolve(__dirname, "../../webadmin/dist");
-    if (fs.existsSync(webadminRoot)) {
-      // @ts-ignore
-      app.use("/admin", express.static(webadminRoot));
+    if (Context.config.webadmin?.enable !== false) {
+      const webadminRoot = path.resolve(__dirname, "../../webadmin/dist");
+      if (fs.existsSync(webadminRoot)) {
+        // @ts-ignore
+        app.use("/admin", express.static(webadminRoot));
+      }
+    } else {
+      logger.info("Webadmin console is disabled.");
     }
 
     // @ts-ignore
