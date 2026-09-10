@@ -7,7 +7,7 @@
 
 const logger = require("../core/logger.js");
 const Context = require("../core/context.js");
-const RtspSession = require("../session/rtsp_session.js");
+const RtspClientSession = require("../session/rtsp_client_session.js");
 const RtmpClientSession = require("../session/rtmp_client_session.js");
 
 /**
@@ -18,7 +18,7 @@ const RtmpClientSession = require("../session/rtmp_client_session.js");
  */
 class NodeRelayServer {
   constructor() {
-    /** @type {Map<string, (RtspSession|RtmpClientSession)>} taskKey -> session */
+    /** @type {Map<string, (RtspClientSession|RtmpClientSession)>} taskKey -> session */
     this.tasks = new Map();
 
     /** @type {boolean} */
@@ -121,7 +121,7 @@ class NodeRelayServer {
    * @param {boolean} [config.reconnect] - Enable auto-reconnect (default true)
    * @param {number} [config.reconnectInterval] - Initial reconnect interval ms
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)
-   * @returns {(RtspSession|RtmpClientSession)} The created session
+   * @returns {(RtspClientSession|RtmpClientSession)} The created session
    */
   addTask(config) {
     const url = config.url || config.rtspUrl;
@@ -155,7 +155,7 @@ class NodeRelayServer {
 
     const sessionConfig = { ...config, url, mode, rtspUrl: url };
     const session = parsedUrl.protocol === "rtsp:"
-      ? new RtspSession(sessionConfig)
+      ? new RtspClientSession(sessionConfig)
       : new RtmpClientSession(sessionConfig);
     session.taskKey = taskKey;
     this.tasks.set(taskKey, session);

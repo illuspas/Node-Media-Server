@@ -42,7 +42,7 @@ const FLV_CODEC_ID_PCMU = 8;
  * @class
  * @augments BaseSession
  */
-class RtspSession extends BaseSession {
+class RtspClientSession extends BaseSession {
   /**
    * @param {object} config
    * @param {string} config.rtspUrl - Full RTSP URL
@@ -580,4 +580,4 @@ class RtspSession extends BaseSession {
   };
 }
 
-module.exports = RtspSession;
+module.exports = RtspClientSession;
