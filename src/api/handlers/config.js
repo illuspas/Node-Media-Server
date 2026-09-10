@@ -21,13 +21,10 @@ const EDITABLE_PATHS = [
   ["store", "maxHistory"],
   ["record", "path"],
   ["record", "auto"],
-  ["auth", "play"],
-  ["auth", "publish"],
-  ["auth", "secret"],
   ["rtmp", "port"],
-  ["rtmps", "port"], ["rtmps", "key"], ["rtmps", "cert"],
+  ["rtmps", "port"],
   ["http", "port"],
-  ["https", "port"], ["https", "key"], ["https", "cert"]
+  ["https", "port"]
 ];
 
 /** @typedef {(v: any, p: string) => string | null} FieldValidator */
