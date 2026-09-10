@@ -52,6 +52,7 @@ class BaseSession {
     this.playCount = 0;
 
     this.filePath = "";
+    this.taskKey = "";
   }
 
   /**

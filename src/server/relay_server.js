@@ -121,7 +121,7 @@ class NodeRelayServer {
    * @param {boolean} [config.reconnect] - Enable auto-reconnect (default true)
    * @param {number} [config.reconnectInterval] - Initial reconnect interval ms
    * @param {number} [config.maxReconnectAttempts] - Max reconnect attempts (0 = unlimited)
-   * @returns {(RtspClientSession|RtmpClientSession)} The created session
+   * @returns {(RtspClientSession|RtmpClientSession|undefined)} The created session
    */
   addTask(config) {
     const url = config.url || config.rtspUrl;
