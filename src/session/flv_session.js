@@ -5,7 +5,6 @@
 //  Copyright (c) 2023 NodeMedia. All rights reserved.
 //
 
-const url = require("url");
 const http = require("http");
 const WebSocket = require("ws");
 const Flv = require("../protocol/flv.js");
@@ -36,12 +35,12 @@ class FlvSession extends BaseSession {
     this.flv = new Flv();
     this.protocol = "flv";
     if (this.res instanceof WebSocket) {
-      const urlInfo = url.parse(req.url, true);
+      const urlInfo = new URL(req.url ?? "/", "http://localhost");
       this.streamHost = req.headers.host?.split(":")[0];
       this.streamPath = urlInfo.pathname.split(".")[0];
       this.streamApp = this.streamPath.split("/")[1];
       this.streamName = this.streamPath.split("/")[2];
-      this.streamQuery = urlInfo.query;
+      this.streamQuery = Object.fromEntries(urlInfo.searchParams);
       if (this.res.protocol.toLowerCase() === "post" || this.res.protocol.toLowerCase() === "publisher") {
         this.isPublisher = true;
       }
