@@ -292,7 +292,7 @@ class RtspClientSession extends BaseSession {
   };
 
   /**
-   * Broadcast the onMetaData packet (flags=5). BroadcastServer caches it and
+   * Broadcast the onMetaData packet (flags=AVPacket.FLAG_METADATA). BroadcastServer caches it and
    * sends it to every new subscriber, and extracts the publisher stream info.
    * The tag body starts with "onMetaData" (not "@setDataFrame") so that FLV
    * parsers such as FFmpeg's read the metadata.
@@ -310,7 +310,7 @@ class RtspClientSession extends BaseSession {
     });
 
     const pkt = new AVPacket();
-    pkt.flags = 5;
+    pkt.flags = AVPacket.FLAG_METADATA;
     pkt.codec_type = 18; // script/data
     pkt.pts = 0;
     pkt.dts = 0;
@@ -372,7 +372,7 @@ class RtspClientSession extends BaseSession {
     const avPackets = this.depayloader.feed(rtpPacket);
     for (const avPacket of avPackets) {
       this.broadcast.broadcastMessage(avPacket);
-      if (avPacket.flags === 3 || avPacket.flags === 4) {
+      if (avPacket.flags === AVPacket.FLAG_VIDEO_KEYFRAME || avPacket.flags === AVPacket.FLAG_VIDEO_INTER_FRAME) {
         // Sample video frame timestamps for fps estimation
         this.videoFrameTimes.push(avPacket.pts);
         if (this.videoFrameTimes.length > FRAMES_TO_ESTIMATE_FPS) {

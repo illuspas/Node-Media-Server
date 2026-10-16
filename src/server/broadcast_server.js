@@ -25,6 +25,21 @@ const RESUMABLE_FIELDS = [
 ];
 
 /**
+ * Audio tracks are identified by the Enhanced RTMP multitrack trackIndex;
+ * plain (non-multitrack) audio maps to track 0.
+ * @param {AVPacket} packet - Audio sequence header packet (flags === 0)
+ * @returns {string} Track cache key
+ */
+function audioTrackKeyOf(packet) {
+  const data = packet.data;
+  // OneTrack multitrack layout: [0]=0x9X|5, [1]=types, [2..5]=FourCC, [6]=trackIndex
+  if (data.length > 6 && data[0] >> 4 === 9 && (data[0] & 0x0f) === 5) {
+    return `track:${data[6]}`;
+  }
+  return "track:0";
+}
+
+/**
  * Session ips are "address:port"; two connections of the same client differ in port only.
  * @param {string} ip
  * @returns {string}
@@ -53,8 +68,8 @@ class BroadcastServer {
     /** @type {Buffer | null} */
     this.flvMetaData = null;
 
-    /** @type {Buffer | null} */
-    this.flvAudioHeader = null;
+    /** Per-track audio sequence headers, keyed by audioTrackKeyOf (Enhanced RTMP multitrack) */
+    this.flvAudioHeaders = new Map();
 
     /** @type {Buffer | null} */
     this.flvVideoHeader = null;
@@ -62,8 +77,8 @@ class BroadcastServer {
     /** @type {Buffer | null} */
     this.rtmpMetaData = null;
 
-    /** @type {Buffer | null} */
-    this.rtmpAudioHeader = null;
+    /** Per-track audio sequence headers, keyed by audioTrackKeyOf (Enhanced RTMP multitrack) */
+    this.rtmpAudioHeaders = new Map();
 
     /** @type {Buffer | null} */
     this.rtmpVideoHeader = null;
@@ -140,9 +155,9 @@ class BroadcastServer {
       if (this.flvMetaData !== null) {
         session.sendBuffer(this.flvMetaData);
       }
-      if (this.flvAudioHeader !== null) {
-        session.sendBuffer(this.flvAudioHeader);
-      }
+      this.flvAudioHeaders.forEach((audioHeader) => {
+        session.sendBuffer(audioHeader);
+      });
       if (this.flvVideoHeader !== null) {
         session.sendBuffer(this.flvVideoHeader);
       }
@@ -156,9 +171,9 @@ class BroadcastServer {
       if (this.rtmpMetaData != null) {
         session.sendBuffer(this.rtmpMetaData);
       }
-      if (this.rtmpAudioHeader != null) {
-        session.sendBuffer(this.rtmpAudioHeader);
-      }
+      this.rtmpAudioHeaders.forEach((audioHeader) => {
+        session.sendBuffer(audioHeader);
+      });
       if (this.rtmpVideoHeader != null) {
         session.sendBuffer(this.rtmpVideoHeader);
       }
@@ -265,10 +280,10 @@ class BroadcastServer {
     this.publisher = null;
     Context.eventEmitter.emit("donePublish", session);
     this.flvMetaData = null;
-    this.flvAudioHeader = null;
+    this.flvAudioHeaders.clear();
     this.flvVideoHeader = null;
     this.rtmpMetaData = null;
-    this.rtmpAudioHeader = null;
+    this.rtmpAudioHeaders.clear();
     this.rtmpVideoHeader = null;
     this.flvGopCache?.clear();
     this.rtmpGopCache?.clear();
@@ -306,14 +321,14 @@ class BroadcastServer {
   broadcastMessage = (packet) => {
     // resumed publishes keep the timeline continuous: shift timestamps past the previous publish's last dts
     const dtsOffset = this._dtsOffset[packet.codec_type] || 0;
-    if (dtsOffset > 0 && (packet.flags === 1 || packet.flags === 3 || packet.flags === 4)) {
+    if (dtsOffset > 0 && (packet.flags === AVPacket.FLAG_AUDIO_FRAME || packet.flags === AVPacket.FLAG_VIDEO_KEYFRAME || packet.flags === AVPacket.FLAG_VIDEO_INTER_FRAME)) {
       packet.dts += dtsOffset;
       packet.pts += dtsOffset;
     }
     if (packet.codec_type === 8 || packet.codec_type === 9) {
       this._lastDts[packet.codec_type] = packet.dts;
     }
-    if (packet.flags == 5) {
+    if (packet.flags === AVPacket.FLAG_METADATA) {
       let metadata = decodeAmf0Data(packet.data);
       // RTMP publishers send "@setDataFrame onMetaData {...}"; our RTSP pull
       // sessions and FLV script tags start directly with "onMetaData {...}".
@@ -333,19 +348,21 @@ class BroadcastServer {
     const flvMessage = Flv.createMessage(packet);
     const rtmpMessage = Rtmp.createMessage(packet);
     switch (packet.flags) {
-    case 0:
-      this.flvAudioHeader = Buffer.from(flvMessage);
-      this.rtmpAudioHeader = Buffer.from(rtmpMessage);
+    case AVPacket.FLAG_AUDIO_SEQUENCE_HEADER: {
+      const trackKey = audioTrackKeyOf(packet);
+      this.flvAudioHeaders.set(trackKey, Buffer.from(flvMessage));
+      this.rtmpAudioHeaders.set(trackKey, Buffer.from(rtmpMessage));
       break;
-    case 1:
+    }
+    case AVPacket.FLAG_AUDIO_FRAME:
       this.flvGopCache?.add(flvMessage);
       this.rtmpGopCache?.add(rtmpMessage);
       break;
-    case 2:
+    case AVPacket.FLAG_VIDEO_SEQUENCE_HEADER:
       this.flvVideoHeader = Buffer.from(flvMessage);
       this.rtmpVideoHeader = Buffer.from(rtmpMessage);
       break;
-    case 3:
+    case AVPacket.FLAG_VIDEO_KEYFRAME:
       this.flvGopCache?.clear();
       this.rtmpGopCache?.clear();
       this.flvGopCache = new Set();
@@ -353,11 +370,11 @@ class BroadcastServer {
       this.flvGopCache.add(flvMessage);
       this.rtmpGopCache.add(rtmpMessage);
       break;
-    case 4:
+    case AVPacket.FLAG_VIDEO_INTER_FRAME:
       this.flvGopCache?.add(flvMessage);
       this.rtmpGopCache?.add(rtmpMessage);
       break;
-    case 5:
+    case AVPacket.FLAG_METADATA:
       this.flvMetaData = Buffer.from(flvMessage);
       this.rtmpMetaData = Buffer.from(rtmpMessage);
       break;

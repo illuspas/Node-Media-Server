@@ -96,9 +96,8 @@ class RtpDepayloader {
       depayloader = new PcmaDepayloader(payloadType, clockRate, FLV_SOUND_FORMAT_PCMU);
       break;
     default:
-      logger.warn(`RtpDepayloader: unsupported codec ${codec}, using passthrough`);
-      depayloader = new PassthroughDepayloader(payloadType, clockRate);
-      break;
+      logger.warn(`RtpDepayloader: unsupported codec ${codec}, discarding track pt=${payloadType}`);
+      return;
     }
 
     this.tracks.set(payloadType, depayloader);
@@ -595,7 +594,7 @@ class H264Depayloader extends TrackDepayloader {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = FLV_CODEC_ID_H264;
-    pkt.flags = 2; // video header
+    pkt.flags = AVPacket.FLAG_VIDEO_SEQUENCE_HEADER;
     pkt.pts = timestamp;
     pkt.dts = timestamp;
 
@@ -623,7 +622,7 @@ class H264Depayloader extends TrackDepayloader {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = FLV_CODEC_ID_H264;
-    pkt.flags = isKeyframe ? 3 : 4; // 3=keyframe, 4=inter frame
+    pkt.flags = isKeyframe ? AVPacket.FLAG_VIDEO_KEYFRAME : AVPacket.FLAG_VIDEO_INTER_FRAME; // 3=keyframe, 4=inter frame
     pkt.pts = timestamp;
     pkt.dts = timestamp;
     pkt.data = flvBody;
@@ -1080,7 +1079,7 @@ class H265Depayloader extends TrackDepayloader {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = 0x31637668; // fourcc "hvc1" as uint32
-    pkt.flags = 2; // video header
+    pkt.flags = AVPacket.FLAG_VIDEO_SEQUENCE_HEADER;
     pkt.pts = timestamp;
     pkt.dts = timestamp;
 
@@ -1098,7 +1097,7 @@ class H265Depayloader extends TrackDepayloader {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_VIDEO_TYPE;
     pkt.codec_id = 0x31637668; // fourcc "hvc1" as uint32
-    pkt.flags = isKeyframe ? 3 : 4;
+    pkt.flags = isKeyframe ? AVPacket.FLAG_VIDEO_KEYFRAME : AVPacket.FLAG_VIDEO_INTER_FRAME;
     pkt.pts = timestamp;
     pkt.dts = timestamp;
     pkt.data = flvBody;
@@ -1188,7 +1187,7 @@ class AacDepayloader extends TrackDepayloader {
       const pkt = new AVPacket();
       pkt.codec_type = FLV_AUDIO_TYPE;
       pkt.codec_id = FLV_SOUND_FORMAT_AAC;
-      pkt.flags = 1; // audio
+      pkt.flags = AVPacket.FLAG_AUDIO_FRAME;
       pkt.pts = rtpPacket.timestamp;
       pkt.dts = rtpPacket.timestamp;
       pkt.data = flvBody;
@@ -1235,7 +1234,7 @@ class PcmaDepayloader extends TrackDepayloader {
     const pkt = new AVPacket();
     pkt.codec_type = FLV_AUDIO_TYPE;
     pkt.codec_id = this.soundFormat;
-    pkt.flags = 1; // audio
+    pkt.flags = AVPacket.FLAG_AUDIO_FRAME;
     pkt.pts = rtpPacket.timestamp;
     pkt.dts = rtpPacket.timestamp;
     pkt.data = flvBody;
@@ -1246,25 +1245,10 @@ class PcmaDepayloader extends TrackDepayloader {
 }
 
 // ═══════════════════════════════════════════
-// Passthrough Depayloader (fallback)
+// Unsupported codecs are discarded in RtpDepayloader.addTrack:
+// raw RTP payloads cannot be wrapped into valid FLV tags or RTMP
+// messages, so passing them through would only emit garbage downstream.
 // ═══════════════════════════════════════════
-
-class PassthroughDepayloader extends TrackDepayloader {
-  /**
-   * @param {import("./rtp.js").RtpPacket} rtpPacket
-   * @returns {AVPacket[]}
-   */
-  feed(rtpPacket) {
-    const pkt = new AVPacket();
-    pkt.codec_type = 0;
-    pkt.flags = 0;
-    pkt.pts = rtpPacket.timestamp;
-    pkt.dts = rtpPacket.timestamp;
-    pkt.data = Buffer.from(rtpPacket.payload);
-    pkt.size = rtpPacket.payload.length;
-    return [pkt];
-  }
-}
 
 // ─────────────────────────────────────────
 // Bit-reading utility

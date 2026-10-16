@@ -18,7 +18,7 @@ class AVPacket {
     this.pts = 0;           // 显示时间戳
     this.dts = 0;           // 解码时间戳
     this.size = 0;          // 数据大小
-    this.flags = 0;         // 标志位: 1=音频头, 2=视频头, 3=关键帧, 4=普通帧, 5=元数据
+    this.flags = 0;         // 标志位(AVPacket.FLAG_*): 0=音频序列头, 1=音频帧, 2=视频序列头, 3=关键帧, 4=普通帧, 5=元数据, 6=视频元数据
     this.data = Buffer.alloc(0); // 原始媒体数据
   }
 }

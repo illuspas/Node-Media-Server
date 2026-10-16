@@ -238,18 +238,26 @@ class Flv {
     if (type === FLV_MEDIA_TYPE_AUDIO) {
       const soundFormat = data[0] >> 4;
       packet.codec_id = soundFormat;
-      packet.flags = 1;
+      packet.flags = AVPacket.FLAG_AUDIO_FRAME;
       if (soundFormat !== FLV_CODECID_ExHeader) {
         if (soundFormat === FLV_CODECID_AAC) {
           if (data[1] === 0) {
-            packet.flags = 0;
+            packet.flags = AVPacket.FLAG_AUDIO_SEQUENCE_HEADER;
           }
         }
       } else {
         const audioPacketType = data[0] & 0x0f;
-        if(audioPacketType === AudioPacketTypeSequenceStart) {
-          packet.flags = 0;
-        } 
+        if (audioPacketType === AudioPacketTypeSequenceStart) {
+          packet.flags = AVPacket.FLAG_AUDIO_SEQUENCE_HEADER;
+        } else if (audioPacketType === AudioPacketTypeMultitrack && data.length > 1) {
+          // Enhanced RTMP v2 multitrack audio: byte 0's low nibble is always
+          // AudioPacketTypeMultitrack; the wrapped per-track packet type lives
+          // in byte 1's low nibble for OneTrack/ManyTracksManyTracks/ManyTracksOneTrack.
+          const innerAudioPacketType = data[1] & 0x0f;
+          if (innerAudioPacketType === AudioPacketTypeSequenceStart) {
+            packet.flags = AVPacket.FLAG_AUDIO_SEQUENCE_HEADER;
+          }
+        }
       }
 
 
@@ -264,17 +272,17 @@ class Flv {
         if (fourCC.compare(FOURCC_AV1) === 0 || fourCC.compare(FOURCC_VP9) === 0 || fourCC.compare(FOURCC_HEVC) === 0) {
           packet.codec_id = fourCC.readUint32BE();
           if (VideoPacketType === VideoPacketTypeSequenceStart) {
-            packet.flags = 2;
+            packet.flags = AVPacket.FLAG_VIDEO_SEQUENCE_HEADER;
           } else if (VideoPacketType === VideoPacketTypeCodedFrames || VideoPacketType === VideoPacketTypeCodedFramesX) {
             if (frameType === FLV_FRAME_KEY) {
-              packet.flags = 3;
+              packet.flags = AVPacket.FLAG_VIDEO_KEYFRAME;
             } else {
-              packet.flags = 4;
+              packet.flags = AVPacket.FLAG_VIDEO_INTER_FRAME;
             }
           } else if (VideoPacketType === VideoPacketTypeMetadata) {
             // const hdrMetadata = AMF.parseScriptData(packet.data.buffer, 5, packet.size);
             // logger.debug(`hdrMetadata:${JSON.stringify(hdrMetadata)}`);
-            packet.flags = 6;
+            packet.flags = AVPacket.FLAG_VIDEO_METADATA;
           }
 
           if (fourCC.compare(FOURCC_HEVC) === 0) {
@@ -289,21 +297,21 @@ class Flv {
         const VideoPacketType = data[1];
         packet.codec_id = codecID;
         packet.pts = packet.dts + cts;
-        packet.flags = 4;
+        packet.flags = AVPacket.FLAG_VIDEO_INTER_FRAME;
         if (codecID === FLV_CODECID_H264) {
           if (VideoPacketType === FLV_AVC_SEQUENCE_HEADER) {
-            packet.flags = 2;
+            packet.flags = AVPacket.FLAG_VIDEO_SEQUENCE_HEADER;
           } else {
             if (frameType === FLV_FRAME_KEY) {
-              packet.flags = 3;
+              packet.flags = AVPacket.FLAG_VIDEO_KEYFRAME;
             } else {
-              packet.flags = 4;
+              packet.flags = AVPacket.FLAG_VIDEO_INTER_FRAME;
             }
           }
         }
       }
     } else if (type === FLV_MEDIA_TYPE_SCRIPT) {
-      packet.flags = 5;
+      packet.flags = AVPacket.FLAG_METADATA;
     }
     return packet;
   }
