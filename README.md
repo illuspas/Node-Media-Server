@@ -56,6 +56,7 @@ never written back to the config file.
 * Authentication
 * Static file server
 * Record to flv file
+* Enhanced RTMP v2 multitrack audio
 * REST API System (New in v4.2.0)
 * JWT-based Authentication (New in v4.2.0)
 * Real-time Monitoring & Statistics (New in v4.2.0)
