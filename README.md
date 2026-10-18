@@ -123,8 +123,12 @@ See the full API documentation in [docs/api.md](docs/api.md).
 |  NodePlayer.js_1.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
 |  NodeMediaClient_3.0+ |   ✅  |  ✅ |  ❌ |  ❌ |
 
-### [QLive](https://play.google.com/store/apps/details?id=cn.nodemedia.qlive) 
-Free Android Live Streaming App
+### [QLive](https://play.google.com/store/apps/details?id=cn.nodemedia.qlive) free Android Live Streaming App
+- Custom output
+- Portrait and landscape orientation support
+- Multiple codec support
+- Multiple filter settings
+
 
 ### [NodePlayer.js](https://www.nodemedia.cn/product/nodeplayer-js/) pure javascript implementation live streaming player
 [Online Demo](http://demo.nodemedia.cn/)
@@ -160,6 +164,22 @@ Free Android Live Streaming App
 ### [expo-nodemediaclient](https://github.com/NodeMedia/expo-nodemediaclient)  Expo module for NodeMediaClient
 - iOS and Android
 - player and publisher
+- Built-in beauty filter
+
+## Other server-side options
+
+### Commercial version: [NodeMediaServer v3](https://www.nodemedia.cn/product/node-media-server/)
+- Multi-core ultra-high concurrency
+- WebRTC / SRT / HLS / RTSP / KMP protocol
+- Real-time audio transcoding
+- Multi-resolution video transcoding
+- VOD slicing and services
+
+### Windows executable: [nginx-live-win32](https://github.com/illuspas/nginx-live-win32)
+- Enhanced rtmp v2 and http/websocket-flv
+- No dependencies, single exe deployment
+- Easy to deploy in offline environments
+- Based on the latest nginx version
 
 ## License
 Apache 2.0
