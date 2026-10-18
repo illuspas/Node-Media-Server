@@ -146,3 +146,28 @@ test("NodeRelayServer routes RTMP pull and push tasks to distinct keys", () => {
   push.close();
   manager.tasks.clear();
 });
+
+test("NodeRelayServer rejects streamPaths with path traversal or unsafe segments", () => {
+  const manager = new NodeRelayServer();
+  const malicious = [
+    "/../outside",
+    "/live/../../outside",
+    "/live/..",
+    "/./live",
+    "live/stream",
+    "/live/%2e%2e",
+    "/live/.hidden",
+    "/live/stream/",
+    "//live/stream",
+    "/live/st ream"
+  ];
+  for (const streamPath of malicious) {
+    assert.throws(
+      () => manager.addTask({ url: "rtmp://example.com/live/input", mode: "pull", streamPath, reconnect: false }),
+      { message: /streamPath/ },
+      `expected rejection for ${streamPath}`
+    );
+  }
+  assert.equal(manager.tasks.size, 0, "no task registered for rejected streamPaths");
+  manager.stop();
+});

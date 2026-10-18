@@ -158,6 +158,42 @@ test("recording metadata lifecycle: recording -> done, persisted with size and d
   resetContext();
 });
 
+test("auto-record refuses streamPaths that escape the record root", async () => {
+  resetContext();
+  const recordPath = fs.mkdtempSync(path.join(os.tmpdir(), "nms-records-"));
+  Context.config = { record: { path: recordPath, auto: true } };
+  const store = await openStore();
+
+  const recordServer = new NodeRecordServer();
+  recordServer.run();
+
+  const outsideMarker = path.join(os.tmpdir(), "nms-escape-marker");
+  const publisher = {
+    id: "pub-evil",
+    ip: "9.9.9.9",
+    isPublisher: true,
+    protocol: "rtmp",
+    streamApp: "live",
+    streamName: "evil",
+    streamPath: "/../../../../../" + path.basename(outsideMarker),
+    streamQuery: {},
+    createTime: Date.now(),
+    endTime: 0,
+    inBytes: 0,
+    outBytes: 0
+  };
+  Context.eventEmitter.emit("postPublish", publisher);
+  await sleep(100);
+
+  assert.equal(fs.existsSync(outsideMarker), false, "no directory created outside the record root");
+  assert.equal(recordServer.isRecording(publisher.streamPath), false, "no record session started");
+  assert.equal(store.collection("records").count(), 0, "no record metadata created");
+
+  recordServer.stop();
+  await store.close();
+  resetContext();
+});
+
 test("history records publishers only; playCount is counted in memory per publish", async () => {
   resetContext();
   Context.config = { store: { maxHistory: 5 } };

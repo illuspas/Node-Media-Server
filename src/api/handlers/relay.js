@@ -7,6 +7,7 @@
 
 const logger = require("../../core/logger.js");
 const Context = require("../../core/context.js");
+const { isValidStreamPath } = require("../../server/relay_server.js");
 /** @typedef {import("express").Request} Request */
 /** @typedef {import("express").Response} Response */
 
@@ -62,11 +63,13 @@ class RelayHandler {
         return;
       }
 
-      // Validate streamPath format
-      if (!streamPath.startsWith("/")) {
+      // Validate streamPath format: must start with "/" and contain only safe
+      // segments (letters/digits/underscore/dash). Blocks ".." and separators
+      // so auto-record cannot write outside the record root (issue #709).
+      if (!isValidStreamPath(streamPath)) {
         res.status(400).json({
           success: false,
-          error: "streamPath must start with /"
+          error: "streamPath must start with / and contain only letters, digits, underscore and dash segments"
         });
         return;
       }

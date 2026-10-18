@@ -11,6 +11,23 @@ const RtspClientSession = require("../session/rtsp_client_session.js");
 const RtmpClientSession = require("../session/rtmp_client_session.js");
 
 /**
+ * Whitelist for relay streamPath segments: each segment must be alphanumeric,
+ * underscore or dash. Blocks ".", "..", empty segments, separators and any
+ * URL-encoded or path-traversal characters (defense against writes outside
+ * the record root via auto-record, see issue #709).
+ */
+const SAFE_STREAM_PATH_PATTERN = /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*$/;
+
+/**
+ * Whether a relay streamPath is a safe publish path like "/live/camera1".
+ * @param {string} streamPath
+ * @returns {boolean}
+ */
+function isValidStreamPath(streamPath) {
+  return typeof streamPath === "string" && SAFE_STREAM_PATH_PATTERN.test(streamPath);
+}
+
+/**
  * Relay Manager — manages RTSP and RTMP relay tasks.
  * Tasks created via API are persisted in the store ("relay_tasks" collection)
  * and restored automatically on restart.
@@ -62,7 +79,10 @@ class NodeRelayServer {
       try {
         this.addTask(doc.config);
       } catch (error) {
+        // drop persisted tasks that no longer pass validation (e.g. legacy
+        // streamPath with path-traversal segments) instead of retrying forever
         logger.error(`NodeRelayServer restore task ${doc.id} failed: ${error.message}`);
+        store.collection("relay_tasks").delete(doc.id);
       }
     }
   }
@@ -129,6 +149,9 @@ class NodeRelayServer {
 
     if (!url || !streamPath) {
       throw new Error("url and streamPath are required");
+    }
+    if (!isValidStreamPath(streamPath)) {
+      throw new Error("streamPath must contain only letters, digits, underscore and dash segments, e.g. /live/camera1");
     }
     const parsedUrl = new URL(url);
     const mode = config.mode || "pull";
@@ -223,3 +246,4 @@ class NodeRelayServer {
 }
 
 module.exports = NodeRelayServer;
+module.exports.isValidStreamPath = isValidStreamPath;

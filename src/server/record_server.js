@@ -30,7 +30,10 @@ class NodeRecordServer {
         logger.info(`Record session ${active.id} ${active.streamPath} resumed by publisher ${session.id}`);
         return;
       }
-      const filePath = path.join(Context.config.record.path, session.streamPath, Date.now() + ".flv");
+      const filePath = this._safeRecordFilePath(session.streamPath);
+      if (!filePath) {
+        return;
+      }
       const sess = new NodeRecordSession(session, filePath);
       sess.run();
       Context.sessions.set(sess.id, sess);
@@ -56,6 +59,24 @@ class NodeRecordServer {
       this._trackRecords();
       this._recoverStaleRecords();
     }
+  }
+
+  /**
+   * Build the record file path for a streamPath, ensuring the result stays
+   * inside the configured record root (defense-in-depth against
+   * path-traversal streamPaths, see issue #709).
+   * @param {string} streamPath - Stream path like "/live/stream"
+   * @returns {string|null} Absolute-safe joined file path, or null when the
+   *   path would escape the record root.
+   */
+  _safeRecordFilePath(streamPath) {
+    const recordRoot = path.resolve(Context.config.record.path);
+    const target = path.resolve(path.join(recordRoot, streamPath, Date.now() + ".flv"));
+    if (!target.startsWith(recordRoot + path.sep)) {
+      logger.warn(`Record refused: streamPath ${streamPath} escapes the record root ${recordRoot}`);
+      return null;
+    }
+    return target;
   }
 
   /**
@@ -92,7 +113,10 @@ class NodeRecordServer {
     if (!broadcast?.publisher) {
       return { ok: false, error: "Stream is not publishing" };
     }
-    const filePath = path.join(Context.config.record.path, streamPath, Date.now() + ".flv");
+    const filePath = this._safeRecordFilePath(streamPath);
+    if (!filePath) {
+      return { ok: false, error: "streamPath escapes the record root" };
+    }
     const sess = new NodeRecordSession(broadcast.publisher, filePath);
     sess.run();
     Context.sessions.set(sess.id, sess);
