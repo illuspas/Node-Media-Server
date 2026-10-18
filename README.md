@@ -13,6 +13,7 @@ v4 is incompatible with v2. Do not upgrade across major versions.
 ## Installation
 ```
 npm install node-media-server -g
+node-media-server
 ```
 
 or run directly
