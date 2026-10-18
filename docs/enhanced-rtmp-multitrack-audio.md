@@ -163,11 +163,11 @@ HTTP-FLV / WS-FLV 拉流同样有效（NMS 原样透传 multitrack tag）：
 
 | 播放器 | 多轨支持 | 说明 |
 | --- | --- | --- |
-| ffplay（FFmpeg ≥ 8.0） | ✅ | `-ast N` 选轨 |
+| ffplay（FFmpeg ≥ 8.0） | ✅ | `-ast N` 选轨或播放中 `a` 键切换音轨 |
 | mpv（链接 FFmpeg ≥ 8.0 编译） | ✅ | `#` 键切换音轨 |
 | FFmpeg 转封装 HLS/TS 后 | ✅ | VLC / hls.js / ExoPlayer 等通用播放器 |
-| VLC 直连 RTMP | ❌ | RTMP access 与 FLV demuxer 均不识别 v2 multitrack |
-| flv.js / mpegts.js | ❌ | Web 端 FLV 解复用仅支持单音轨 |
+| VLC 直连 RTMP | ✅ | 更新到最新VLC, 可在播放中切换音轨 |
+| flv.js / nodeplayer.js | ❌ | Web 端 FLV 解复用仅支持单音轨 |
 
 ### 4.4 迟到订阅者收到的头部抓取（深度验证）
 
